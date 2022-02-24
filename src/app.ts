@@ -61,21 +61,24 @@ class TileEditor implements View {
             });
         }
 
-        //draw the grid
-        ctx.ctx.beginPath();
-        for(let i=0; i<=this.bounds.w; i+=32) {
-            ctx.ctx.moveTo(i+0.5,0);
-            ctx.ctx.lineTo(i+0.5,this.bounds.h);
-        }
-        for(let i=0; i<=this.bounds.w; i+=32) {
-            ctx.ctx.moveTo(0,i+0.5);
-            ctx.ctx.lineTo(this.bounds.w,i+0.5);
-        }
-        ctx.ctx.strokeStyle = 'black';
-        ctx.ctx.lineWidth = 1;
-        ctx.ctx.stroke();
-
+        draw_grid(ctx,this.bounds,32)
     }
+}
+
+function draw_grid(ctx: Ctx, bounds: Rect, step: number) {
+    //draw the grid
+    ctx.ctx.beginPath();
+    for(let i=0; i<=bounds.w; i+=step) {
+        ctx.ctx.moveTo(i+0.5,0);
+        ctx.ctx.lineTo(i+0.5,bounds.h);
+    }
+    for(let i=0; i<=bounds.w; i+=step) {
+        ctx.ctx.moveTo(0,i+0.5);
+        ctx.ctx.lineTo(bounds.w,i+0.5);
+    }
+    ctx.ctx.strokeStyle = 'black';
+    ctx.ctx.lineWidth = 1;
+    ctx.ctx.stroke();
 }
 
 class TileSelector implements View{
@@ -84,24 +87,35 @@ class TileSelector implements View{
     id: string;
     doc: Doc;
     mouse_down: (pt) => void;
+    scale:number;
     constructor() {
-        this.bounds = new Rect(0,0,256,64)
+        this.scale = 32;
+        this.bounds = new Rect(0,0,8*this.scale,8*this.scale)
         this.children = []
         this.id = 'tile selector'
         this.mouse_down = (e:PEvt) => {
-            this.doc.selected_tile = Math.floor(e.pt.x / 64);
-            this.doc.fire('change',this.doc.selected_color)
+            let x = Math.floor(e.pt.x / this.scale);
+            let y = Math.floor(e.pt.y / this.scale);
+            let val = x + y * 8;
+            if(val >= 0 && val < this.doc.tiles.length) {
+                this.doc.selected_tile = val;
+                this.doc.fire('change', this.doc.selected_color)
+            }
         }
     }
 
     draw(ctx: Ctx) {
+        ctx.fillBackground(this.bounds,'cyan');
         this.doc.tiles.forEach((sprite,s)=>{
-            ctx.fillBounds(new Rect(s*64+1,0,64,64),'black');
-            draw_sprite(sprite,ctx,s*64,0,8, this.doc)
-            if (s === this.doc.selected_tile) {
-                ctx.strokeRect(s*64,0,64,64,'red');
-            }
+            let x = s % 8;
+            let y = Math.floor(s/8);
+            ctx.fillBounds(new Rect(x*this.scale+1,y,this.scale,this.scale),'black');
+            draw_sprite(sprite,ctx,x*this.scale,y*this.scale,4, this.doc)
         })
+        draw_grid(ctx,this.bounds,this.scale);
+        let x = this.doc.selected_tile % 8;
+        let y = Math.floor(this.doc.selected_tile/8);
+        draw_selection_rect(ctx,new Rect(x*this.scale,y*this.scale,this.scale,this.scale));
     }
 }
 
@@ -138,6 +152,12 @@ class MapEditor implements  View {
 
 }
 
+function draw_selection_rect(ctx: Ctx, rect: Rect) {
+    ['red','white','black'].forEach((color,i)=>{
+        ctx.strokeRect(rect.x+i+0.5,rect.y+i+0.5,rect.w-i*2,rect.h-i*2,color);
+    })
+}
+
 class PaletteChooser implements View{
     bounds: Rect;
     children: View[];
@@ -145,22 +165,30 @@ class PaletteChooser implements View{
     palette: any;
     mouse_down: (pt) => void;
     doc: Doc;
+    scale:number;
     constructor() {
         this.id = 'palette chooser';
         this.children = [];
-        this.bounds = new Rect(0,0,32*8,32);
+        this.scale = 32;
+        this.bounds = new Rect(0,0,this.scale*8,this.scale);
         this.mouse_down = (e:PEvt) => {
-            this.doc.selected_color = Math.floor(e.pt.x / 32);
-            this.doc.fire('change',this.doc.selected_color)
+            let val = Math.floor(e.pt.x / this.scale);
+            if (val >= 0 && val < this.doc.palette.length) {
+                this.doc.selected_color = val;
+                this.doc.fire('change',this.doc.selected_color)
+            }
         }
     }
 
     draw(ctx: Ctx) {
         if (this.palette) {
             for (let i=0; i<5; i++) {
-                ctx.fillRect(i*32+0.5,0+0.5,32-1,32-1,this.palette[i]);
-                ctx.strokeRect(i*32+0.5,0+0.5,32-1,32-1,i === this.doc.selected_color?'red':'black');
+                ctx.fillRect(i*this.scale+0.5,0+0.5,this.scale,this.scale,this.palette[i]);
             }
+            draw_grid(ctx,this.bounds,this.scale)
+            let i = this.doc.selected_color;
+            let rect = new Rect(i*this.scale+1,1,this.scale-2,this.scale-2);
+            draw_selection_rect(ctx,rect)
         }
     }
 
