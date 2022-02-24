@@ -302,6 +302,7 @@ class TileSelector implements View{
     bounds: Rect;
     children: View[];
     id: string;
+    doc: Doc;
     constructor() {
         this.bounds = new Rect(0,0,256,64)
         this.children = []
@@ -309,9 +310,12 @@ class TileSelector implements View{
     }
 
     draw(ctx: Ctx) {
-        ctx.fillBounds(new Rect(0,0,64,64),'black')
-        ctx.fillBounds(new Rect(64,0,64,64),'red')
-        ctx.fillBounds(new Rect(64*2,0,64,64),'black')
+        this.doc.tiles.forEach((sprite,i)=>{
+            ctx.fillBounds(new Rect(i*64+1,0,64,64),'red');
+            sprite.forEachPixel((val:number,i:number,j:number) => {
+                ctx.fillRect(i*8,j*8,8,8,this.doc.palette[val]);
+            });
+        })
     }
 }
 class Label implements View {
@@ -407,9 +411,10 @@ export function start() {
     tile_editor.bounds.x = 0
     main_view.add(tile_editor)
 
-/*
+
     // lets you see all N tiles and choose one to edit
     let sprite_selector = new TileSelector()
+    sprite_selector.doc = doc;
     sprite_selector.bounds.y = tile_editor.bounds.bottom() + 10;
     main_view.add(sprite_selector);
 
@@ -417,7 +422,7 @@ export function start() {
     let map_editor = new MapEditor();
     map_editor.bounds.x = 300;
     main_view.add(map_editor);
-*/
+
     let ctx = new Ctx(canvas);
     ctx.draw_view(main_view);
 
