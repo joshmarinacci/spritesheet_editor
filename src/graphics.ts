@@ -105,6 +105,13 @@ export class Point {
     translate(x: number, y: number) {
         return new Point(this.x - x, this.y - y)
     }
+
+    divide_floor(scale: number) {
+        return new Point(
+            Math.floor(this.x/scale),
+            Math.floor(this.y/scale)
+        )
+    }
 }
 
 export class Rect {
@@ -144,4 +151,26 @@ export interface View {
     mouse_down?: any;
 
     draw(ctx: Ctx);
+}
+
+export function draw_selection_rect(ctx: Ctx, rect: Rect) {
+    ['red', 'white', 'black'].forEach((color, i) => {
+        ctx.strokeRect(rect.x + i + 0.5, rect.y + i + 0.5, rect.w - i * 2, rect.h - i * 2, color);
+    })
+}
+
+export function draw_grid(ctx: Ctx, bounds: Rect, step: number) {
+    //draw the grid
+    ctx.ctx.beginPath();
+    for (let i = 0; i <= bounds.w; i += step) {
+        ctx.ctx.moveTo(i + 0.5, 0);
+        ctx.ctx.lineTo(i + 0.5, bounds.h);
+    }
+    for (let i = 0; i <= bounds.w; i += step) {
+        ctx.ctx.moveTo(0, i + 0.5);
+        ctx.ctx.lineTo(bounds.w, i + 0.5);
+    }
+    ctx.ctx.strokeStyle = 'black';
+    ctx.ctx.lineWidth = 1;
+    ctx.ctx.stroke();
 }

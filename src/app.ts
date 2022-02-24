@@ -1,4 +1,4 @@
-import {Ctx, PEvt, Point, Rect, View} from "./graphics";
+import {Ctx, draw_grid, draw_selection_rect, PEvt, Point, Rect, View} from "./graphics";
 import {Button, HBox, Label} from "./components";
 import {gen_id} from "./util";
 import {Doc, draw_sprite, Sprite} from "./model";
@@ -27,17 +27,18 @@ class TileEditor implements View {
     id: string;
     mouse_down: (evt:PEvt) => void;
     doc: Doc;
+    scale:number
     constructor() {
         this.id = 'tile editor'
-        this.bounds = new Rect(0,0,32*8 + 1, 32*8 + 1)
+        this.scale = 32;
+        this.bounds = new Rect(0,0,this.scale*8 + 1, this.scale*8 + 1)
         this.children = []
         this.mouse_down = (e:PEvt) => {
-            let x = Math.floor(e.pt.x/32);
-            let y = Math.floor(e.pt.y/32);
+            let pt = e.pt.divide_floor(this.scale);
             let tile = this.doc.tiles[this.doc.selected_tile]
             if (e.button == 2) {
                 if(e.type === "mousedown") {
-                    let value = tile.get_pixel(x, y);
+                    let value = tile.get_pixel(pt.x,pt.y);
                     if (typeof value === 'number') {
                         this.doc.selected_color = value
                         this.doc.fire('change', "tile edited");
@@ -45,7 +46,7 @@ class TileEditor implements View {
                 }
                 return
             }
-            tile.set_pixel(x, y, this.doc.selected_color);
+            tile.set_pixel(pt.x, pt.y, this.doc.selected_color);
             this.doc.fire('change', "tile edited");
         }
     }
@@ -57,28 +58,12 @@ class TileEditor implements View {
         let palette = this.doc.palette;
         if (sprite !== null) {
             sprite.forEachPixel((val:number,i:number,j:number) => {
-                ctx.fillRect(i*32,j*32,32,32,palette[val]);
+                ctx.fillRect(i*this.scale,j*this.scale,this.scale,this.scale,palette[val]);
             });
         }
 
-        draw_grid(ctx,this.bounds,32)
+        draw_grid(ctx,this.bounds,this.scale)
     }
-}
-
-function draw_grid(ctx: Ctx, bounds: Rect, step: number) {
-    //draw the grid
-    ctx.ctx.beginPath();
-    for(let i=0; i<=bounds.w; i+=step) {
-        ctx.ctx.moveTo(i+0.5,0);
-        ctx.ctx.lineTo(i+0.5,bounds.h);
-    }
-    for(let i=0; i<=bounds.w; i+=step) {
-        ctx.ctx.moveTo(0,i+0.5);
-        ctx.ctx.lineTo(bounds.w,i+0.5);
-    }
-    ctx.ctx.strokeStyle = 'black';
-    ctx.ctx.lineWidth = 1;
-    ctx.ctx.stroke();
 }
 
 class TileSelector implements View{
@@ -94,9 +79,8 @@ class TileSelector implements View{
         this.children = []
         this.id = 'tile selector'
         this.mouse_down = (e:PEvt) => {
-            let x = Math.floor(e.pt.x / this.scale);
-            let y = Math.floor(e.pt.y / this.scale);
-            let val = x + y * 8;
+            let pt = e.pt.divide_floor(this.scale);
+            let val = pt.x + pt.y * 8;
             if(val >= 0 && val < this.doc.tiles.length) {
                 this.doc.selected_tile = val;
                 this.doc.fire('change', this.doc.selected_color)
@@ -107,16 +91,20 @@ class TileSelector implements View{
     draw(ctx: Ctx) {
         ctx.fillBackground(this.bounds,'cyan');
         this.doc.tiles.forEach((sprite,s)=>{
-            let x = s % 8;
-            let y = Math.floor(s/8);
-            ctx.fillBounds(new Rect(x*this.scale+1,y,this.scale,this.scale),'black');
-            draw_sprite(sprite,ctx,x*this.scale,y*this.scale,4, this.doc)
+            let pt = wrap_number(s,8);
+            draw_sprite(sprite,ctx,pt.x*this.scale,pt.y*this.scale,4, this.doc)
         })
         draw_grid(ctx,this.bounds,this.scale);
-        let x = this.doc.selected_tile % 8;
-        let y = Math.floor(this.doc.selected_tile/8);
-        draw_selection_rect(ctx,new Rect(x*this.scale,y*this.scale,this.scale,this.scale));
+        let pt = wrap_number(this.doc.selected_tile,8);
+        draw_selection_rect(ctx,new Rect(pt.x*this.scale,pt.y*this.scale,this.scale,this.scale));
     }
+}
+
+function wrap_number(num:number,width:number):Point {
+    return new Point(
+        num % width,
+        Math.floor(num/8)
+    )
 }
 
 class MapEditor implements  View {
@@ -125,17 +113,18 @@ class MapEditor implements  View {
     id: string;
     doc: Doc;
     mouse_down: (e: PEvt) => void;
+    scale:number;
 
     constructor() {
         this.id = 'map editor'
+        this.scale = 64;
         this.children = []
-        this.bounds = new Rect(0,0,8*8*8,8*8*8)
+        this.bounds = new Rect(0,0,8*this.scale,8*this.scale)
         this.mouse_down = (e:PEvt) => {
             if(e.type === "mousedown" || e.type === "mousedrag") {
-                let x = Math.floor(e.pt.x/64);
-                let y = Math.floor(e.pt.y/64);
+                let pt = e.pt.divide_floor(this.scale);
                 let tile = this.doc.tiles[this.doc.selected_tile];
-                this.doc.tilemap.set_pixel(x,y,tile.id)
+                this.doc.tilemap.set_pixel(pt.x,pt.y,tile.id)
                 this.doc.fire('change',tile)
             }
         }
@@ -146,16 +135,11 @@ class MapEditor implements  View {
         this.doc.tilemap.forEachPixel((val,i,j) => {
             if (!val || val === 0) return;
             let tile = this.doc.tiles.find((t:Sprite) => t.id ===val);
-            draw_sprite(tile,ctx,i*64,j*64,8,this.doc)
+            draw_sprite(tile,ctx,i*this.scale,j*this.scale,8,this.doc)
         })
+        draw_grid(ctx,this.bounds,this.scale)
     }
 
-}
-
-function draw_selection_rect(ctx: Ctx, rect: Rect) {
-    ['red','white','black'].forEach((color,i)=>{
-        ctx.strokeRect(rect.x+i+0.5,rect.y+i+0.5,rect.w-i*2,rect.h-i*2,color);
-    })
 }
 
 class PaletteChooser implements View{
