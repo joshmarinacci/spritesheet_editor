@@ -44,6 +44,13 @@ class Sprite {
         let n = y*this.w + x;
         this.data[n] = color;
     }
+
+    fromJSONObj(obj) {
+        let sprite = new Sprite(obj.id,obj.w,obj.h);
+        sprite.data = obj.data;
+        return sprite;
+
+    }
 }
 
 type CB = (any) => void;
@@ -52,16 +59,17 @@ type Evt = {
     type:"mousedown" | "mousedrag" | "mouseup"
     pt:Point
 }
+type Etype = "change"
 class Observable {
-    listeners:Map<String,Array<CB>>
+    listeners:Map<Etype,Array<CB>>
     constructor() {
-        this.listeners = new Map<String, Array<CB>>();
+        this.listeners = new Map<Etype, Array<CB>>();
     }
-    addEventListener(etype:string,cb:CB) {
+    addEventListener(etype:Etype,cb:CB) {
         if(!this.listeners.has(etype)) this.listeners.set(etype, new Array<CB>());
         this.listeners.get(etype).push(cb);
     }
-    fire(etype:string,payload:any) {
+    fire(etype:Etype,payload:any) {
         if(!this.listeners.has(etype)) this.listeners.set(etype, new Array<CB>());
         this.listeners.get(etype).forEach(cb => cb(payload))
     }
@@ -235,6 +243,10 @@ class Rect {
 
     bottom() {
         return this.y + this.h;
+    }
+
+    right() {
+        return this.x + this.w;
     }
 }
 
@@ -490,6 +502,44 @@ export function start() {
     }
     add_tile_button.bounds.y = tile_editor.bounds.bottom() + 10;
     main_view.add(add_tile_button);
+
+    let save_button = new Button("save");
+    save_button.mouse_down = (evt:Evt) => {
+        if(evt.type === 'mousedown') {
+            let str = JSON.stringify(doc,null, '  ');
+            console.log(str);
+            localStorage.setItem("doc",str);
+        }
+    }
+    save_button.bounds.x = add_tile_button.bounds.right() + 10;
+    save_button.bounds.y = add_tile_button.bounds.y
+    main_view.add(save_button)
+
+    let load_button = new Button("load");
+    load_button.mouse_down = (evt:Evt) => {
+        if(evt.type === 'mousedown') {
+            let str = localStorage.getItem("doc");
+            if(str) {
+                try {
+                    let doc_obj = JSON.parse(str);
+                    console.log("parsed the obj",doc_obj)
+                    doc.palette = doc_obj.palette
+                    doc.selected_tile = doc_obj.selected_tile
+                    doc.selected_color = doc_obj.selected_color
+                    doc.tiles = doc_obj.tiles.map(tile => {
+                        return new Sprite('foo', 8, 8).fromJSONObj(tile);
+                    });
+                    doc.tilemap = new Sprite("foo",8,8).fromJSONObj(doc_obj.tilemap);
+                    doc.fire('change',doc_obj)
+                } catch (e) {
+                    console.log("error parsing",str)
+                }
+            }
+        }
+    }
+    load_button.bounds.x = save_button.bounds.right() + 10;
+    load_button.bounds.y = save_button.bounds.y
+    main_view.add(load_button)
 
     // lets you see all N tiles and choose one to edit
     let sprite_selector = new TileSelector()
