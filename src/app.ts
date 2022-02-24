@@ -1,5 +1,5 @@
-import {Ctx, Evt, Point, Rect, View} from "./graphics";
-import {Button, Label} from "./components";
+import {Ctx, PEvt, Point, Rect, View} from "./graphics";
+import {Button, HBox, Label} from "./components";
 import {gen_id} from "./util";
 import {Doc, draw_sprite, Sprite} from "./model";
 
@@ -25,18 +25,28 @@ class TileEditor implements View {
     bounds: Rect;
     children: View[];
     id: string;
-    mouse_down: (pt) => void;
+    mouse_down: (evt:PEvt) => void;
     doc: Doc;
     constructor() {
         this.id = 'tile editor'
         this.bounds = new Rect(0,0,32*8 + 1, 32*8 + 1)
         this.children = []
-        this.mouse_down = (e:Evt) => {
-            // console.log("this sprite is",this.sprite);
+        this.mouse_down = (e:PEvt) => {
             let x = Math.floor(e.pt.x/32);
             let y = Math.floor(e.pt.y/32);
-            this.doc.tiles[this.doc.selected_tile].set_pixel(x,y,this.doc.selected_color);
-            this.doc.fire('change',"tile edited");
+            let tile = this.doc.tiles[this.doc.selected_tile]
+            if (e.button == 2) {
+                if(e.type === "mousedown") {
+                    let value = tile.get_pixel(x, y);
+                    if (typeof value === 'number') {
+                        this.doc.selected_color = value
+                        this.doc.fire('change', "tile edited");
+                    }
+                }
+                return
+            }
+            tile.set_pixel(x, y, this.doc.selected_color);
+            this.doc.fire('change', "tile edited");
         }
     }
     draw(ctx: Ctx) {
@@ -78,7 +88,7 @@ class TileSelector implements View{
         this.bounds = new Rect(0,0,256,64)
         this.children = []
         this.id = 'tile selector'
-        this.mouse_down = (e:Evt) => {
+        this.mouse_down = (e:PEvt) => {
             this.doc.selected_tile = Math.floor(e.pt.x / 64);
             this.doc.fire('change',this.doc.selected_color)
         }
@@ -100,13 +110,13 @@ class MapEditor implements  View {
     children: View[];
     id: string;
     doc: Doc;
-    mouse_down: (e: Evt) => void;
+    mouse_down: (e: PEvt) => void;
 
     constructor() {
         this.id = 'map editor'
         this.children = []
         this.bounds = new Rect(0,0,8*8*8,8*8*8)
-        this.mouse_down = (e:Evt) => {
+        this.mouse_down = (e:PEvt) => {
             if(e.type === "mousedown" || e.type === "mousedrag") {
                 let x = Math.floor(e.pt.x/64);
                 let y = Math.floor(e.pt.y/64);
@@ -139,7 +149,7 @@ class PaletteChooser implements View{
         this.id = 'palette chooser';
         this.children = [];
         this.bounds = new Rect(0,0,32*8,32);
-        this.mouse_down = (e:Evt) => {
+        this.mouse_down = (e:PEvt) => {
             this.doc.selected_color = Math.floor(e.pt.x / 32);
             this.doc.fire('change',this.doc.selected_color)
         }
@@ -158,8 +168,10 @@ class PaletteChooser implements View{
 
 export function start() {
     let canvas = document.createElement('canvas');
-    canvas.width = 900;
-    canvas.height = 600;
+    canvas.width = 900*window.devicePixelRatio;
+    canvas.height = 600*window.devicePixelRatio;
+    canvas.style.width = '900px';
+    canvas.style.height = '600px';
     document.body.appendChild(canvas);
 
     let doc = new Doc();
@@ -171,45 +183,23 @@ export function start() {
     main_label.bounds.y = 0
     main_view.add(main_label);
 
-    let palette_chooser = new PaletteChooser();
-    palette_chooser.doc = doc;
-    palette_chooser.palette = doc.palette;
-    palette_chooser.bounds.y = main_label.bounds.bottom() + 10;
-    main_view.add(palette_chooser);
-
-
-    // tile editor, edits the current tile
-    let tile_editor = new TileEditor();
-    tile_editor.doc = doc;
-    tile_editor.bounds.y = palette_chooser.bounds.bottom() + 10;
-    tile_editor.bounds.x = 0
-    main_view.add(tile_editor)
-
-
-    let add_tile_button = new Button("add tile");
-    add_tile_button.mouse_down = (evt:Evt) => {
-        if(evt.type === 'mousedown') {
-            doc.tiles.push(new Sprite(gen_id("tile"), 8, 8));
-            doc.fire('change', "added a tile");
-        }
-    }
-    add_tile_button.bounds.y = tile_editor.bounds.bottom() + 10;
-    main_view.add(add_tile_button);
+    let toolbar = new HBox();
+    toolbar.bounds.x = 0;//add_tile_button.bounds.right()
+    toolbar.bounds.y = main_label.bounds.bottom();//add_tile_button.bounds.y;
 
     let save_button = new Button("save");
-    save_button.mouse_down = (evt:Evt) => {
+    save_button.mouse_down = (evt:PEvt) => {
         if(evt.type === 'mousedown') {
             let str = JSON.stringify(doc,null, '  ');
             console.log(str);
             localStorage.setItem("doc",str);
         }
     }
-    save_button.bounds.x = add_tile_button.bounds.right() + 10;
-    save_button.bounds.y = add_tile_button.bounds.y
-    main_view.add(save_button)
+    toolbar.add(save_button);
 
     let load_button = new Button("load");
-    load_button.mouse_down = (evt:Evt) => {
+    load_button.mouse_down = (evt:PEvt) => {
+        console.log("load button event")
         if(evt.type === 'mousedown') {
             let str = localStorage.getItem("doc");
             if(str) {
@@ -230,9 +220,37 @@ export function start() {
             }
         }
     }
-    load_button.bounds.x = save_button.bounds.right() + 10;
-    load_button.bounds.y = save_button.bounds.y
-    main_view.add(load_button)
+    toolbar.add(load_button);
+
+    toolbar.layout();
+    main_view.add(toolbar);
+
+
+    let palette_chooser = new PaletteChooser();
+    palette_chooser.doc = doc;
+    palette_chooser.palette = doc.palette;
+    palette_chooser.bounds.y = toolbar.bounds.bottom() + 10;
+    main_view.add(palette_chooser);
+
+
+    // tile editor, edits the current tile
+    let tile_editor = new TileEditor();
+    tile_editor.doc = doc;
+    tile_editor.bounds.y = palette_chooser.bounds.bottom() + 10;
+    tile_editor.bounds.x = 0
+    main_view.add(tile_editor)
+
+
+    let add_tile_button = new Button("add tile");
+    add_tile_button.mouse_down = (evt:PEvt) => {
+        if(evt.type === 'mousedown') {
+            doc.tiles.push(new Sprite(gen_id("tile"), 8, 8));
+            doc.fire('change', "added a tile");
+        }
+    }
+    add_tile_button.bounds.y = tile_editor.bounds.bottom() + 10;
+    main_view.add(add_tile_button);
+
 
     // lets you see all N tiles and choose one to edit
     let sprite_selector = new TileSelector()
@@ -258,24 +276,30 @@ export function start() {
     });
 
     let down = false;
+    let button = 1
+    canvas.addEventListener('contextmenu',(e)=>{
+        e.preventDefault();
+        return false;
+    })
     canvas.addEventListener('mousedown',(evt)=>{
         down = true;
         let rect = canvas.getBoundingClientRect();
         let pt = new Point(evt.x-rect.x,evt.y-rect.y);
-        ctx.dispatch(main_view,{type:'mousedown', pt:pt});
+        button = evt.button as any
+        ctx.dispatch(main_view,{type:'mousedown', pt:pt, button:button});
     })
     canvas.addEventListener('mousemove',(evt)=>{
         if(down) {
             let rect = canvas.getBoundingClientRect();
             let pt = new Point(evt.x - rect.x, evt.y - rect.y);
-            let view = ctx.dispatch(main_view, {type:'mousedrag', pt:pt});
+            ctx.dispatch(main_view, {type:'mousedrag', pt:pt, button:button});
         }
     })
     canvas.addEventListener('mouseup',(evt)=>{
         down = false;
         let rect = canvas.getBoundingClientRect();
         let pt = new Point(evt.x-rect.x,evt.y-rect.y);
-        let view = ctx.dispatch(main_view,{type:'mouseup',pt:pt});
+        ctx.dispatch(main_view,{type:'mouseup',pt:pt, button:button});
     })
 
 }

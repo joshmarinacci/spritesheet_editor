@@ -1,7 +1,8 @@
 const DEBUG_VIEW_BOUNDS = false;
-export type Evt = {
+export type PEvt = {
     type: "mousedown" | "mousedrag" | "mouseup"
     pt: Point
+    button: number
 }
 
 export class Ctx {
@@ -13,8 +14,9 @@ export class Ctx {
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas
         this.ctx = canvas.getContext('2d')
-        this.w = this.canvas.width
-        this.h = this.canvas.height
+        this.ctx.scale(2,2);
+        this.w = this.canvas.width/2
+        this.h = this.canvas.height/2
         this.ctx.fillStyle = 'white'
         this.ctx.fillRect(0, 0, this.w, this.h)
     }
@@ -62,23 +64,25 @@ export class Ctx {
         this.ctx.fillRect(0, 0, bounds.w, bounds.h);
     }
 
-    dispatch(view: View, e: Evt): View | null {
+    dispatch(view: View, e: PEvt): View | null {
         if (view.bounds.contains(e.pt)) {
             // console.log("inside of the view",view);
             for (let i = 0; i < view.children.length; i++) {
                 let ch = view.children[i]
-                let e2: Evt = {
+                let e2: PEvt = {
                     type: e.type,
-                    pt: e.pt.translate(view.bounds.x, view.bounds.y)
+                    pt: e.pt.translate(view.bounds.x, view.bounds.y),
+                    button:e.button,
                 }
                 let picked = this.dispatch(ch, e2)
                 if (picked) return picked;
             }
             // if we get here it means this view was picked but no children were
             if (view.mouse_down) {
-                let e2: Evt = {
+                let e2: PEvt = {
                     type: e.type,
-                    pt: e.pt.translate(view.bounds.x, view.bounds.y)
+                    pt: e.pt.translate(view.bounds.x, view.bounds.y),
+                    button:e.button,
                 }
                 view.mouse_down(e2)
             }

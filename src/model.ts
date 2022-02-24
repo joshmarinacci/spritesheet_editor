@@ -37,6 +37,11 @@ export class Sprite {
         return sprite;
 
     }
+
+    get_pixel(x: number, y: number):any {
+        let n = y * this.w + x;
+        return this.data[n]
+    }
 }
 
 export type CB = (any) => void;
