@@ -1,4 +1,10 @@
 const DEBUG_VIEW_BOUNDS = false;
+const CLEAR_COLOR = '#f0f0f0'
+export const EMPTY_COLOR = '#62fcdc'
+// export const BUTTON_COLOR = '#ecd7ac';
+export const BUTTON_COLOR = '#e3e3e0';
+export const BUTTON_BORDER_COLOR = '#949492';
+
 export type PEvt = {
     type: "mousedown" | "mousedrag" | "mouseup"
     pt: Point
@@ -17,12 +23,12 @@ export class Ctx {
         this.ctx.scale(2,2);
         this.w = this.canvas.width/2
         this.h = this.canvas.height/2
-        this.ctx.fillStyle = 'white'
+        this.ctx.fillStyle = CLEAR_COLOR
         this.ctx.fillRect(0, 0, this.w, this.h)
     }
 
     clear() {
-        this.ctx.fillStyle = 'white'
+        this.ctx.fillStyle = CLEAR_COLOR
         this.ctx.fillRect(0, 0, this.w, this.h)
     }
 
@@ -62,6 +68,10 @@ export class Ctx {
     fillBackground(bounds: Rect, fill: string) {
         this.ctx.fillStyle = fill;
         this.ctx.fillRect(0, 0, bounds.w, bounds.h);
+    }
+    strokeBackground(bounds: Rect, fill: string) {
+        this.ctx.strokeStyle = fill;
+        this.ctx.strokeRect(0+0.5, 0+0.5, bounds.w-1, bounds.h-1);
     }
 
     dispatch(view: View, e: PEvt): View | null {

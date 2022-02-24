@@ -71,6 +71,7 @@ export class Doc extends Observable {
     tiles: Sprite[]
     selected_tile: number;
     tilemap: Sprite;
+    map_grid_visible: boolean;
 
     constructor() {
         super();
@@ -88,6 +89,7 @@ export class Doc extends Observable {
         this.selected_tile = 0;
         this.tilemap = new Sprite('mainmap', 8, 8);
         this.tilemap.set_pixel(0, 0, 'sprite1');
+        this.map_grid_visible = true;
     }
 }
 

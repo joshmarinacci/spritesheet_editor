@@ -1,5 +1,14 @@
-import {Ctx, draw_grid, draw_selection_rect, PEvt, Point, Rect, View} from "./graphics";
-import {Button, HBox, Label} from "./components";
+import {
+    Ctx,
+    draw_grid,
+    draw_selection_rect,
+    EMPTY_COLOR,
+    PEvt,
+    Point,
+    Rect,
+    View
+} from "./graphics";
+import {Button, HBox, Label, ToggleButton} from "./components";
 import {gen_id} from "./util";
 import {Doc, draw_sprite, Sprite} from "./model";
 
@@ -89,7 +98,7 @@ class TileSelector implements View{
     }
 
     draw(ctx: Ctx) {
-        ctx.fillBackground(this.bounds,'cyan');
+        ctx.fillBackground(this.bounds,EMPTY_COLOR);
         this.doc.tiles.forEach((sprite,s)=>{
             let pt = wrap_number(s,8);
             draw_sprite(sprite,ctx,pt.x*this.scale,pt.y*this.scale,4, this.doc)
@@ -131,13 +140,13 @@ class MapEditor implements  View {
     }
 
     draw(ctx: Ctx) {
-        ctx.fillBackground(this.bounds,'goldenrod')
+        ctx.fillBackground(this.bounds,EMPTY_COLOR)
         this.doc.tilemap.forEachPixel((val,i,j) => {
             if (!val || val === 0) return;
             let tile = this.doc.tiles.find((t:Sprite) => t.id ===val);
             draw_sprite(tile,ctx,i*this.scale,j*this.scale,8,this.doc)
         })
-        draw_grid(ctx,this.bounds,this.scale)
+        if(this.doc.map_grid_visible) draw_grid(ctx,this.bounds,this.scale)
     }
 
 }
@@ -156,7 +165,7 @@ class PaletteChooser implements View{
         this.scale = 32;
         this.bounds = new Rect(0,0,this.scale*8,this.scale);
         this.mouse_down = (e:PEvt) => {
-            let val = Math.floor(e.pt.x / this.scale);
+            let val = e.pt.divide_floor(this.scale).x
             if (val >= 0 && val < this.doc.palette.length) {
                 this.doc.selected_color = val;
                 this.doc.fire('change',this.doc.selected_color)
@@ -166,6 +175,7 @@ class PaletteChooser implements View{
 
     draw(ctx: Ctx) {
         if (this.palette) {
+            ctx.fillBackground(this.bounds,EMPTY_COLOR)
             for (let i=0; i<5; i++) {
                 ctx.fillRect(i*this.scale+0.5,0+0.5,this.scale,this.scale,this.palette[i]);
             }
@@ -180,10 +190,10 @@ class PaletteChooser implements View{
 
 export function start() {
     let canvas = document.createElement('canvas');
-    canvas.width = 900*window.devicePixelRatio;
-    canvas.height = 600*window.devicePixelRatio;
-    canvas.style.width = '900px';
-    canvas.style.height = '600px';
+    canvas.width = 1024*window.devicePixelRatio;
+    canvas.height = 768*window.devicePixelRatio;
+    canvas.style.width = '1024px';
+    canvas.style.height = '768px';
     document.body.appendChild(canvas);
 
     let doc = new Doc();
@@ -221,6 +231,7 @@ export function start() {
                     doc.palette = doc_obj.palette
                     doc.selected_tile = doc_obj.selected_tile
                     doc.selected_color = doc_obj.selected_color
+                    doc.map_grid_visible = doc_obj.map_grid_visible || false;
                     doc.tiles = doc_obj.tiles.map(tile => {
                         return new Sprite('foo', 8, 8).fromJSONObj(tile);
                     });
@@ -276,6 +287,17 @@ export function start() {
     map_editor.doc = doc
     map_editor.bounds.x = 300;
     main_view.add(map_editor);
+
+    let grid_toggle = new ToggleButton("grid")
+    grid_toggle.mouse_down = (evt:PEvt) => {
+        if (evt.type === "mousedown") {
+            doc.map_grid_visible = !doc.map_grid_visible;
+            grid_toggle.selected = doc.map_grid_visible;
+            doc.fire("change", grid_toggle.selected);
+        }
+    }
+    grid_toggle.bounds.x = map_editor.bounds.right() + 5;
+    main_view.add(grid_toggle)
 
     let ctx = new Ctx(canvas);
     ctx.draw_view(main_view);

@@ -1,4 +1,4 @@
-import {Ctx, Rect, View} from "./graphics";
+import {BUTTON_BORDER_COLOR, BUTTON_COLOR, Ctx, Rect, View} from "./graphics";
 import {gen_id} from "./util";
 
 export class Label implements View {
@@ -38,12 +38,38 @@ export class Button implements View {
     }
 
     draw(ctx: Ctx) {
-        ctx.fillBackground(this.bounds, 'aqua')
+        ctx.fillBackground(this.bounds, BUTTON_COLOR)
+        ctx.strokeBackground(this.bounds,BUTTON_BORDER_COLOR)
         ctx.ctx.fillStyle = '#404040';
         ctx.ctx.font = '20px sans-serif';
         ctx.ctx.fillText(this.title, 5, 20);
     }
 
+}
+
+export class ToggleButton implements View {
+    bounds: Rect;
+    children: View[];
+    id: string;
+    mouse_down: any;
+    private title: string;
+    selected:boolean
+
+    constructor(title: string) {
+        this.title = title;
+        this.id = "a toggle button";
+        this.bounds = new Rect(0, 0, 100, 30);
+        this.children = []
+        this.selected = false;
+    }
+
+    draw(ctx: Ctx) {
+        ctx.fillBackground(this.bounds, this.selected?BUTTON_BORDER_COLOR:BUTTON_COLOR)
+        ctx.strokeBackground(this.bounds,BUTTON_BORDER_COLOR)
+        ctx.ctx.fillStyle = '#404040';
+        ctx.ctx.font = '20px sans-serif';
+        ctx.ctx.fillText(this.title, 5, 20);
+    }
 }
 
 export class HBox implements View {
