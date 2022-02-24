@@ -16,7 +16,7 @@
 const DEBUG_VIEW_BOUNDS = false;
 
 class Sprite {
-    private id:string;
+    id:string;
     private w: number;
     private h: number;
     private data: number[];
@@ -30,7 +30,7 @@ class Sprite {
         }
     }
 
-    forEachPixel(cb: (val: number, i: number, j: number) => void) {
+    forEachPixel(cb: (val: any, i: number, j: number) => void) {
         for(let j = 0; j<this.h; j++) {
             for(let i=0; i<this.w; i++) {
                 let n = j*this.w + i;
@@ -40,7 +40,7 @@ class Sprite {
         }
     }
 
-    set_pixel(x: number, y: number, color: number) {
+    set_pixel(x: number, y: number, color: any) {
         let n = y*this.w + x;
         this.data[n] = color;
     }
@@ -72,6 +72,7 @@ class Doc extends Observable {
     palette: string[];
     tiles:Sprite[]
     selected_tile:number;
+    tilemap: Sprite;
 
     constructor() {
         super();
@@ -87,6 +88,8 @@ class Doc extends Observable {
             new Sprite('sprite1',8,8)
         ]
         this.selected_tile = 0;
+        this.tilemap = new Sprite('mainmap',8,8);
+        this.tilemap.set_pixel(0,0,'sprite1');
     }
 }
 /*
@@ -327,15 +330,21 @@ class TileSelector implements View{
     draw(ctx: Ctx) {
         this.doc.tiles.forEach((sprite,s)=>{
             ctx.fillBounds(new Rect(s*64+1,0,64,64),'black');
-            sprite.forEachPixel((val:number,i:number,j:number) => {
-                ctx.fillRect(s*64+i*8,j*8,8,8,this.doc.palette[val]);
-            });
+            draw_sprite(sprite,ctx,s*64,0,8, this.doc)
             if (s === this.doc.selected_tile) {
                 ctx.strokeRect(s*64,0,64,64,'red');
             }
         })
     }
 }
+
+function draw_sprite(sprite: Sprite, ctx: Ctx, x:number,y:number, scale: number, doc:Doc) {
+    sprite.forEachPixel((val:number,i:number,j:number) => {
+        ctx.fillRect(x+i*scale,y+j*scale,scale,scale,doc.palette[val]);
+    });
+}
+
+
 class Label implements View {
     bounds: Rect;
     id: string;
@@ -381,14 +390,31 @@ class MapEditor implements  View {
     bounds: Rect;
     children: View[];
     id: string;
+    doc: Doc;
+    mouse_down: (e: Evt) => void;
 
     constructor() {
         this.id = 'map editor'
         this.children = []
         this.bounds = new Rect(0,0,8*8*8,8*8*8)
+        this.mouse_down = (e:Evt) => {
+            if(e.type === "mousedown" || e.type === "mousedrag") {
+                let x = Math.floor(e.pt.x/64);
+                let y = Math.floor(e.pt.y/64);
+                let tile = this.doc.tiles[this.doc.selected_tile];
+                this.doc.tilemap.set_pixel(x,y,tile.id)
+                this.doc.fire('change',tile)
+            }
+        }
     }
 
     draw(ctx: Ctx) {
+        ctx.fillBackground(this.bounds,'goldenrod')
+        this.doc.tilemap.forEachPixel((val,i,j) => {
+            if (!val || val === 0) return;
+            let tile = this.doc.tiles.find((t:Sprite) => t.id ===val);
+            draw_sprite(tile,ctx,i*64,j*64,8,this.doc)
+        })
     }
 
 }
@@ -420,6 +446,11 @@ class PaletteChooser implements View{
     }
 
 }
+
+function gen_id(prefix: string) {
+    return `${prefix}_${Math.floor(Math.random()*100000)}`
+}
+
 export function start() {
     let canvas = document.createElement('canvas');
     canvas.width = 900;
@@ -453,7 +484,7 @@ export function start() {
     let add_tile_button = new Button("add tile");
     add_tile_button.mouse_down = (evt:Evt) => {
         if(evt.type === 'mousedown') {
-            doc.tiles.push(new Sprite("tile2", 8, 8));
+            doc.tiles.push(new Sprite(gen_id("tile"), 8, 8));
             doc.fire('change', "added a tile");
         }
     }
@@ -469,6 +500,7 @@ export function start() {
 
     // lets you edit an entire tile map, using the currently selected tile
     let map_editor = new MapEditor();
+    map_editor.doc = doc
     map_editor.bounds.x = 300;
     main_view.add(map_editor);
 
