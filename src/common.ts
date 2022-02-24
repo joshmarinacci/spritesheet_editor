@@ -48,6 +48,10 @@ class Sprite {
 
 type CB = (any) => void;
 
+type Evt = {
+    type:"mousedown" | "mousedrag" | "mouseup"
+    pt:Point
+}
 class Observable {
     listeners:Map<String,Array<CB>>
     constructor() {
@@ -59,7 +63,6 @@ class Observable {
     }
     fire(etype:string,payload:any) {
         if(!this.listeners.has(etype)) this.listeners.set(etype, new Array<CB>());
-        log("firing",etype)
         this.listeners.get(etype).forEach(cb => cb(payload))
     }
 }
@@ -167,16 +170,26 @@ class Ctx {
         this.ctx.fillRect(0,0,bounds.w,bounds.h);
     }
 
-    pick(view:View, pt: Point):View|null {
-        if(view.bounds.contains(pt)) {
+    dispatch(view:View, e:Evt):View|null {
+        if(view.bounds.contains(e.pt)) {
             // console.log("inside of the view",view);
             for (let i =0; i<view.children.length; i++) {
                 let ch = view.children[i]
-                let picked = this.pick(ch,pt.translate(view.bounds.x,view.bounds.y))
+                let e2:Evt = {
+                    type:e.type,
+                    pt:e.pt.translate(view.bounds.x,view.bounds.y)
+                }
+                let picked = this.dispatch(ch,e2)
                 if (picked) return picked;
             }
             // if we get here it means this view was picked but no children were
-            if (view.mouse_down) view.mouse_down(pt.translate(view.bounds.x,view.bounds.y))
+            if (view.mouse_down) {
+                let e2:Evt = {
+                    type:e.type,
+                    pt:e.pt.translate(view.bounds.x,view.bounds.y)
+                }
+                view.mouse_down(e2)
+            }
             return view;
         }
         return null;
@@ -258,15 +271,12 @@ class TileEditor implements View {
         this.id = 'tile editor'
         this.bounds = new Rect(0,0,32*8 + 1, 32*8 + 1)
         this.children = []
-        this.mouse_down = (pt) => {
-            // console.log("mouse was pressed at {}",pt);
+        this.mouse_down = (e:Evt) => {
             // console.log("this sprite is",this.sprite);
-            let x = Math.floor(pt.x / 32);
-            let y = Math.floor(pt.y/32);
-            // log("setting pixel at ", x,y);
+            let x = Math.floor(e.pt.x/32);
+            let y = Math.floor(e.pt.y/32);
             this.doc.tiles[this.doc.selected_tile].set_pixel(x,y,this.doc.selected_color);
             this.doc.fire('change',"tile edited");
-
         }
     }
     draw(ctx: Ctx) {
@@ -303,18 +313,26 @@ class TileSelector implements View{
     children: View[];
     id: string;
     doc: Doc;
+    mouse_down: (pt) => void;
     constructor() {
         this.bounds = new Rect(0,0,256,64)
         this.children = []
         this.id = 'tile selector'
+        this.mouse_down = (e:Evt) => {
+            this.doc.selected_tile = Math.floor(e.pt.x / 64);
+            this.doc.fire('change',this.doc.selected_color)
+        }
     }
 
     draw(ctx: Ctx) {
-        this.doc.tiles.forEach((sprite,i)=>{
-            ctx.fillBounds(new Rect(i*64+1,0,64,64),'red');
+        this.doc.tiles.forEach((sprite,s)=>{
+            ctx.fillBounds(new Rect(s*64+1,0,64,64),'black');
             sprite.forEachPixel((val:number,i:number,j:number) => {
-                ctx.fillRect(i*8,j*8,8,8,this.doc.palette[val]);
+                ctx.fillRect(s*64+i*8,j*8,8,8,this.doc.palette[val]);
             });
+            if (s === this.doc.selected_tile) {
+                ctx.strokeRect(s*64,0,64,64,'red');
+            }
         })
     }
 }
@@ -337,7 +355,27 @@ class Label implements View {
         ctx.ctx.fillText(this.text,0,20);
     }
 }
+class Button implements View {
+    bounds: Rect;
+    children: View[];
+    id: string;
+    mouse_down: any;
+    private title: string;
+    constructor(title:string) {
+        this.title = title;
+        this.id = "a button";
+        this.bounds = new Rect(0,0,100,30);
+        this.children = []
+    }
 
+    draw(ctx: Ctx) {
+        ctx.fillBackground(this.bounds,'aqua')
+        ctx.ctx.fillStyle = '#404040';
+        ctx.ctx.font = '20px sans-serif';
+        ctx.ctx.fillText(this.title,5,20);
+    }
+
+}
 
 class MapEditor implements  View {
     bounds: Rect;
@@ -366,8 +404,8 @@ class PaletteChooser implements View{
         this.id = 'palette chooser';
         this.children = [];
         this.bounds = new Rect(0,0,32*8,32);
-        this.mouse_down = (pt) => {
-            this.doc.selected_color = Math.floor(pt.x / 32);
+        this.mouse_down = (e:Evt) => {
+            this.doc.selected_color = Math.floor(e.pt.x / 32);
             this.doc.fire('change',this.doc.selected_color)
         }
     }
@@ -412,11 +450,22 @@ export function start() {
     main_view.add(tile_editor)
 
 
+    let add_tile_button = new Button("add tile");
+    add_tile_button.mouse_down = (evt:Evt) => {
+        if(evt.type === 'mousedown') {
+            doc.tiles.push(new Sprite("tile2", 8, 8));
+            doc.fire('change', "added a tile");
+        }
+    }
+    add_tile_button.bounds.y = tile_editor.bounds.bottom() + 10;
+    main_view.add(add_tile_button);
+
     // lets you see all N tiles and choose one to edit
     let sprite_selector = new TileSelector()
     sprite_selector.doc = doc;
-    sprite_selector.bounds.y = tile_editor.bounds.bottom() + 10;
+    sprite_selector.bounds.y = add_tile_button.bounds.bottom() + 10;
     main_view.add(sprite_selector);
+
 
     // lets you edit an entire tile map, using the currently selected tile
     let map_editor = new MapEditor();
@@ -433,10 +482,25 @@ export function start() {
         console.timeEnd("repaint");
     });
 
+    let down = false;
     canvas.addEventListener('mousedown',(evt)=>{
+        down = true;
         let rect = canvas.getBoundingClientRect();
         let pt = new Point(evt.x-rect.x,evt.y-rect.y);
-        let view = ctx.pick(main_view,pt);
+        ctx.dispatch(main_view,{type:'mousedown', pt:pt});
+    })
+    canvas.addEventListener('mousemove',(evt)=>{
+        if(down) {
+            let rect = canvas.getBoundingClientRect();
+            let pt = new Point(evt.x - rect.x, evt.y - rect.y);
+            let view = ctx.dispatch(main_view, {type:'mousedrag', pt:pt});
+        }
+    })
+    canvas.addEventListener('mouseup',(evt)=>{
+        down = false;
+        let rect = canvas.getBoundingClientRect();
+        let pt = new Point(evt.x-rect.x,evt.y-rect.y);
+        let view = ctx.dispatch(main_view,{type:'mouseup',pt:pt});
     })
 
 }
