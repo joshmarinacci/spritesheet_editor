@@ -1,18 +1,3 @@
-/*
-
-- [ ] datastructure has tile is pixels, sheet is tiles, tilemap is tile ids
-- [ ] left pane edits single tile
-- [ ] right pane edits tile map
-- [ ] bottom pane is selected tile in list of all tiles
-- [ ] exports big JSON file
-- [ ] four colors to choose from
-- [ ] just draw directly into canvas
-- [ ] view is a subset of a canvas that you can pick against
-
-
-
-*/
-
 import {Ctx, Evt, Point, Rect, View} from "./graphics";
 import {Button, Label} from "./components";
 import {gen_id} from "./util";
