@@ -188,6 +188,89 @@ class PaletteChooser implements View{
 
 }
 
+class WrapperView implements View {
+    bounds: Rect;
+    children: View[];
+    id: string;
+    clip_children: boolean;
+    constructor() {
+        this.id = 'wrapper-view'
+        this.children = []
+        this.bounds = new Rect(0,0,200,200)
+        this.clip_children = true;
+    }
+
+    draw(ctx: Ctx) {
+        ctx.fillBackground(this.bounds,'green')
+    }
+
+    scroll_by(x: number, y: number) {
+        let ch = this.children[0].bounds;
+        ch.x += x;
+        ch.y += y;
+        if(ch.x >= 0) ch.x = 0;
+        if(ch.y >= 0) ch.y = 0;
+    }
+}
+
+class ScrollView implements View {
+    bounds: Rect;
+    children: View[];
+    id: string;
+    clip_children:boolean
+    private wrapper: WrapperView;
+    constructor() {
+        this.id = 'scroll-view'
+        this.children = []
+        this.bounds = new Rect(0,0,300,300)
+
+        this.wrapper = new WrapperView()
+        this.children.push(this.wrapper)
+        this.wrapper.bounds.w = 270;
+        this.wrapper.bounds.h = 270;
+
+        let step = 20;
+
+        let up = new Button("u",(evt:PEvt)=>{
+            this.wrapper.scroll_by(0,+step);
+            evt.ctx.redraw()
+        });
+        up.bounds = new Rect(this.bounds.w-30,0,30,30);
+        this.children.push(up)
+
+        let down = new Button("d",(evt:PEvt)=>{
+            this.wrapper.scroll_by(0,-step);
+            evt.ctx.redraw()
+        });
+        down.bounds = new Rect(this.bounds.w-30,this.bounds.h-30-30,30,30);
+        this.children.push(down);
+
+        let left = new Button('l',(evt:PEvt)=>{
+            this.wrapper.scroll_by(+step,-0);
+            evt.ctx.redraw()
+        })
+        left.bounds = new Rect(0,this.bounds.h-30,30,30);
+        this.children.push(left);
+
+
+        let right = new Button('r',(evt:PEvt)=>{
+            this.wrapper.scroll_by(-step,-0);
+            evt.ctx.redraw()
+        })
+        right.bounds = new Rect(this.bounds.w-30-30,this.bounds.h-30,30,30);
+        this.children.push(right);
+    }
+
+    add(view: View) {
+        this.wrapper.children.push(view);
+    }
+
+    draw(ctx: Ctx) {
+        ctx.fillBackground(this.bounds,'red')
+    }
+
+}
+
 export function start() {
     let canvas = document.createElement('canvas');
     canvas.width = 1024*window.devicePixelRatio;
@@ -206,43 +289,35 @@ export function start() {
     main_view.add(main_label);
 
     let toolbar = new HBox();
-    toolbar.bounds.x = 0;//add_tile_button.bounds.right()
-    toolbar.bounds.y = main_label.bounds.bottom();//add_tile_button.bounds.y;
+    toolbar.bounds.x = 0;
+    toolbar.bounds.y = main_label.bounds.bottom();
 
-    let save_button = new Button("save");
-    save_button.mouse_down = (evt:PEvt) => {
-        if(evt.type === 'mousedown') {
-            let str = JSON.stringify(doc,null, '  ');
-            console.log(str);
-            localStorage.setItem("doc",str);
-        }
-    }
+    let save_button = new Button("save",()=>{
+        let str = JSON.stringify(doc,null, '  ');
+        localStorage.setItem("doc",str);
+    });
     toolbar.add(save_button);
 
-    let load_button = new Button("load");
-    load_button.mouse_down = (evt:PEvt) => {
-        console.log("load button event")
-        if(evt.type === 'mousedown') {
-            let str = localStorage.getItem("doc");
-            if(str) {
-                try {
-                    let doc_obj = JSON.parse(str);
-                    console.log("parsed the obj",doc_obj)
-                    doc.palette = doc_obj.palette
-                    doc.selected_tile = doc_obj.selected_tile
-                    doc.selected_color = doc_obj.selected_color
-                    doc.map_grid_visible = doc_obj.map_grid_visible || false;
-                    doc.tiles = doc_obj.tiles.map(tile => {
-                        return new Sprite('foo', 8, 8).fromJSONObj(tile);
-                    });
-                    doc.tilemap = new Sprite("foo",8,8).fromJSONObj(doc_obj.tilemap);
-                    doc.fire('change',doc_obj)
-                } catch (e) {
-                    console.log("error parsing",str)
-                }
+    let load_button = new Button("load",()=>{
+        let str = localStorage.getItem("doc");
+        if(str) {
+            try {
+                let doc_obj = JSON.parse(str);
+                console.log("parsed the obj",doc_obj)
+                doc.palette = doc_obj.palette
+                doc.selected_tile = doc_obj.selected_tile
+                doc.selected_color = doc_obj.selected_color
+                doc.map_grid_visible = doc_obj.map_grid_visible || false;
+                doc.tiles = doc_obj.tiles.map(tile => {
+                    return new Sprite('foo', 8, 8).fromJSONObj(tile);
+                });
+                doc.tilemap = new Sprite("foo",8,8).fromJSONObj(doc_obj.tilemap);
+                doc.fire('change',doc_obj)
+            } catch (e) {
+                console.log("error parsing",str)
             }
         }
-    }
+    });
     toolbar.add(load_button);
 
     toolbar.layout();
@@ -264,13 +339,10 @@ export function start() {
     main_view.add(tile_editor)
 
 
-    let add_tile_button = new Button("add tile");
-    add_tile_button.mouse_down = (evt:PEvt) => {
-        if(evt.type === 'mousedown') {
-            doc.tiles.push(new Sprite(gen_id("tile"), 8, 8));
-            doc.fire('change', "added a tile");
-        }
-    }
+    let add_tile_button = new Button("add tile",()=>{
+        doc.tiles.push(new Sprite(gen_id("tile"), 8, 8));
+        doc.fire('change', "added a tile");
+    });
     add_tile_button.bounds.y = tile_editor.bounds.bottom() + 10;
     main_view.add(add_tile_button);
 
@@ -281,32 +353,30 @@ export function start() {
     sprite_selector.bounds.y = add_tile_button.bounds.bottom() + 10;
     main_view.add(sprite_selector);
 
+    let scroll_view = new ScrollView();
+    scroll_view.bounds.x = 300;
+    scroll_view.bounds.y = 10;
+    main_view.add(scroll_view);
 
     // lets you edit an entire tile map, using the currently selected tile
     let map_editor = new MapEditor();
     map_editor.doc = doc
-    map_editor.bounds.x = 300;
-    main_view.add(map_editor);
+    // map_editor.bounds.x = 300;
+    scroll_view.add(map_editor);
 
-    let grid_toggle = new ToggleButton("grid")
-    grid_toggle.mouse_down = (evt:PEvt) => {
-        if (evt.type === "mousedown") {
-            doc.map_grid_visible = !doc.map_grid_visible;
-            grid_toggle.selected = doc.map_grid_visible;
-            doc.fire("change", grid_toggle.selected);
-        }
-    }
-    grid_toggle.bounds.x = map_editor.bounds.right() + 5;
+    let grid_toggle = new ToggleButton("grid",()=>{
+        doc.map_grid_visible = !doc.map_grid_visible;
+        grid_toggle.selected = doc.map_grid_visible;
+        doc.fire("change", grid_toggle.selected);
+    });
+    grid_toggle.bounds.x = scroll_view.bounds.right() + 5;
     main_view.add(grid_toggle)
 
-    let ctx = new Ctx(canvas);
-    ctx.draw_view(main_view);
+    let ctx = new Ctx(canvas,main_view);
+    ctx.redraw();
 
     doc.addEventListener('change',() => {
-        console.time("repaint");
-        ctx.clear();
-        ctx.draw_view(main_view)
-        console.timeEnd("repaint");
+        ctx.redraw();
     });
 
     let down = false;
@@ -320,20 +390,20 @@ export function start() {
         let rect = canvas.getBoundingClientRect();
         let pt = new Point(evt.x-rect.x,evt.y-rect.y);
         button = evt.button as any
-        ctx.dispatch(main_view,{type:'mousedown', pt:pt, button:button});
+        ctx.dispatch(main_view,{type:'mousedown', pt:pt, button:button, ctx:ctx});
     })
     canvas.addEventListener('mousemove',(evt)=>{
         if(down) {
             let rect = canvas.getBoundingClientRect();
             let pt = new Point(evt.x - rect.x, evt.y - rect.y);
-            ctx.dispatch(main_view, {type:'mousedrag', pt:pt, button:button});
+            ctx.dispatch(main_view, {type:'mousedrag', pt:pt, button:button, ctx:ctx});
         }
     })
     canvas.addEventListener('mouseup',(evt)=>{
         down = false;
         let rect = canvas.getBoundingClientRect();
         let pt = new Point(evt.x-rect.x,evt.y-rect.y);
-        ctx.dispatch(main_view,{type:'mouseup',pt:pt, button:button});
+        ctx.dispatch(main_view,{type:'mouseup',pt:pt, button:button, ctx:ctx});
     })
 
 }

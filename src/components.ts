@@ -1,4 +1,4 @@
-import {BUTTON_BORDER_COLOR, BUTTON_COLOR, Ctx, Rect, View} from "./graphics";
+import {BUTTON_BORDER_COLOR, BUTTON_COLOR, Ctx, PEvt, Rect, View} from "./graphics";
 import {gen_id} from "./util";
 
 export class Label implements View {
@@ -24,17 +24,24 @@ export class Label implements View {
 }
 
 export class Button implements View {
-    bounds: Rect;
-    children: View[];
-    id: string;
-    mouse_down: any;
-    private title: string;
+    bounds: Rect
+    children: View[]
+    id: string
+    mouse_down: any
+    private title: string
+    private cb: any
 
-    constructor(title: string) {
+    constructor(title: string, cb) {
         this.title = title;
         this.id = "a button";
         this.bounds = new Rect(0, 0, 100, 30);
         this.children = []
+        this.cb = cb;
+        this.mouse_down = (evt:PEvt) => {
+            if(evt.type === "mousedown") {
+                this.cb(evt)
+            }
+        }
     }
 
     draw(ctx: Ctx) {
@@ -48,19 +55,26 @@ export class Button implements View {
 }
 
 export class ToggleButton implements View {
-    bounds: Rect;
-    children: View[];
-    id: string;
-    mouse_down: any;
-    private title: string;
+    bounds: Rect
+    children: View[]
+    id: string
+    mouse_down: any
+    private title: string
     selected:boolean
+    cb:any
 
-    constructor(title: string) {
+    constructor(title: string, cb) {
         this.title = title;
         this.id = "a toggle button";
         this.bounds = new Rect(0, 0, 100, 30);
         this.children = []
         this.selected = false;
+        this.cb = cb;
+        this.mouse_down = (evt:PEvt) => {
+            if(evt.type === "mousedown") {
+                this.cb(evt)
+            }
+        }
     }
 
     draw(ctx: Ctx) {

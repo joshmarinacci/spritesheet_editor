@@ -8,7 +8,8 @@ export const BUTTON_BORDER_COLOR = '#949492';
 export type PEvt = {
     type: "mousedown" | "mousedrag" | "mouseup"
     pt: Point
-    button: number
+    button: number,
+    ctx:Ctx,
 }
 
 export class Ctx {
@@ -16,8 +17,9 @@ export class Ctx {
     ctx: CanvasRenderingContext2D;
     w: number;
     h: number;
+    root: View;
 
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(canvas: HTMLCanvasElement, root:View) {
         this.canvas = canvas
         this.ctx = canvas.getContext('2d')
         this.ctx.scale(2,2);
@@ -25,6 +27,7 @@ export class Ctx {
         this.h = this.canvas.height/2
         this.ctx.fillStyle = CLEAR_COLOR
         this.ctx.fillRect(0, 0, this.w, this.h)
+        this.root = root
     }
 
     clear() {
@@ -48,10 +51,14 @@ export class Ctx {
     }
 
     draw_view(view: View) {
-
         this.ctx.save()
         this.ctx.translate(view.bounds.x, view.bounds.y);
         view.draw(this)
+        if (view.clip_children) {
+            this.ctx.beginPath()
+            this.ctx.rect(0,0,view.bounds.w,view.bounds.h);
+            this.ctx.clip()
+        }
         view.children.forEach(ch => {
             this.draw_view(ch);
         })
@@ -83,6 +90,7 @@ export class Ctx {
                     type: e.type,
                     pt: e.pt.translate(view.bounds.x, view.bounds.y),
                     button:e.button,
+                    ctx:this,
                 }
                 let picked = this.dispatch(ch, e2)
                 if (picked) return picked;
@@ -93,6 +101,7 @@ export class Ctx {
                     type: e.type,
                     pt: e.pt.translate(view.bounds.x, view.bounds.y),
                     button:e.button,
+                    ctx:this,
                 }
                 view.mouse_down(e2)
             }
@@ -101,6 +110,12 @@ export class Ctx {
         return null;
     }
 
+    redraw() {
+        console.time("repaint");
+        this.clear();
+        this.draw_view(this.root)
+        console.timeEnd("repaint");
+    }
 }
 
 export class Point {
@@ -159,6 +174,7 @@ export interface View {
     id: string,
     children: View[];
     mouse_down?: any;
+    clip_children?:boolean,
 
     draw(ctx: Ctx);
 }
