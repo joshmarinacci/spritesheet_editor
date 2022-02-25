@@ -87,7 +87,7 @@ export class Doc extends Observable {
             new Sprite('sprite1', 8, 8)
         ]
         this.selected_tile = 0;
-        this.tilemap = new Sprite('mainmap', 8, 8);
+        this.tilemap = new Sprite('main-map', 16, 16);
         this.tilemap.set_pixel(0, 0, 'sprite1');
         this.map_grid_visible = true;
     }

@@ -128,7 +128,7 @@ class MapEditor implements  View {
         this.id = 'map editor'
         this.scale = 64;
         this.children = []
-        this.bounds = new Rect(0,0,8*this.scale,8*this.scale)
+        this.bounds = new Rect(0,0,16*this.scale,16*this.scale)
         this.mouse_down = (e:PEvt) => {
             if(e.type === "mousedown" || e.type === "mousedrag") {
                 let pt = e.pt.divide_floor(this.scale);
@@ -193,10 +193,10 @@ class WrapperView implements View {
     children: View[];
     id: string;
     clip_children: boolean;
-    constructor() {
+    constructor(bounds:Rect) {
         this.id = 'wrapper-view'
         this.children = []
-        this.bounds = new Rect(0,0,200,200)
+        this.bounds = bounds
         this.clip_children = true;
     }
 
@@ -219,15 +219,13 @@ class ScrollView implements View {
     id: string;
     clip_children:boolean
     private wrapper: WrapperView;
-    constructor() {
+    constructor(bounds:Rect) {
         this.id = 'scroll-view'
         this.children = []
-        this.bounds = new Rect(0,0,300,300)
+        this.bounds = bounds
 
-        this.wrapper = new WrapperView()
+        this.wrapper = new WrapperView(new Rect(0,0,this.bounds.w-30,this.bounds.h-30));
         this.children.push(this.wrapper)
-        this.wrapper.bounds.w = 270;
-        this.wrapper.bounds.h = 270;
 
         let step = 20;
 
@@ -353,24 +351,23 @@ export function start() {
     sprite_selector.bounds.y = add_tile_button.bounds.bottom() + 10;
     main_view.add(sprite_selector);
 
-    let scroll_view = new ScrollView();
-    scroll_view.bounds.x = 300;
-    scroll_view.bounds.y = 10;
-    main_view.add(scroll_view);
-
-    // lets you edit an entire tile map, using the currently selected tile
-    let map_editor = new MapEditor();
-    map_editor.doc = doc
-    // map_editor.bounds.x = 300;
-    scroll_view.add(map_editor);
-
     let grid_toggle = new ToggleButton("grid",()=>{
         doc.map_grid_visible = !doc.map_grid_visible;
         grid_toggle.selected = doc.map_grid_visible;
         doc.fire("change", grid_toggle.selected);
     });
-    grid_toggle.bounds.x = scroll_view.bounds.right() + 5;
+    grid_toggle.bounds.x = 300;
+    grid_toggle.bounds.y = 30;
     main_view.add(grid_toggle)
+
+    let scroll_view = new ScrollView(new Rect(300,70,600,600));
+    main_view.add(scroll_view);
+
+    // lets you edit an entire tile map, using the currently selected tile
+    let map_editor = new MapEditor();
+    map_editor.doc = doc
+    scroll_view.add(map_editor);
+
 
     let ctx = new Ctx(canvas,main_view);
     ctx.redraw();
