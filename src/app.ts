@@ -210,6 +210,10 @@ class WrapperView implements View {
         ch.y += y;
         if(ch.x >= 0) ch.x = 0;
         if(ch.y >= 0) ch.y = 0;
+        let maxy = ch.h - this.bounds.h
+        if(maxy < -ch.y) ch.y = - (maxy)
+        let maxx = ch.w - this.bounds.w
+        if(maxx < -ch.x) ch.x = - (maxx)
     }
 }
 
@@ -218,11 +222,17 @@ class ScrollView implements View {
     children: View[];
     id: string;
     clip_children:boolean
+    wheel_down: any
     private wrapper: WrapperView;
     constructor(bounds:Rect) {
         this.id = 'scroll-view'
         this.children = []
         this.bounds = bounds
+
+        this.wheel_down = (evt) => {
+            this.wrapper.scroll_by(-evt.details.deltaX, -evt.details.deltaY);
+            evt.ctx.redraw()
+        }
 
         this.wrapper = new WrapperView(new Rect(0,0,this.bounds.w-30,this.bounds.h-30));
         this.children.push(this.wrapper)
@@ -402,5 +412,19 @@ export function start() {
         let pt = new Point(evt.x-rect.x,evt.y-rect.y);
         ctx.dispatch(main_view,{type:'mouseup',pt:pt, button:button, ctx:ctx});
     })
+    canvas.addEventListener('wheel',(evt)=>{
+        let rect = canvas.getBoundingClientRect();
+        let pt = new Point(evt.x-rect.x,evt.y-rect.y);
+        // console.log("wheel",evt.deltaX, evt.deltaY, evt.deltaZ, evt.deltaMode, evt.x);
+        ctx.dispatch_wheel(main_view,{
+            type:'wheel',
+            pt:pt,
+            ctx:ctx,
+            button:-1,
+            details:{deltaX:evt.deltaX, deltaY:evt.deltaY}
+        });
+        // evt.stopPropagation();
+        evt.preventDefault()
+    });
 
 }

@@ -6,12 +6,23 @@ export const BUTTON_COLOR = '#e3e3e0';
 export const BUTTON_BORDER_COLOR = '#949492';
 
 export type PEvt = {
-    type: "mousedown" | "mousedrag" | "mouseup"
+    type: "mousedown" | "mousedrag" | "mouseup" | "wheel"
     pt: Point
     button: number,
     ctx:Ctx,
-}
+    details?:any
 
+}
+function translate(e:PEvt, x: number, y: number) {
+    let e2: PEvt = {
+        type: e.type,
+        pt: e.pt.translate(x,y),
+        button:e.button,
+        ctx:e.ctx,
+        details:e.details,
+    }
+    return e2;
+}
 export class Ctx {
     private canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
@@ -83,7 +94,6 @@ export class Ctx {
 
     dispatch(view: View, e: PEvt): View | null {
         if (view.bounds.contains(e.pt)) {
-            // console.log("inside of the view",view);
             for (let i = 0; i < view.children.length; i++) {
                 let ch = view.children[i]
                 let e2: PEvt = {
@@ -95,7 +105,6 @@ export class Ctx {
                 let picked = this.dispatch(ch, e2)
                 if (picked) return picked;
             }
-            // if we get here it means this view was picked but no children were
             if (view.mouse_down) {
                 let e2: PEvt = {
                     type: e.type,
@@ -104,10 +113,26 @@ export class Ctx {
                     ctx:this,
                 }
                 view.mouse_down(e2)
+                return view;
             }
-            return view;
         }
         return null;
+    }
+    dispatch_wheel(view:View, e:PEvt):View | null {
+        if (view.bounds.contains(e.pt)) {
+            for (let i = 0; i < view.children.length; i++) {
+                let ch = view.children[i]
+                let e2 = translate(e,view.bounds.x,view.bounds.y);
+                let picked = this.dispatch_wheel(ch, e2)
+                if (picked) return picked;
+            }
+
+            if (view.wheel_down && e.type === 'wheel') {
+                let e2 = translate(e,view.bounds.x,view.bounds.y);
+                view.wheel_down(e2)
+                return view;
+            }
+        }
     }
 
     redraw() {
@@ -174,6 +199,7 @@ export interface View {
     id: string,
     children: View[];
     mouse_down?: any;
+    wheel_down?: any;
     clip_children?:boolean,
 
     draw(ctx: Ctx);
