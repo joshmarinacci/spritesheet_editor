@@ -71,6 +71,7 @@ class GridView implements View {
     private wall: SpriteSlice;
     private empty: SpriteSlice;
     private tail: SpriteSlice;
+    private food: SpriteSlice;
 
     constructor(model: GridModel, spritesheet: SpriteSheet) {
         this.id = 'grid-view'
@@ -80,6 +81,7 @@ class GridView implements View {
         this.wall = spritesheet.get_slice(0)
         this.empty = spritesheet.get_slice(1)
         this.tail = spritesheet.get_slice(3)
+        this.food = spritesheet.get_slice(4);
     }
 
     get_bounds(): Rect {
@@ -98,6 +100,7 @@ class GridView implements View {
             if (w === EMPTY) g.draw_slice(x*16,y*16,this.empty,2)
             if (w === WALL) g.draw_slice(x*16,y*16,this.wall,2)
             if (w === TAIL) g.draw_slice(x*16,y*16,this.tail,2)
+            if (w === FOOD) g.draw_slice(x*16,y*16,this.food,2)
 
         })
     }
