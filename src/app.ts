@@ -4,13 +4,11 @@ import {
     draw_selection_rect,
     EMPTY_COLOR,
     PEvt,
-    Point,
-    Rect,
     View
 } from "./graphics";
 import {Button, HBox, Label, ToggleButton} from "./components";
-import {canvasToPNGBlob, forceDownloadBlob, gen_id} from "./util";
-import {Doc, draw_sprite, Sprite} from "./model";
+import {canvasToPNGBlob, forceDownloadBlob, gen_id, Point, Rect} from "./util";
+import {Doc, draw_sprite, Sprite} from "./app-model";
 
 class StandardView implements View {
     bounds: Rect;

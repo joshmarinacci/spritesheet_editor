@@ -1,5 +1,5 @@
-import {BUTTON_BORDER_COLOR, BUTTON_COLOR, Ctx, PEvt, Rect, View} from "./graphics";
-import {gen_id} from "./util";
+import {BUTTON_BORDER_COLOR, BUTTON_COLOR, Ctx, PEvt, View} from "./graphics";
+import {gen_id, Rect} from "./util";
 
 export class Label implements View {
     bounds: Rect;
