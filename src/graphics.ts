@@ -162,6 +162,17 @@ export class Point {
             Math.floor(this.y/scale)
         )
     }
+
+    add(pt:Point) {
+        return new Point(
+            this.x + pt.x,
+            this.y + pt.y,
+        )
+    }
+    set(x: number, y: number) {
+        this.x = x;
+        this.y = y;
+    }
 }
 
 export class Rect {
