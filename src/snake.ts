@@ -317,21 +317,19 @@ function setup_keyboard_input() {
 export function start() {
     log("starting")
     let All = new Observable();
+    let level = 0;
+    let KeyboardInput = setup_keyboard_input()
 
     let root = new RootView()
-
     let snake = new SnakeModel()
     snake.position.set(10,10);
-
     let board = new GridModel(20,20)
     board.fill_all(()=>0)
-
     let board_layer = new LayerView();
     board_layer.id = 'board'
     let board_view = new GridView(board);
     board_layer.add(board_view);
     root.add(board_layer);
-
     board_layer.add(new SnakeView(snake));
 
     // let overlay_layer = new LayerView();
@@ -339,7 +337,21 @@ export function start() {
     // overlay_layer.add(start_button);
     // root.add(overlay_layer);
 
-    let level = 0;
+    on(All,EVENTS.START,()=>restart());
+
+    let surface = new CanvasSurface(400,300);
+    surface.addToPage();
+    surface.set_root(root);
+    surface.repaint();
+
+    on(KeyboardInput,LEFT,  () => move_by(new Point(-1,0)));
+    on(KeyboardInput,RIGHT, () => move_by(new Point(+1,0)));
+    on(KeyboardInput,DOWN,  () => move_by(new Point(0,1)));
+    on(KeyboardInput,UP,    () => move_by(new Point(0,-1)));
+
+    // on(Clock,TICK,() => {
+    //     log("clock tick");
+    // })
 
     function restart() {
         level = 0
@@ -347,30 +359,6 @@ export function start() {
         snake.tail.clear();
         nextLevel()
     }
-    on(All,EVENTS.START,()=>restart());
-
-
-    let surface = new CanvasSurface(400,300);
-    surface.addToPage();
-
-    surface.set_root(root);
-    surface.repaint();
-
-
-
-
-    let KeyboardInput = setup_keyboard_input()
-
-
-    on(KeyboardInput,LEFT,() => move_by(new Point(-1,0)));
-    on(KeyboardInput,RIGHT,() => move_by(new Point(+1,0)));
-    on(KeyboardInput,DOWN,() => move_by(new Point(0,1)));
-    on(KeyboardInput,UP,() => move_by(new Point(0,-1)));
-
-    // on(Clock,TICK,() => {
-    //     log("clock tick");
-    // })
-
     function nextLevel() {
         level += 1
         board.fill_all(()=>EMPTY);
