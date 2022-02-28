@@ -64,3 +64,22 @@ function wait(msec: number, cb: Callback) {
 export function randi(min: number, max: number) {
     return Math.floor(min + Math.random() * (max - min))
 }
+
+
+export function canvasToPNGBlob(canvas) {
+    return new Promise((res,rej)=>{
+        canvas.toBlob((blob)=>{
+            res(blob)
+        },'image/png')
+    })
+}
+
+export function forceDownloadBlob(title,blob) {
+    console.log("forcing download of",title)
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = title
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+}

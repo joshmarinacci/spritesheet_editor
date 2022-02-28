@@ -1,5 +1,6 @@
 import {Point, Rect} from "./graphics";
 import {Callback, Observable, on, randi, SuperArray} from "./util";
+import tileset_url from "./tileset@1.png";
 
 interface View {
     get_bounds():Rect
@@ -65,10 +66,13 @@ class GridView implements View {
     private model: GridModel;
     private id: string;
     bounds: Rect;
+    private tileset: HTMLImageElement;
     constructor(model: GridModel) {
         this.id = 'grid-view'
         this.model = model;
         this.bounds = new Rect(0,0,this.model.w*16,this.model.h*16);
+        this.tileset = new Image()
+        this.tileset.src = tileset_url
     }
 
     get_bounds(): Rect {
@@ -84,6 +88,10 @@ class GridView implements View {
             if (w === TAIL) color = 'orange'
             if (w === FOOD) color = 'red'
             g.fill(new Rect(x*16,y*16,15,15),color);
+            if(this.tileset) {
+                g.ctx.imageSmoothingEnabled = false;
+                g.ctx.drawImage(this.tileset,0,0,8,8,0,0,64,64);
+            }
         })
     }
 }
@@ -201,7 +209,7 @@ class CanvasSurface {
     private h: number;
     canvas: HTMLCanvasElement;
     private root: RootView;
-    private ctx: CanvasRenderingContext2D;
+    ctx: CanvasRenderingContext2D;
     private debug: boolean;
     private scale: number;
     constructor(w: number, h: number) {

@@ -9,7 +9,7 @@ import {
     View
 } from "./graphics";
 import {Button, HBox, Label, ToggleButton} from "./components";
-import {gen_id} from "./util";
+import {canvasToPNGBlob, forceDownloadBlob, gen_id} from "./util";
 import {Doc, draw_sprite, Sprite} from "./model";
 
 class StandardView implements View {
@@ -304,6 +304,7 @@ export function start() {
         let str = JSON.stringify(doc,null, '  ');
         localStorage.setItem("doc",str);
     });
+    save_button.bounds.w = 60
     toolbar.add(save_button);
 
     let load_button = new Button("load",()=>{
@@ -326,7 +327,33 @@ export function start() {
             }
         }
     });
+    load_button.bounds.w = 60
     toolbar.add(load_button);
+
+    let export_button = new Button("export",() => {
+        console.log("exporting");
+        let canvas = document.createElement('canvas')
+        let size = 8
+        canvas.width = 8*size
+        canvas.height = 8*size
+        let ctx = canvas.getContext('2d')
+        // ctx.fillStyle = 'red'
+        // ctx.fillRect(0,0,canvas.width,canvas.height);
+        doc.tiles.forEach((sprite,s)=>{
+            let pt = wrap_number(s,8);
+            console.log("exporting tile",sprite)
+            let x = pt.x * size
+            let y = pt.y * size
+            sprite.forEachPixel((val: number, i: number, j: number) => {
+                ctx.fillStyle = doc.palette[val]
+                ctx.fillRect(x + i, y + j, 1,1);
+            });
+        })
+
+        canvasToPNGBlob(canvas).then((blob)=> forceDownloadBlob(`tileset@1.png`,blob))
+    })
+    export_button.bounds.w = 70
+    toolbar.add(export_button);
 
     toolbar.layout();
     main_view.add(toolbar);

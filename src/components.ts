@@ -105,7 +105,7 @@ export class HBox implements View {
         this.children.forEach(ch => {
             ch.bounds.x = x;
             ch.bounds.y = y;
-            x += ch.bounds.right() + 5
+            x += ch.bounds.w + 5
             my = Math.max(my,ch.bounds.h)
         })
         this.bounds.w = x;
