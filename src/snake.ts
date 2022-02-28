@@ -90,7 +90,9 @@ class GridView implements View {
             g.fill(new Rect(x*16,y*16,15,15),color);
             if(this.tileset) {
                 g.ctx.imageSmoothingEnabled = false;
-                g.ctx.drawImage(this.tileset,0,0,8,8,0,0,64,64);
+                if (w === WALL) g.ctx.drawImage(this.tileset,
+                    0,0,8,8,
+                    x*16,y*16,16,16);
             }
         })
     }
