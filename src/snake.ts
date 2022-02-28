@@ -1,5 +1,6 @@
 import {Point, Rect} from "./graphics";
 import {Callback, Observable, on, randi, SuperArray} from "./util";
+// @ts-ignore
 import tileset_url from "./tileset@1.png";
 
 interface View {
@@ -66,13 +67,19 @@ class GridView implements View {
     private model: GridModel;
     private id: string;
     bounds: Rect;
-    private tileset: HTMLImageElement;
-    constructor(model: GridModel) {
+    private spritesheet: SpriteSheet;
+    private wall: SpriteSlice;
+    private empty: SpriteSlice;
+    private tail: SpriteSlice;
+
+    constructor(model: GridModel, spritesheet: SpriteSheet) {
         this.id = 'grid-view'
         this.model = model;
         this.bounds = new Rect(0,0,this.model.w*16,this.model.h*16);
-        this.tileset = new Image()
-        this.tileset.src = tileset_url
+        this.spritesheet = spritesheet
+        this.wall = spritesheet.get_slice(0)
+        this.empty = spritesheet.get_slice(1)
+        this.tail = spritesheet.get_slice(3)
     }
 
     get_bounds(): Rect {
@@ -88,12 +95,10 @@ class GridView implements View {
             if (w === TAIL) color = 'orange'
             if (w === FOOD) color = 'red'
             g.fill(new Rect(x*16,y*16,15,15),color);
-            if(this.tileset) {
-                g.ctx.imageSmoothingEnabled = false;
-                if (w === WALL) g.ctx.drawImage(this.tileset,
-                    0,0,8,8,
-                    x*16,y*16,16,16);
-            }
+            if (w === EMPTY) g.draw_slice(x*16,y*16,this.empty,2)
+            if (w === WALL) g.draw_slice(x*16,y*16,this.wall,2)
+            if (w === TAIL) g.draw_slice(x*16,y*16,this.tail,2)
+
         })
     }
 }
@@ -101,12 +106,18 @@ class GridView implements View {
 class SnakeView implements View {
     private model: SnakeModel;
     private id: string;
-    constructor(model:SnakeModel) {
+    private spritesheet: SpriteSheet;
+    private sprite_slice: SpriteSlice;
+
+    constructor(model: SnakeModel, spritesheet: SpriteSheet) {
         this.id = 'snake'
         this.model = model;
+        this.spritesheet = spritesheet
+        this.sprite_slice = spritesheet.get_slice(2)
     }
     draw(g: CanvasSurface): void {
         g.fill(new Rect(0,0,16,16),'yellow')
+        g.draw_slice(0,0,this.sprite_slice,2)
     }
 
     get_bounds(): Rect {
@@ -309,8 +320,55 @@ class CanvasSurface {
             this.ctx.fillText(str, 3+i+1, 3+i+1 + 12)
         }
     }
+
+    load_spritesheet(img_url: any) {
+        return new SpriteSheet(img_url, this)
+    }
+
+    draw_slice(x: number, y: number, slice: SpriteSlice, scale:number) {
+        if(!slice.sheet.is_loaded()) log("not loaded yet",slice.sheet.url)
+        this.ctx.imageSmoothingEnabled = false;
+        this.ctx.drawImage(slice.sheet.img,
+            slice.rect.x,slice.rect.y,slice.rect.w,slice.rect.h,
+            x,y,slice.rect.w*scale,slice.rect.h*scale
+        )
+    }
 }
 
+class SpriteSheet {
+    img: HTMLImageElement;
+    loaded:boolean
+    url: any;
+
+    constructor(url: any, can: CanvasSurface) {
+        this.url = url
+        this.img =new Image()
+        this.loaded = false
+        this.img.addEventListener('load',() => {
+            log('loaded',url)
+            this.loaded = true
+            can.repaint()
+        })
+        this.img.src = url
+    }
+
+    is_loaded() {
+        return this.loaded
+    }
+
+    get_slice(numb: number):SpriteSlice {
+        return new SpriteSlice(this,new Rect(numb*8,0,8,8))
+    }
+}
+
+class SpriteSlice {
+    sheet: SpriteSheet;
+    rect: Rect;
+    constructor(param: SpriteSheet, rect: Rect) {
+        this.sheet = param
+        this.rect = rect
+    }
+}
 
 function setup_keyboard_input() {
     let KBD = new Observable()
@@ -329,6 +387,8 @@ export function start() {
     let All = new Observable();
     let level = 0;
     let KeyboardInput = setup_keyboard_input()
+    let surface = new CanvasSurface(400,300);
+    let spritesheet = surface.load_spritesheet(tileset_url);
 
     let root = new RootView()
     let snake = new SnakeModel()
@@ -337,10 +397,10 @@ export function start() {
     board.fill_all(()=>0)
     let board_layer = new LayerView();
     board_layer.id = 'board'
-    let board_view = new GridView(board);
+    let board_view = new GridView(board,spritesheet);
     board_layer.add(board_view);
     root.add(board_layer);
-    board_layer.add(new SnakeView(snake));
+    board_layer.add(new SnakeView(snake,spritesheet));
 
     // let overlay_layer = new LayerView();
     // overlay_layer.add(snake_logo);
@@ -349,7 +409,6 @@ export function start() {
 
     on(All,EVENTS.START,()=>restart());
 
-    let surface = new CanvasSurface(400,300);
     surface.addToPage();
     surface.set_root(root);
     surface.repaint();
