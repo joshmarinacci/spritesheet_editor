@@ -1,4 +1,5 @@
 import {Point, Rect} from "./graphics";
+import {Callback, Observable, on, randi, SuperArray} from "./util";
 
 interface View {
     get_bounds():Rect
@@ -103,32 +104,7 @@ class SnakeView implements View {
         return new Rect(pos.x*16,pos.y*16,16,16)
     }
 }
-class SuperArray {
-    private data: any[];
-    constructor() {
-        this.data = []
-    }
-    clear() {
-        this.data = []
-    }
 
-    push_end(value: any) {
-        this.data.push(value)
-    }
-
-    length() {
-        return this.data.length
-    }
-
-    pop_start() {
-        return this.data.shift()
-    }
-
-    forEach(cb:Callback) {
-        // @ts-ignore
-        this.data.forEach((v,i)=>cb(v,i))
-    }
-}
 class SnakeModel {
     position: Point
     tail: SuperArray
@@ -140,34 +116,13 @@ class SnakeModel {
     }
 }
 
-export type Callback = (any) => any;
-const START = 'start'
+const EVENTS = {
+    START:'start',
+}
 const LEFT = 'left'
 const RIGHT = 'right'
 const DOWN = 'down'
 const UP = 'up'
-
-class Observable {
-    listeners: Map<string, Array<Callback>>
-
-    constructor() {
-        this.listeners = new Map();
-    }
-
-    addEventListener(etype: string, cb: Callback) {
-        if (!this.listeners.has(etype)) this.listeners.set(etype, new Array<Callback>());
-        this.listeners.get(etype).push(cb);
-    }
-
-    fire(etype: string, payload: any) {
-        if (!this.listeners.has(etype)) this.listeners.set(etype, new Array<Callback>());
-        this.listeners.get(etype).forEach(cb => cb(payload))
-    }
-}
-
-function on(target:Observable,event_type:string,cb:Callback) {
-    target.addEventListener(event_type,cb);
-}
 
 const EMPTY = 0;
 const WALL = 1;
@@ -232,7 +187,6 @@ class GridModel {
     }
 
     set_at(pt: Point, value: any) {
-        console.log("setting",pt,value)
         return this.set_xy(pt.x,pt.y,value)
     }
 }
@@ -347,34 +301,31 @@ class CanvasSurface {
     }
 }
 
-function wait(msec: number, cb:Callback) {
-    setTimeout(()=>{
-        cb({})
-    },msec)
+
+function setup_keyboard_input() {
+    let KBD = new Observable()
+    document.addEventListener('keydown',(e) => {
+        if (e.key === 'ArrowLeft')  KBD.fire(LEFT,{});
+        if (e.key === 'ArrowRight')  KBD.fire(RIGHT,{});
+        if (e.key === 'ArrowDown')  KBD.fire(DOWN,{});
+        if (e.key === 'ArrowUp')  KBD.fire(UP,{});
+    })
+
+    return KBD
 }
-
-
-function randi(min:number, max: number) {
-    return Math.floor(min + Math.random()*(max-min))
-}
-
 
 export function start() {
     log("starting")
     let All = new Observable();
 
-
     let root = new RootView()
 
-    // let sprites =load_sprites()
-    // let bgs = load_backgrounds()
     let snake = new SnakeModel()
     snake.position.set(10,10);
 
     let board = new GridModel(20,20)
     board.fill_all(()=>0)
 
-    //make a layer view for the board
     let board_layer = new LayerView();
     board_layer.id = 'board'
     let board_view = new GridView(board);
@@ -388,13 +339,15 @@ export function start() {
     // overlay_layer.add(start_button);
     // root.add(overlay_layer);
 
-
     let level = 0;
-    on(All,START,() => {
-        nextLevel()
+
+    function restart() {
+        level = 0
         snake.position.set(5,5);
         snake.tail.clear();
-    })
+        nextLevel()
+    }
+    on(All,EVENTS.START,()=>restart());
 
 
     let surface = new CanvasSurface(400,300);
@@ -404,17 +357,10 @@ export function start() {
     surface.repaint();
 
 
-    All.fire(START,{})
-    surface.repaint();
 
-    let KeyboardInput = new Observable();
 
-    document.addEventListener('keydown',(e) => {
-        if (e.key === 'ArrowLeft')  KeyboardInput.fire(LEFT,{});
-        if (e.key === 'ArrowRight')  KeyboardInput.fire(RIGHT,{});
-        if (e.key === 'ArrowDown')  KeyboardInput.fire(DOWN,{});
-        if (e.key === 'ArrowUp')  KeyboardInput.fire(UP,{});
-    })
+    let KeyboardInput = setup_keyboard_input()
+
 
     on(KeyboardInput,LEFT,() => move_by(new Point(-1,0)));
     on(KeyboardInput,RIGHT,() => move_by(new Point(+1,0)));
@@ -439,31 +385,31 @@ export function start() {
     }
     function die() {
         console.log("you died");
+        restart()
     }
 
     function move_by(offset:Point) {
 
-
         //drop a tail spot where the head is
-        let old_pos = snake.position
-        snake.tail.push_end(old_pos);
-        board.set_at(old_pos,TAIL)
+        board.set_at(snake.position,TAIL)
+        //add to the tail
+        snake.tail.push_end(snake.position);
         // trim tail if too long
         while (snake.tail.length() > snake.length) {
-            let pt = snake.tail.pop_start()
-            board.set_at(pt,EMPTY)
+            board.set_at(snake.tail.pop_start(),EMPTY) // remove tail spot
         }
 
         //move the head
         snake.position = snake.position.add(offset)
+
         //check the new spot
         let spot = board.get_at(snake.position);
         if (spot === WALL) return die();
         if (spot === TAIL) return die();
         if (spot === FOOD) return nextLevel();
 
-        // add to the tail
         surface.repaint()
     }
 
+    All.fire(EVENTS.START,{})
 }
