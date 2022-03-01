@@ -1,4 +1,4 @@
-import {Ctx} from "./graphics";
+import {CanvasSurface} from "./canvas";
 
 export class Sprite {
     id: string;
@@ -93,7 +93,7 @@ export class Doc extends Observable {
     }
 }
 
-export function draw_sprite(sprite: Sprite, ctx: Ctx, x: number, y: number, scale: number, doc: Doc) {
+export function draw_sprite(sprite: Sprite, ctx: CanvasSurface, x: number, y: number, scale: number, doc: Doc) {
     sprite.forEachPixel((val: number, i: number, j: number) => {
         ctx.fillRect(x + i * scale, y + j * scale, scale, scale, doc.palette[val]);
     });

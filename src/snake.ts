@@ -35,6 +35,10 @@ class RootView implements View, ParentView {
     is_parent_view(): boolean {
         return true
     }
+
+    clip_children(): boolean {
+        return false;
+    }
 }
 class LayerView implements View, ParentView {
     private children: any[];
@@ -61,6 +65,10 @@ class LayerView implements View, ParentView {
 
     is_parent_view(): boolean {
         return true;
+    }
+
+    clip_children(): boolean {
+        return false;
     }
 }
 class GridView implements View {

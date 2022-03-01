@@ -1,16 +1,19 @@
-import {
-    Ctx,
-    draw_grid,
-    draw_selection_rect,
-    EMPTY_COLOR,
-    PEvt,
-    View
-} from "./graphics";
 import {Button, HBox, Label, ToggleButton} from "./components";
-import {canvasToPNGBlob, forceDownloadBlob, gen_id, Point, Rect} from "./util";
+import {canvasToPNGBlob, forceDownloadBlob, gen_id, Observable, Point, Rect} from "./util";
 import {Doc, draw_sprite, Sprite} from "./app-model";
+import {
+    CanvasSurface,
+    CommonEvent,
+    InputView,
+    log,
+    ParentView,
+    setup_keyboard_input,
+    View
+} from "./canvas";
 
-class StandardView implements View {
+export const EMPTY_COLOR = '#62fcdc'
+
+class StandardView implements View, ParentView {
     bounds: Rect;
     id:string;
     children: View[];
@@ -19,20 +22,35 @@ class StandardView implements View {
         this.bounds = new Rect(0,0,w,h);
         this.children = []
     }
-    draw(ctx:Ctx) {
+    draw(ctx:CanvasSurface) {
         // log(this.id,"drawing to context");
     }
 
     add(view: View) {
         this.children.push(view);
     }
+
+    get_bounds(): Rect {
+        return this.bounds
+    }
+
+    get_children(): View[] {
+        return this.children
+    }
+
+    is_parent_view(): boolean {
+        return true
+    }
+
+    clip_children(): boolean {
+        return false;
+    }
 }
 
-class TileEditor implements View {
+class TileEditor implements View, InputView {
     bounds: Rect;
     children: View[];
     id: string;
-    mouse_down: (evt:PEvt) => void;
     doc: Doc;
     scale:number
     constructor() {
@@ -40,70 +58,88 @@ class TileEditor implements View {
         this.scale = 32;
         this.bounds = new Rect(0,0,this.scale*8 + 1, this.scale*8 + 1)
         this.children = []
-        this.mouse_down = (e:PEvt) => {
-            let pt = e.pt.divide_floor(this.scale);
-            let tile = this.doc.tiles[this.doc.selected_tile]
-            if (e.button == 2) {
-                if(e.type === "mousedown") {
-                    let value = tile.get_pixel(pt.x,pt.y);
-                    if (typeof value === 'number') {
-                        this.doc.selected_color = value
-                        this.doc.fire('change', "tile edited");
-                    }
-                }
-                return
-            }
-            tile.set_pixel(pt.x, pt.y, this.doc.selected_color);
-            this.doc.fire('change', "tile edited");
-        }
     }
-    draw(ctx: Ctx) {
+    draw(g: CanvasSurface) {
         //clear the background
-        ctx.fillBackground(this.bounds,'white');
+        g.fillBackground(this.bounds,'white');
         //draw each pixel in the tile as a rect
         let sprite = this.doc.tiles[this.doc.selected_tile];
         let palette = this.doc.palette;
         if (sprite !== null) {
             sprite.forEachPixel((val:number,i:number,j:number) => {
-                ctx.fillRect(i*this.scale,j*this.scale,this.scale,this.scale,palette[val]);
+                g.ctx.fillStyle = palette[val]
+                g.ctx.fillRect(i*this.scale,j*this.scale,this.scale,this.scale)
             });
         }
 
-        draw_grid(ctx,this.bounds,this.scale)
+        draw_grid(g,this.bounds,this.scale)
+    }
+
+    get_bounds(): Rect {
+        return this.bounds
+    }
+
+    input(e: CommonEvent): void {
+        let pt = e.pt.divide_floor(this.scale);
+        let tile = this.doc.tiles[this.doc.selected_tile]
+        if (e.button == 2) {
+            if(e.type === "mousedown") {
+                let value = tile.get_pixel(pt.x,pt.y);
+                if (typeof value === 'number') {
+                    this.doc.selected_color = value
+                    this.doc.fire('change', "tile edited");
+                }
+            }
+            return
+        }
+        tile.set_pixel(pt.x, pt.y, this.doc.selected_color);
+        this.doc.fire('change', "tile edited");
+    }
+
+    is_input_view(): boolean {
+        return true;
     }
 }
 
-class TileSelector implements View{
+class TileSelector implements View, InputView {
     bounds: Rect;
     children: View[];
     id: string;
     doc: Doc;
-    mouse_down: (pt) => void;
     scale:number;
     constructor() {
         this.scale = 32;
         this.bounds = new Rect(0,0,8*this.scale,8*this.scale)
         this.children = []
         this.id = 'tile selector'
-        this.mouse_down = (e:PEvt) => {
-            let pt = e.pt.divide_floor(this.scale);
-            let val = pt.x + pt.y * 8;
-            if(val >= 0 && val < this.doc.tiles.length) {
-                this.doc.selected_tile = val;
-                this.doc.fire('change', this.doc.selected_color)
-            }
+    }
+
+    draw(g: CanvasSurface) {
+        g.fillBackground(this.bounds,EMPTY_COLOR);
+        this.doc.tiles.forEach((sprite,s)=>{
+            let pt = wrap_number(s,8);
+            draw_sprite(sprite,g,pt.x*this.scale,pt.y*this.scale,4, this.doc)
+        })
+        draw_grid(g,this.bounds,this.scale);
+        let pt = wrap_number(this.doc.selected_tile,8);
+        draw_selection_rect(g,new Rect(pt.x*this.scale,pt.y*this.scale,this.scale,this.scale));
+    }
+
+    get_bounds(): Rect {
+        return this.bounds
+    }
+
+    input(e: CommonEvent): void {
+        let pt = e.pt.divide_floor(this.scale);
+        let val = pt.x + pt.y * 8;
+        if(val >= 0 && val < this.doc.tiles.length) {
+            this.doc.selected_tile = val;
+            this.doc.fire('change', this.doc.selected_color)
         }
     }
 
-    draw(ctx: Ctx) {
-        ctx.fillBackground(this.bounds,EMPTY_COLOR);
-        this.doc.tiles.forEach((sprite,s)=>{
-            let pt = wrap_number(s,8);
-            draw_sprite(sprite,ctx,pt.x*this.scale,pt.y*this.scale,4, this.doc)
-        })
-        draw_grid(ctx,this.bounds,this.scale);
-        let pt = wrap_number(this.doc.selected_tile,8);
-        draw_selection_rect(ctx,new Rect(pt.x*this.scale,pt.y*this.scale,this.scale,this.scale));
+    is_input_view(): boolean {
+        return true;
     }
 }
 
@@ -114,12 +150,12 @@ function wrap_number(num:number,width:number):Point {
     )
 }
 
-class MapEditor implements  View {
+class MapEditor implements  View, InputView {
     bounds: Rect;
     children: View[];
     id: string;
     doc: Doc;
-    mouse_down: (e: PEvt) => void;
+    // mouse_down: (e: PEvt) => void;
     scale:number;
 
     constructor() {
@@ -127,17 +163,9 @@ class MapEditor implements  View {
         this.scale = 64;
         this.children = []
         this.bounds = new Rect(0,0,16*this.scale,16*this.scale)
-        this.mouse_down = (e:PEvt) => {
-            if(e.type === "mousedown" || e.type === "mousedrag") {
-                let pt = e.pt.divide_floor(this.scale);
-                let tile = this.doc.tiles[this.doc.selected_tile];
-                this.doc.tilemap.set_pixel(pt.x,pt.y,tile.id)
-                this.doc.fire('change',tile)
-            }
-        }
     }
 
-    draw(ctx: Ctx) {
+    draw(ctx: CanvasSurface) {
         ctx.fillBackground(this.bounds,EMPTY_COLOR)
         this.doc.tilemap.forEachPixel((val,i,j) => {
             if (!val || val === 0) return;
@@ -147,14 +175,30 @@ class MapEditor implements  View {
         if(this.doc.map_grid_visible) draw_grid(ctx,this.bounds,this.scale)
     }
 
+    get_bounds(): Rect {
+        return this.bounds
+    }
+
+    input(e: CommonEvent): void {
+        if(e.type === "mousedown" || e.type === "mousedrag") {
+            let pt = e.pt.divide_floor(this.scale);
+            let tile = this.doc.tiles[this.doc.selected_tile];
+            this.doc.tilemap.set_pixel(pt.x,pt.y,tile.id)
+            this.doc.fire('change',tile)
+        }
+    }
+
+    is_input_view(): boolean {
+        return true
+    }
+
 }
 
-class PaletteChooser implements View{
+class PaletteChooser implements View, InputView {
     bounds: Rect;
     children: View[];
     id: string;
     palette: any;
-    mouse_down: (pt) => void;
     doc: Doc;
     scale:number;
     constructor() {
@@ -162,16 +206,9 @@ class PaletteChooser implements View{
         this.children = [];
         this.scale = 32;
         this.bounds = new Rect(0,0,this.scale*8,this.scale);
-        this.mouse_down = (e:PEvt) => {
-            let val = e.pt.divide_floor(this.scale).x
-            if (val >= 0 && val < this.doc.palette.length) {
-                this.doc.selected_color = val;
-                this.doc.fire('change',this.doc.selected_color)
-            }
-        }
     }
 
-    draw(ctx: Ctx) {
+    draw(ctx: CanvasSurface) {
         if (this.palette) {
             ctx.fillBackground(this.bounds,EMPTY_COLOR)
             for (let i=0; i<5; i++) {
@@ -184,26 +221,40 @@ class PaletteChooser implements View{
         }
     }
 
+    get_bounds(): Rect {
+        return this.bounds
+    }
+
+    input(e: CommonEvent): void {
+        let val = e.pt.divide_floor(this.scale).x
+        if (val >= 0 && val < this.doc.palette.length) {
+            this.doc.selected_color = val;
+            this.doc.fire('change',this.doc.selected_color)
+        }
+    }
+
+    is_input_view(): boolean {
+        return true
+    }
+
 }
 
-class WrapperView implements View {
+class WrapperView implements View, ParentView {
     bounds: Rect;
     children: View[];
     id: string;
-    clip_children: boolean;
     constructor(bounds:Rect) {
         this.id = 'wrapper-view'
         this.children = []
         this.bounds = bounds
-        this.clip_children = true;
     }
 
-    draw(ctx: Ctx) {
+    draw(ctx: CanvasSurface) {
         ctx.fillBackground(this.bounds,'green')
     }
 
     scroll_by(x: number, y: number) {
-        let ch = this.children[0].bounds;
+        let ch = this.children[0].get_bounds();
         ch.x += x;
         ch.y += y;
         if(ch.x >= 0) ch.x = 0;
@@ -213,55 +264,65 @@ class WrapperView implements View {
         let maxx = ch.w - this.bounds.w
         if(maxx < -ch.x) ch.x = - (maxx)
     }
+
+    get_bounds(): Rect {
+        return this.bounds
+    }
+
+    get_children(): View[] {
+        return this.children
+    }
+
+    is_parent_view(): boolean {
+        return true
+    }
+
+    clip_children(): boolean {
+        return true;
+    }
 }
 
-class ScrollView implements View {
+class ScrollView implements View, ParentView, InputView {
     bounds: Rect;
     children: View[];
     id: string;
-    clip_children:boolean
-    wheel_down: any
     private wrapper: WrapperView;
     constructor(bounds:Rect) {
         this.id = 'scroll-view'
         this.children = []
         this.bounds = bounds
 
-        this.wheel_down = (evt) => {
-            this.wrapper.scroll_by(-evt.details.deltaX, -evt.details.deltaY);
-            evt.ctx.redraw()
-        }
 
         this.wrapper = new WrapperView(new Rect(0,0,this.bounds.w-30,this.bounds.h-30));
         this.children.push(this.wrapper)
 
         let step = 20;
 
-        let up = new Button("u",(evt:PEvt)=>{
+        let up = new Button("u",(evt:CommonEvent)=>{
             this.wrapper.scroll_by(0,+step);
-            evt.ctx.redraw()
+            evt.ctx.repaint()
         });
         up.bounds = new Rect(this.bounds.w-30,0,30,30);
         this.children.push(up)
 
-        let down = new Button("d",(evt:PEvt)=>{
+        let down = new Button("d",(evt:CommonEvent)=>{
             this.wrapper.scroll_by(0,-step);
-            evt.ctx.redraw()
+            evt.ctx.repaint()
         });
         down.bounds = new Rect(this.bounds.w-30,this.bounds.h-30-30,30,30);
         this.children.push(down);
 
-        let left = new Button('l',(evt:PEvt)=>{
+        let left = new Button('l',(evt:CommonEvent)=>{
             this.wrapper.scroll_by(+step,-0);
-            evt.ctx.redraw()
+            evt.ctx.repaint()
         })
         left.bounds = new Rect(0,this.bounds.h-30,30,30);
         this.children.push(left);
 
 
-        let right = new Button('r',(evt:PEvt)=>{
+        let right = new Button('r',(evt:CommonEvent)=>{
             this.wrapper.scroll_by(-step,-0);
-            evt.ctx.redraw()
+            evt.ctx.repaint()
         })
         right.bounds = new Rect(this.bounds.w-30-30,this.bounds.h-30,30,30);
         this.children.push(right);
@@ -271,23 +332,47 @@ class ScrollView implements View {
         this.wrapper.children.push(view);
     }
 
-    draw(ctx: Ctx) {
+    draw(ctx: CanvasSurface) {
         ctx.fillBackground(this.bounds,'red')
+    }
+
+    get_bounds(): Rect {
+        return this.bounds
+    }
+
+    get_children(): View[] {
+        return this.children
+    }
+
+    is_parent_view(): boolean {
+        return true;
+    }
+
+    clip_children(): boolean {
+        return false
+    }
+    is_input_view(): boolean {
+        return true
+    }
+    input(evt: CommonEvent) {
+        if(evt.type === 'wheel') {
+            this.wrapper.scroll_by(-evt.details.deltaX, -evt.details.deltaY);
+            evt.ctx.repaint()
+        }
     }
 
 }
 
 export function start() {
-    let canvas = document.createElement('canvas');
-    canvas.width = 1024*window.devicePixelRatio;
-    canvas.height = 768*window.devicePixelRatio;
-    canvas.style.width = '1024px';
-    canvas.style.height = '768px';
-    document.body.appendChild(canvas);
+    log("starting")
+    let All = new Observable();
+
+    let KeyboardInput = setup_keyboard_input()
+    let surface = new CanvasSurface(1024,768);
 
     let doc = new Doc();
     //draws border
-    let main_view = new StandardView("main",canvas.width,canvas.height);
+    let main_view = new StandardView("main",surface.canvas.width,surface.canvas.height);
 
     //label at the top
     let main_label = new Label("tile map editor");
@@ -306,6 +391,7 @@ export function start() {
     toolbar.add(save_button);
 
     let load_button = new Button("load",()=>{
+        console.log("trying to load")
         let str = localStorage.getItem("doc");
         if(str) {
             try {
@@ -403,53 +489,33 @@ export function start() {
     map_editor.doc = doc
     scroll_view.add(map_editor);
 
-
-    let ctx = new Ctx(canvas,main_view);
-    ctx.redraw();
-
     doc.addEventListener('change',() => {
-        ctx.redraw();
+        surface.repaint();
     });
 
-    let down = false;
-    let button = 1
-    canvas.addEventListener('contextmenu',(e)=>{
-        e.preventDefault();
-        return false;
+    surface.set_root(main_view)
+    surface.addToPage();
+    surface.setup_mouse_input()
+    surface.repaint()
+}
+function draw_selection_rect(g: CanvasSurface, rect: Rect) {
+    ['red', 'white', 'black'].forEach((color, i) => {
+        g.ctx.strokeStyle = color
+        g.ctx.strokeRect(rect.x + i + 0.5, rect.y + i + 0.5, rect.w - i * 2, rect.h - i * 2);
     })
-    canvas.addEventListener('mousedown',(evt)=>{
-        down = true;
-        let rect = canvas.getBoundingClientRect();
-        let pt = new Point(evt.x-rect.x,evt.y-rect.y);
-        button = evt.button as any
-        ctx.dispatch(main_view,{type:'mousedown', pt:pt, button:button, ctx:ctx});
-    })
-    canvas.addEventListener('mousemove',(evt)=>{
-        if(down) {
-            let rect = canvas.getBoundingClientRect();
-            let pt = new Point(evt.x - rect.x, evt.y - rect.y);
-            ctx.dispatch(main_view, {type:'mousedrag', pt:pt, button:button, ctx:ctx});
-        }
-    })
-    canvas.addEventListener('mouseup',(evt)=>{
-        down = false;
-        let rect = canvas.getBoundingClientRect();
-        let pt = new Point(evt.x-rect.x,evt.y-rect.y);
-        ctx.dispatch(main_view,{type:'mouseup',pt:pt, button:button, ctx:ctx});
-    })
-    canvas.addEventListener('wheel',(evt)=>{
-        let rect = canvas.getBoundingClientRect();
-        let pt = new Point(evt.x-rect.x,evt.y-rect.y);
-        // console.log("wheel",evt.deltaX, evt.deltaY, evt.deltaZ, evt.deltaMode, evt.x);
-        ctx.dispatch_wheel(main_view,{
-            type:'wheel',
-            pt:pt,
-            ctx:ctx,
-            button:-1,
-            details:{deltaX:evt.deltaX, deltaY:evt.deltaY}
-        });
-        // evt.stopPropagation();
-        evt.preventDefault()
-    });
-
+}
+function draw_grid(g: CanvasSurface, bounds: Rect, step: number) {
+    //draw the grid
+    g.ctx.beginPath();
+    for (let i = 0; i <= bounds.w; i += step) {
+        g.ctx.moveTo(i + 0.5, 0);
+        g.ctx.lineTo(i + 0.5, bounds.h);
+    }
+    for (let i = 0; i <= bounds.w; i += step) {
+        g.ctx.moveTo(0, i + 0.5);
+        g.ctx.lineTo(bounds.w, i + 0.5);
+    }
+    g.ctx.strokeStyle = 'black';
+    g.ctx.lineWidth = 1;
+    g.ctx.stroke();
 }

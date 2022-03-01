@@ -1,4 +1,4 @@
-import {Observable, Rect} from "./util";
+import {Observable, Point, Rect} from "./util";
 
 export function log(...args) {
     console.log('SNAKE:', ...args);
@@ -12,6 +12,31 @@ export interface View {
 export interface ParentView {
     is_parent_view():boolean,
     get_children():View[]
+    clip_children():boolean,
+}
+export class CommonEvent {
+    type:string
+    pt:Point
+    button:number
+    ctx:CanvasSurface
+    details?:any
+
+    constructor(type: string, pt: Point, ctx: CanvasSurface) {
+        this.type = type
+        this.pt = pt
+        this.ctx = ctx
+    }
+
+    translate(x: number, y: number):CommonEvent {
+        let ce = new CommonEvent(this.type,this.pt.translate(x,y),this.ctx)
+        ce.button = this.button
+        ce.details = this.details
+        return ce
+    }
+}
+export interface InputView {
+    is_input_view():boolean
+    input(event:CommonEvent):void
 }
 
 export class CanvasSurface {
@@ -74,8 +99,14 @@ export class CanvasSurface {
         this.ctx.translate(bds.x, bds.y)
         view.draw(this);
         // @ts-ignore
+        // @ts-ignore
         if (view.is_parent_view && view.is_parent_view()) {
             let parent = view as unknown as ParentView;
+            if(parent.clip_children()) {
+                this.ctx.beginPath()
+                this.ctx.rect(0,0,view.get_bounds().w,view.get_bounds().h);
+                this.ctx.clip()
+            }
             parent.get_children().forEach(ch => {
                 if (this.debug) {
                     this.ctx.save();
@@ -95,6 +126,20 @@ export class CanvasSurface {
     fill(bounds: Rect, color: string) {
         this.ctx.fillStyle = color
         this.ctx.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+    }
+
+    stroke(bounds: Rect, color: string) {
+        this.ctx.strokeStyle = color
+        this.ctx.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+    }
+    fillBackground(bounds: Rect, color: string) {
+        this.ctx.fillStyle = color
+        this.ctx.fillRect(0, 0, bounds.w, bounds.h);
+    }
+
+    strokeBackground(bounds: Rect, color: string) {
+        this.ctx.strokeStyle = color
+        this.ctx.strokeRect(0,0, bounds.w, bounds.h);
     }
 
     private debug_draw_rect(bds: Rect, title: string) {
@@ -134,6 +179,80 @@ export class CanvasSurface {
             x, y, slice.rect.w * scale, slice.rect.h * scale
         )
     }
+
+    fillRect(x: number, y: number, w: number, h: number, color: string) {
+        this.ctx.fillStyle = color;
+        this.ctx.fillRect(x,y,w,h)
+    }
+
+    setup_mouse_input() {
+        let down = false
+        let button = -1
+        this.canvas.addEventListener('contextmenu',(e)=>{
+            e.preventDefault();
+            return false;
+        })
+        this.canvas.addEventListener('mousedown',(evt)=>{
+            down = true;
+            let rect = this.canvas.getBoundingClientRect();
+            let pt = new Point(evt.x-rect.x,evt.y-rect.y);
+            button = evt.button as any
+            let e = new CommonEvent('mousedown', pt, this)
+            e.button = evt.button
+            this.dispatch(this.root,e);
+        })
+        this.canvas.addEventListener('mousemove',(evt)=>{
+            if(down) {
+                let rect = this.canvas.getBoundingClientRect();
+                let pt = new Point(evt.x - rect.x, evt.y - rect.y);
+                let e = new CommonEvent('mousedrag', pt, this)
+                e.button = evt.button
+                this.dispatch(this.root,e)// {type:'mousedrag', pt:pt, button:button, ctx:this});
+            }
+        })
+        this.canvas.addEventListener('mouseup',(evt)=>{
+            down = false;
+            let rect = this.canvas.getBoundingClientRect();
+            let pt = new Point(evt.x-rect.x,evt.y-rect.y);
+            let e = new CommonEvent('mouseup', pt, this)
+            e.button = evt.button
+            this.dispatch(this.root,e)//{type:'mouseup',pt:pt, button:button, ctx:this});
+        })
+        this.canvas.addEventListener('wheel',(evt)=>{
+            let rect = this.canvas.getBoundingClientRect();
+            let pt = new Point(evt.x-rect.x,evt.y-rect.y);
+            let e = new CommonEvent('wheel',pt,this)
+            e.details = {deltaX:evt.deltaX, deltaY:evt.deltaY}
+            this.dispatch(this.root,e);
+            // evt.stopPropagation();
+            evt.preventDefault()
+        });
+    }
+
+    private dispatch(view: View, e:CommonEvent): View | null {
+        // log("dispatching",view,e);
+        if (view.get_bounds().contains(e.pt)) {
+            // @ts-ignore
+            if (view.is_parent_view && view.is_parent_view()) {
+                let parent = view as unknown as ParentView;
+                for (let i = 0; i < parent.get_children().length; i++) {
+                    let ch = parent.get_children()[i]
+                    let e2 = e.translate(view.get_bounds().x,view.get_bounds().y);
+                    let picked = this.dispatch(ch, e2)
+                    if (picked) return picked;
+                }
+            }
+            // @ts-ignore
+            if (view.is_input_view && view.is_input_view()) {
+                let inputview = view as unknown as InputView
+                let e2 = e.translate(view.get_bounds().x,view.get_bounds().y)
+                inputview.input(e2);
+                return view;
+            }
+        }
+        return null;
+    }
+
 }
 
 export class SpriteSheet {
@@ -196,7 +315,7 @@ export function setup_keyboard_input() {
         if (e.key === 'ArrowRight') KBD.fire(EVENTS.RIGHT, {});
         if (e.key === 'ArrowDown') KBD.fire(EVENTS.DOWN, {});
         if (e.key === 'ArrowUp') KBD.fire(EVENTS.UP, {});
-        e.preventDefault()
+        // e.preventDefault()
     })
 
     return KBD
