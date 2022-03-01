@@ -29,7 +29,6 @@ export class Label implements View {
     }
 }
 
-
 export class Button implements View, InputView {
     bounds: Rect
     children: View[]
@@ -155,4 +154,40 @@ export class HBox implements View, ParentView {
         return false;
     }
 
+}
+
+export class LayerView implements View, ParentView {
+    private children: any[];
+    id: string
+    bounds: Rect;
+
+    constructor() {
+        this.id = 'some layer'
+        this.children = []
+        this.bounds = new Rect(0,0,100,100)
+    }
+
+    add(child: View) {
+        this.children.push(child);
+    }
+
+    get_bounds(): Rect {
+        return this.bounds
+    }
+
+    draw(g: CanvasSurface): void {
+        // g.fill(this.get_bounds(),'orange')
+    }
+
+    get_children(): View[] {
+        return this.children
+    }
+
+    is_parent_view(): boolean {
+        return true;
+    }
+
+    clip_children(): boolean {
+        return false;
+    }
 }

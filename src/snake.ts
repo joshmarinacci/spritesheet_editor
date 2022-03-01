@@ -1,76 +1,18 @@
-import {Callback, Observable, on, Point, randi, Rect, SuperArray} from "./util";
+import {Observable, on, Point, randi, Rect, SuperArray} from "./util";
 // @ts-ignore
 import tileset_url from "./tileset@1.png";
 import {
-    CanvasSurface, EVENTS,
+    CanvasSurface,
+    EVENTS,
     log,
-    ParentView,
     setup_keyboard_input,
     SpriteSheet,
     SpriteSlice,
     View
 } from "./canvas";
+import {GridModel} from "./models";
+import {LayerView} from "./components";
 
-class RootView implements View, ParentView {
-    private children: any[];
-    constructor() {
-        this.children = []
-    }
-    add(child: LayerView) {
-        this.children.push(child)
-    }
-
-    get_bounds(): Rect {
-        return new Rect(0,0,100,100)
-    }
-
-    draw(g: CanvasSurface): void {
-        // g.fill(this.get_bounds(),'red');
-    }
-
-    get_children(): View[] {
-        return this.children;
-    }
-
-    is_parent_view(): boolean {
-        return true
-    }
-
-    clip_children(): boolean {
-        return false;
-    }
-}
-class LayerView implements View, ParentView {
-    private children: any[];
-    id:string
-    constructor() {
-        this.id = 'some layer'
-        this.children = []
-    }
-    add(child: View) {
-        this.children.push(child);
-    }
-
-    get_bounds(): Rect {
-        return new Rect(0,0,100,100)
-    }
-
-    draw(g: CanvasSurface): void {
-        // g.fill(this.get_bounds(),'orange')
-    }
-
-    get_children(): View[] {
-        return this.children
-    }
-
-    is_parent_view(): boolean {
-        return true;
-    }
-
-    clip_children(): boolean {
-        return false;
-    }
-}
 class GridView implements View {
     private model: GridModel;
     private id: string;
@@ -161,67 +103,6 @@ const TAIL = 2;
 const FOOD = 3;
 
 
-class GridModel {
-    w: number;
-    h: number;
-    private data: any[];
-    constructor(w: number, h: number) {
-        this.w = w;
-        this.h = h;
-        this.data = []
-        for (let i = 0; i < this.w * this.h; i++) {
-            this.data[i] = 0;
-        }
-    }
-
-    get_xy(x:number,y:number):any {
-        let n = this.xy_to_n(x,y);
-        return this.data[n]
-    }
-    set_xy(x:number,y:number,value:any) {
-        let n = this.xy_to_n(x,y);
-        this.data[n] = value;
-    }
-    fill_all(cb: Callback) {
-        this.data = this.data.map((v)=>cb(v));
-    }
-
-    fill_row(row: number, cb: Callback) {
-        for(let i=0; i<this.h; i++) {
-            this.set_xy(i,row,cb(this.get_xy(i,row)))
-        }
-    }
-    fill_col(col: number, cb: Callback) {
-        for(let v=0; v<this.h; v++) {
-            this.set_xy(col,v,cb(this.get_xy(col,v)))
-        }
-    }
-
-    private xy_to_n(x: number, y: number) {
-        return x + y*this.h;
-    }
-
-    forEach(cb: (w, x, y) => void) {
-        for(let j=0; j<this.h; j++) {
-            for (let i=0; i<this.w; i++) {
-                cb(this.get_xy(i,j),i,j);
-            }
-        }
-    }
-    dump() {
-        log("grid model", this.w,this.h);
-        log(this.data);
-    }
-
-    get_at(pt: Point) {
-        return this.get_xy(pt.x,pt.y)
-    }
-
-    set_at(pt: Point, value: any) {
-        return this.set_xy(pt.x,pt.y,value)
-    }
-}
-
 class ScoreView implements View {
     private score: ScoreModel;
     private bounds: Rect;
@@ -262,9 +143,8 @@ export async function start() {
     let KeyboardInput = setup_keyboard_input()
     let surface = new CanvasSurface(400,300);
     let spritesheet = await surface.load_spritesheet(tileset_url);
-    console.log("loaded now")
 
-    let root = new RootView()
+    let root = new LayerView()
     let snake = new SnakeModel()
     snake.position.set(10,10);
     let board = new GridModel(20,20)

@@ -45,7 +45,7 @@ export class CanvasSurface {
     canvas: HTMLCanvasElement;
     private root: View;
     ctx: CanvasRenderingContext2D;
-    private debug: boolean;
+    debug: boolean;
     private scale: number;
 
     constructor(w: number, h: number) {
@@ -60,7 +60,7 @@ export class CanvasSurface {
         this.canvas.style.width = `${this.w * this.scale}px`
         this.canvas.style.height = `${this.h * this.scale}px`
         this.ctx = this.canvas.getContext('2d');
-        this.debug = false;
+        this.debug = true;
         this.clear()
     }
 
@@ -230,7 +230,7 @@ export class CanvasSurface {
     }
 
     private dispatch(view: View, e:CommonEvent): View | null {
-        // log("dispatching",view,e);
+        if(this.debug) log("dispatching",view,view.get_bounds());
         if (view.get_bounds().contains(e.pt)) {
             // @ts-ignore
             if (view.is_parent_view && view.is_parent_view()) {

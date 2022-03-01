@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npx tsc",
     "local-dev": "npx parcel src/index.html",
-    "snake-dev": "npx parcel src/snake.html"
+    "snake-dev": "npx parcel src/snake.html",
+    "minesweeper-dev": "npx parcel src/minesweeper.html"
   },
   "author": "",
   "license": "ISC",
