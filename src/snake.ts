@@ -220,7 +220,7 @@ class ScoreView implements View {
     private slices: SpriteSlice[];
     constructor(score: ScoreModel, spritesheet:SpriteSheet) {
         this.score = score;
-        this.bounds = new Rect(0,0,32,16)
+        this.bounds = new Rect(8*9,0,32,16)
         this.slices = []
         for(let i=0; i<=9; i++) {
             this.slices[i] = spritesheet.get_slice(4+i)
@@ -237,8 +237,8 @@ class ScoreView implements View {
             ones = this.score.level%10;
             tens = Math.floor(this.score.level/10)
         }
-        g.draw_slice(0, 0, this.slices[tens], 2)
-        g.draw_slice(16, 0, this.slices[ones], 2)
+        g.draw_slice(this.bounds.x, 0, this.slices[tens], 2)
+        g.draw_slice(this.bounds.x+16, 0, this.slices[ones], 2)
     }
 
     get_bounds(): Rect {

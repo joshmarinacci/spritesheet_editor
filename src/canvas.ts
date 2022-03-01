@@ -168,7 +168,6 @@ export class SpriteSheet {
         let w = this.img.width/8
         let x = numb%w;
         let y = Math.floor(numb/w)
-        console.log("num",numb,'goes to',x,y)
         return new SpriteSlice(this, new Rect(x*8, y*8, 8, 8))
     }
 }
