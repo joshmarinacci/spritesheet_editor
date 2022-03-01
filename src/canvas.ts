@@ -7,6 +7,7 @@ export function log(...args) {
 const CLEAR_COLOR = '#f0f0f0'
 export interface View {
     get_bounds():Rect
+    layout(g:CanvasSurface, parent:View):void;
     draw(g:CanvasSurface):void;
 }
 export interface ParentView {
@@ -60,7 +61,7 @@ export class CanvasSurface {
         this.canvas.style.width = `${this.w * this.scale}px`
         this.canvas.style.height = `${this.h * this.scale}px`
         this.ctx = this.canvas.getContext('2d');
-        this.debug = true;
+        this.debug = false;
         this.clear()
     }
 
@@ -74,6 +75,7 @@ export class CanvasSurface {
 
     repaint() {
         console.time("repaint");
+        this.layout_stack();
         this.clear();
         this.draw_stack()
         console.timeEnd("repaint");
@@ -81,9 +83,27 @@ export class CanvasSurface {
 
     clear() {
         this.ctx.fillStyle = CLEAR_COLOR
-        this.ctx.fillRect(0, 0, this.w, this.h)
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
     }
 
+    private layout_stack() {
+        this.layout_view(this.root,null)
+    }
+    private layout_view(view: View, parent:View) {
+        // if(!this.debug) { // @ts-ignore
+        //     log("laying out",view.id)
+        // }
+        let bds = view.get_bounds()
+        view.layout(this,parent)
+        // @ts-ignore
+        if (view.is_parent_view && view.is_parent_view()) {
+            let parent = view as unknown as ParentView;
+            parent.get_children().forEach(ch => {
+                this.layout_view(ch,view)
+            })
+        }
+        // log("final bounds",view.get_bounds())
+    }
     private draw_stack() {
         this.ctx.save();
         this.ctx.translate(0.5, 0.5);
@@ -99,7 +119,6 @@ export class CanvasSurface {
         this.ctx.translate(bds.x, bds.y)
         view.draw(this);
         // @ts-ignore
-        // @ts-ignore
         if (view.is_parent_view && view.is_parent_view()) {
             let parent = view as unknown as ParentView;
             if(parent.clip_children()) {
@@ -110,7 +129,7 @@ export class CanvasSurface {
             parent.get_children().forEach(ch => {
                 if (this.debug) {
                     this.ctx.save();
-                    this.ctx.translate(20, 20)
+                    // this.ctx.translate(20, 20)
                 }
                 this.draw_view(ch);
                 if (this.debug) {
@@ -305,7 +324,8 @@ export const EVENTS = {
     LEFT:'left',
     RIGHT:'right',
     DOWN:'down',
-    UP:'up'
+    UP:'up',
+    KEYDOWN:'keydown'
 }
 
 export function setup_keyboard_input() {
@@ -315,6 +335,8 @@ export function setup_keyboard_input() {
         if (e.key === 'ArrowRight') KBD.fire(EVENTS.RIGHT, {});
         if (e.key === 'ArrowDown') KBD.fire(EVENTS.DOWN, {});
         if (e.key === 'ArrowUp') KBD.fire(EVENTS.UP, {});
+        KBD.fire(EVENTS.KEYDOWN,e)
+        console.log(e)
         // e.preventDefault()
     })
 

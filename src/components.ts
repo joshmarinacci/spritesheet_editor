@@ -1,5 +1,6 @@
 import {gen_id, Rect} from "./util";
 import {CanvasSurface, CommonEvent, InputView, ParentView, View} from "./canvas";
+
 export const BUTTON_COLOR = '#e3e3e0';
 export const BUTTON_BORDER_COLOR = '#949492';
 
@@ -10,7 +11,7 @@ export class Label implements View {
     children: View[];
 
     constructor(text: string) {
-        this.id = 'a label'
+        this.id = gen_id('label')
         this.bounds = new Rect(0, 0, 100, 30);
         this.text = text;
         this.children = []
@@ -27,6 +28,9 @@ export class Label implements View {
     get_bounds(): Rect {
         return this.bounds
     }
+
+    layout(g: CanvasSurface, parent: View): void {
+    }
 }
 
 export class Button implements View, InputView {
@@ -42,7 +46,7 @@ export class Button implements View, InputView {
 
     constructor(title: string, cb) {
         this.title = title;
-        this.id = "a button";
+        this.id = gen_id('button')
         this.bounds = new Rect(0, 0, 100, 30);
         this.children = []
         this.cb = cb;
@@ -64,6 +68,9 @@ export class Button implements View, InputView {
 
     is_input_view(): boolean {
         return true
+    }
+
+    layout(g: CanvasSurface, parent: View): void {
     }
 
 }
@@ -106,25 +113,54 @@ export class ToggleButton implements View, InputView {
     is_input_view(): boolean {
         return true;
     }
+
+    layout(g: CanvasSurface, parent: View): void {
+    }
 }
 
-export class HBox implements View, ParentView {
-    bounds: Rect;
+export class BaseParentView implements View, ParentView {
+    private id: string;
+    bounds: Rect
     children: View[];
-    id: string;
+
+    constructor(id: string, bounds?: Rect) {
+        this.id = id
+        this.bounds = bounds || new Rect(0, 0, 100, 100)
+        this.children = []
+    }
+
+    add(view: View) {
+        this.children.push(view);
+    }
+
+    clip_children(): boolean {
+        return false;
+    }
+
+    draw(g: CanvasSurface): void {
+    }
+
     get_bounds(): Rect {
         return this.bounds
     }
 
+    get_children(): View[] {
+        return this.children
+    }
+
+    is_parent_view(): boolean {
+        return true
+    }
+
+    layout(g: CanvasSurface, parent: View): void {
+    }
+}
+
+export class HBox extends BaseParentView {
     constructor() {
-        this.id = gen_id('hbox')
-        this.children = []
-        this.bounds = new Rect(0,0,100,100);
+        super(gen_id('hbox'), new Rect(0,0,100,100))
     }
-    add(view: View) {
-        this.children.push(view);
-    }
-    layout() {
+    layout(g:CanvasSurface, parent:View) {
         let x = 0;
         let y = 0;
         let my = 0;
@@ -137,57 +173,15 @@ export class HBox implements View, ParentView {
         this.bounds.w = x;
         this.bounds.h = my;
     }
-
-
-    draw(ctx: CanvasSurface) {
-    }
-
-    get_children(): View[] {
-        return this.children
-    }
-
-    is_parent_view(): boolean {
-        return true
-    }
-
-    clip_children(): boolean {
-        return false;
-    }
-
 }
 
-export class LayerView implements View, ParentView {
-    private children: any[];
-    id: string
-    bounds: Rect;
-
+export class LayerView extends BaseParentView{
     constructor() {
-        this.id = 'some layer'
-        this.children = []
-        this.bounds = new Rect(0,0,100,100)
+        super(gen_id('layer'),new Rect(0,0,100,100))
     }
 
-    add(child: View) {
-        this.children.push(child);
-    }
-
-    get_bounds(): Rect {
-        return this.bounds
-    }
-
-    draw(g: CanvasSurface): void {
-        // g.fill(this.get_bounds(),'orange')
-    }
-
-    get_children(): View[] {
-        return this.children
-    }
-
-    is_parent_view(): boolean {
-        return true;
-    }
-
-    clip_children(): boolean {
-        return false;
+    layout(g: CanvasSurface, parent: View): void {
+        this.bounds.w = parent.get_bounds().w
+        this.bounds.h = parent.get_bounds().h
     }
 }

@@ -1,9 +1,10 @@
-import {Button, HBox, Label, ToggleButton} from "./components";
-import {canvasToPNGBlob, forceDownloadBlob, gen_id, Observable, Point, Rect} from "./util";
+import {BaseParentView, Button, HBox, Label, ToggleButton} from "./components";
+import {canvasToPNGBlob, forceDownloadBlob, gen_id, Observable, on, Point, Rect} from "./util";
 import {Doc, draw_sprite, Sprite} from "./app-model";
 import {
     CanvasSurface,
     CommonEvent,
+    EVENTS,
     InputView,
     log,
     ParentView,
@@ -12,40 +13,6 @@ import {
 } from "./canvas";
 
 export const EMPTY_COLOR = '#62fcdc'
-
-class StandardView implements View, ParentView {
-    bounds: Rect;
-    id:string;
-    children: View[];
-    constructor(id,w,h) {
-        this.id = id
-        this.bounds = new Rect(0,0,w,h);
-        this.children = []
-    }
-    draw(ctx:CanvasSurface) {
-        // log(this.id,"drawing to context");
-    }
-
-    add(view: View) {
-        this.children.push(view);
-    }
-
-    get_bounds(): Rect {
-        return this.bounds
-    }
-
-    get_children(): View[] {
-        return this.children
-    }
-
-    is_parent_view(): boolean {
-        return true
-    }
-
-    clip_children(): boolean {
-        return false;
-    }
-}
 
 class TileEditor implements View, InputView {
     bounds: Rect;
@@ -99,6 +66,9 @@ class TileEditor implements View, InputView {
     is_input_view(): boolean {
         return true;
     }
+
+    layout(g: CanvasSurface, parent: View): void {
+    }
 }
 
 class TileSelector implements View, InputView {
@@ -140,6 +110,9 @@ class TileSelector implements View, InputView {
 
     is_input_view(): boolean {
         return true;
+    }
+
+    layout(g: CanvasSurface, parent: View): void {
     }
 }
 
@@ -192,6 +165,9 @@ class MapEditor implements  View, InputView {
         return true
     }
 
+    layout(g: CanvasSurface, parent: View): void {
+    }
+
 }
 
 class PaletteChooser implements View, InputView {
@@ -237,6 +213,9 @@ class PaletteChooser implements View, InputView {
         return true
     }
 
+    layout(g: CanvasSurface, parent: View): void {
+    }
+
 }
 
 class WrapperView implements View, ParentView {
@@ -279,6 +258,9 @@ class WrapperView implements View, ParentView {
 
     clip_children(): boolean {
         return true;
+    }
+
+    layout(g: CanvasSurface, parent: View): void {
     }
 }
 
@@ -361,27 +343,13 @@ class ScrollView implements View, ParentView, InputView {
         }
     }
 
+    layout(g: CanvasSurface, parent: View): void {
+    }
+
 }
 
-export function start() {
-    log("starting")
-    let All = new Observable();
-
-    let KeyboardInput = setup_keyboard_input()
-    let surface = new CanvasSurface(1024,768);
-
-    let doc = new Doc();
-    //draws border
-    let main_view = new StandardView("main",surface.canvas.width,surface.canvas.height);
-
-    //label at the top
-    let main_label = new Label("tile map editor");
-    main_label.bounds.y = 0
-    main_view.add(main_label);
-
+function setup_toolbar(doc:Doc):HBox {
     let toolbar = new HBox();
-    toolbar.bounds.x = 0;
-    toolbar.bounds.y = main_label.bounds.bottom();
 
     let save_button = new Button("save",()=>{
         let str = JSON.stringify(doc,null, '  ');
@@ -439,7 +407,35 @@ export function start() {
     export_button.bounds.w = 70
     toolbar.add(export_button);
 
-    toolbar.layout();
+    return toolbar
+}
+
+export function start() {
+    log("starting")
+    let All = new Observable();
+
+    let surface = new CanvasSurface(1024,768);
+    let KeyboardInput = setup_keyboard_input()
+    on(KeyboardInput,EVENTS.KEYDOWN,(e)=>{
+        if(e.type === 'keydown' && e.key == 'D' && e.shiftKey) {
+            surface.debug = !surface.debug
+            surface.repaint()
+        }
+    })
+
+    let doc = new Doc();
+    //draws border
+    let main_view = new BaseParentView("main",new Rect(0,0,surface.canvas.width,surface.canvas.height))
+
+    //label at the top
+    let main_label = new Label("tile map editor");
+    main_label.bounds.y = 0
+    main_view.add(main_label);
+
+    let toolbar = setup_toolbar(doc);
+    toolbar.bounds.x = 0;
+    toolbar.bounds.y = main_label.bounds.bottom();
+
     main_view.add(toolbar);
 
 
@@ -447,6 +443,7 @@ export function start() {
     palette_chooser.doc = doc;
     palette_chooser.palette = doc.palette;
     palette_chooser.bounds.y = toolbar.bounds.bottom() + 10;
+    palette_chooser.bounds.y = 80
     main_view.add(palette_chooser);
 
 
