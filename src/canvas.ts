@@ -64,7 +64,7 @@ export class CanvasSurface {
         this.ctx.translate(0.5, 0.5);
         this.ctx.scale(this.scale, this.scale)
         this.debug_draw_rect(new Rect(0, 0, this.w - 1, this.h - 1), 'canvas')
-        this.draw_view(this.root)
+        if(this.root) this.draw_view(this.root)
         this.ctx.restore()
     }
 
@@ -120,8 +120,10 @@ export class CanvasSurface {
         }
     }
 
-    load_spritesheet(img_url: any) {
-        return new SpriteSheet(img_url, this)
+    async load_spritesheet(img_url: any):Promise<SpriteSheet> {
+        let ss = new SpriteSheet(img_url,this);
+        await ss.load()
+        return ss;
     }
 
     draw_slice(x: number, y: number, slice: SpriteSlice, scale: number) {
@@ -138,17 +140,24 @@ export class SpriteSheet {
     img: HTMLImageElement;
     loaded: boolean
     url: any;
+    private can: CanvasSurface;
 
     constructor(url: any, can: CanvasSurface) {
         this.url = url
         this.img = new Image()
         this.loaded = false
-        this.img.addEventListener('load', () => {
-            log('loaded', url)
-            this.loaded = true
-            can.repaint()
+        this.can = can
+    }
+    load() {
+        return new Promise<void>((res,rej)=>{
+            this.img.addEventListener('load', () => {
+                log('loaded', this.url)
+                this.loaded = true
+                this.can.repaint()
+                res()
+            })
+            this.img.src = this.url
         })
-        this.img.src = url
     }
 
     is_loaded() {
@@ -156,7 +165,11 @@ export class SpriteSheet {
     }
 
     get_slice(numb: number): SpriteSlice {
-        return new SpriteSlice(this, new Rect(numb * 8, 0, 8, 8))
+        let w = this.img.width/8
+        let x = numb%w;
+        let y = Math.floor(numb/w)
+        console.log("num",numb,'goes to',x,y)
+        return new SpriteSlice(this, new Rect(x*8, y*8, 8, 8))
     }
 }
 
@@ -184,6 +197,7 @@ export function setup_keyboard_input() {
         if (e.key === 'ArrowRight') KBD.fire(EVENTS.RIGHT, {});
         if (e.key === 'ArrowDown') KBD.fire(EVENTS.DOWN, {});
         if (e.key === 'ArrowUp') KBD.fire(EVENTS.UP, {});
+        e.preventDefault()
     })
 
     return KBD

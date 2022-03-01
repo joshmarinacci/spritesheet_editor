@@ -139,6 +139,13 @@ class SnakeModel {
     }
 }
 
+class ScoreModel {
+    level: number;
+    constructor() {
+        this.level = 0;
+    }
+}
+
 
 const EMPTY = 0;
 const WALL = 1;
@@ -207,13 +214,47 @@ class GridModel {
     }
 }
 
-export function start() {
+class ScoreView implements View {
+    private score: ScoreModel;
+    private bounds: Rect;
+    private slices: SpriteSlice[];
+    constructor(score: ScoreModel, spritesheet:SpriteSheet) {
+        this.score = score;
+        this.bounds = new Rect(0,0,32,16)
+        this.slices = []
+        for(let i=0; i<=9; i++) {
+            this.slices[i] = spritesheet.get_slice(4+i)
+        }
+    }
+
+    draw(g: CanvasSurface): void {
+        let ones = 0;
+        let tens = 0;
+        if(this.score.level < 10) {
+            ones = this.score.level
+            // g.draw_slice(0, 0, this.slices[this.score.level], 2)
+        } else {
+            ones = this.score.level%10;
+            tens = Math.floor(this.score.level/10)
+        }
+        g.draw_slice(0, 0, this.slices[tens], 2)
+        g.draw_slice(16, 0, this.slices[ones], 2)
+    }
+
+    get_bounds(): Rect {
+        return this.bounds
+    }
+
+}
+
+export async function start() {
     log("starting")
     let All = new Observable();
-    let level = 0;
+
     let KeyboardInput = setup_keyboard_input()
     let surface = new CanvasSurface(400,300);
-    let spritesheet = surface.load_spritesheet(tileset_url);
+    let spritesheet = await surface.load_spritesheet(tileset_url);
+    console.log("loaded now")
 
     let root = new RootView()
     let snake = new SnakeModel()
@@ -226,6 +267,11 @@ export function start() {
     board_layer.add(board_view);
     root.add(board_layer);
     board_layer.add(new SnakeView(snake,spritesheet));
+
+
+    let score = new ScoreModel()
+    board_layer.add(new ScoreView(score, spritesheet))
+
 
     // let overlay_layer = new LayerView();
     // overlay_layer.add(snake_logo);
@@ -243,24 +289,21 @@ export function start() {
     on(KeyboardInput,EVENTS.DOWN,  () => move_by(new Point(0,1)));
     on(KeyboardInput,EVENTS.UP,    () => move_by(new Point(0,-1)));
 
-    // on(Clock,TICK,() => {
-    //     log("clock tick");
-    // })
-
     function restart() {
-        level = 0
+        score.level = 0
         snake.position.set(5,5);
         snake.tail.clear();
         nextLevel()
     }
+
     function nextLevel() {
-        level += 1
+        score.level += 1
         board.fill_all(()=>EMPTY);
         board.fill_row(0,()=>WALL)
         board.fill_col(0,()=>WALL)
         board.fill_row(19,()=>WALL)
         board.fill_col(19,()=>WALL)
-        snake.length = level
+        snake.length = score.level
         snake.tail.forEach(val=>board.set_at(val,TAIL));
         board.set_xy(randi(1,19),randi(1,19),FOOD)
         surface.repaint()
