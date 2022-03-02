@@ -118,6 +118,22 @@ export class Doc extends Observable {
         this.selected_tree_item_index = -1
         this.selected_tree_item = null
     }
+
+    get_selected_sheet():Sheet {
+        return this.sheets[this.selected_sheet]
+    }
+
+    get_selected_map():Sprite {
+        return this.maps[this.selected_map]
+    }
+
+    set_selected_sheet(target: Sheet) {
+        this.selected_sheet = this.sheets.indexOf(target)
+    }
+
+    set_selected_map(target: Sprite) {
+        this.selected_map = this.maps.indexOf(target)
+    }
 }
 
 export function draw_sprite(sprite: Sprite, ctx: CanvasSurface, x: number, y: number, scale: number, doc: Doc) {

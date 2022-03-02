@@ -30,7 +30,7 @@ class TileEditor implements View, InputView {
         //clear the background
         g.fillBackground(this.bounds,'white');
         //draw each pixel in the tile as a rect
-        let sheet = this.doc.sheets[this.doc.selected_sheet];
+        let sheet = this.doc.get_selected_sheet()
         let sprite = sheet.sprites[this.doc.selected_tile];
         let palette = this.doc.palette;
         if (sprite !== null) {
@@ -49,7 +49,7 @@ class TileEditor implements View, InputView {
 
     input(e: CommonEvent): void {
         let pt = e.pt.divide_floor(this.scale);
-        let sheet = this.doc.sheets[this.doc.selected_sheet]
+        let sheet = this.doc.get_selected_sheet()
         let tile = sheet.sprites[this.doc.selected_tile]
         if (e.button == 2) {
             if(e.type === "mousedown") {
@@ -92,7 +92,7 @@ class TileSelector implements View, InputView {
 
     draw(g: CanvasSurface) {
         g.fillBackground(this.bounds,EMPTY_COLOR);
-        let sheet = this.doc.sheets[this.doc.selected_sheet]
+        let sheet = this.doc.get_selected_sheet()
         sheet.sprites.forEach((sprite,s)=>{
             let pt = wrap_number(s,8);
             draw_sprite(sprite,g,pt.x*this.scale,pt.y*this.scale,4, this.doc)
@@ -109,7 +109,7 @@ class TileSelector implements View, InputView {
     input(e: CommonEvent): void {
         let pt = e.pt.divide_floor(this.scale);
         let val = pt.x + pt.y * 8;
-        let sheet = this.doc.sheets[this.doc.selected_sheet]
+        let sheet = this.doc.get_selected_sheet()
         if(val >= 0 && val < sheet.sprites.length) {
             this.doc.selected_tile = val;
             this.doc.fire('change', this.doc.selected_color)
@@ -140,11 +140,11 @@ class MapEditor implements  View, InputView {
     children: View[];
     id: string;
     doc: Doc;
-    // mouse_down: (e: PEvt) => void;
     scale:number;
 
-    constructor() {
-        this.id = 'map editor'
+    constructor(doc:Doc) {
+        this.doc = doc
+        this.id = 'map-editor'
         this.scale = 64;
         this.children = []
         this.bounds = new Rect(0,0,16*this.scale,16*this.scale)
@@ -156,10 +156,11 @@ class MapEditor implements  View, InputView {
     draw(ctx: CanvasSurface) {
         ctx.fillBackground(this.bounds,EMPTY_COLOR)
         let map = this.doc.maps[this.doc.selected_map]
+        console.log("selected map",map)
         if (!map) return;
         map.forEachPixel((val,i,j) => {
             if (!val || val === 0) return;
-            let sheet = this.doc.sheets[this.doc.selected_sheet]
+            let sheet = this.doc.get_selected_sheet()
             let tile = sheet.sprites.find((t:Sprite) => t.id ===val);
             draw_sprite(tile,ctx,i*this.scale,j*this.scale,8,this.doc)
         })
@@ -173,11 +174,15 @@ class MapEditor implements  View, InputView {
     input(e: CommonEvent): void {
         if(e.type === "mousedown" || e.type === "mousedrag") {
             let pt = e.pt.divide_floor(this.scale);
-            let map = this.doc.maps[this.doc.selected_map]
+            let map = this.doc.get_selected_map()
             if(!map) return
-            // let tile = this.doc.tiles[this.doc.selected_tile];
-            // this.doc.tilemap.set_pixel(pt.x,pt.y,tile.id)
-            // this.doc.fire('change',tile)
+            let sheet = this.doc.get_selected_sheet()
+            let tile = sheet.sprites[this.doc.selected_tile];
+            console.log("drawing with tile")
+            if(tile) {
+                map.set_pixel(pt.x,pt.y,tile.id)
+                this.doc.fire('change', tile)
+            }
         }
     }
 
@@ -545,6 +550,15 @@ class TreeView extends BaseParentView implements InputView {
             if (item && item.type !== 'header') {
                 this.doc.selected_tree_item_index = y
                 this.doc.selected_tree_item = item
+                let target = this.doc.selected_tree_item.target;
+                console.log("selecting",target)
+                if(this.doc.selected_tree_item.type === 'sheet') {
+                    this.doc.set_selected_sheet(target)
+                }
+                if(this.doc.selected_tree_item.type === 'map') {
+                    this.doc.set_selected_map(target)
+                }
+                // if(this.doc.se)
                 event.ctx.repaint()
             }
         }
@@ -619,7 +633,7 @@ function make_sheet_editor_view(doc: Doc) {
     sheet_editor.add(tile_editor)
 
     let add_tile_button = new Button("add tile",()=>{
-        let sheet = doc.sheets[doc.selected_sheet]
+        let sheet = doc.get_selected_sheet()
         sheet.add(new Sprite(gen_id("tile"), 8, 8));
         doc.fire('change', "added a tile");
     });
@@ -633,6 +647,28 @@ function make_sheet_editor_view(doc: Doc) {
     sprite_selector.bounds.y = add_tile_button.bounds.bottom() + 10;
     sheet_editor.add(sprite_selector);
     return sheet_editor
+}
+
+function make_map_view(doc: Doc) {
+    let map_view = new MapEditorView()
+
+    let grid_toggle = new ToggleButton("grid",()=>{
+        doc.map_grid_visible = !doc.map_grid_visible;
+        grid_toggle.selected = doc.map_grid_visible;
+        doc.fire("change", grid_toggle.selected);
+    });
+    grid_toggle.bounds.x = 0;
+    grid_toggle.bounds.y = 0;
+    map_view.add(grid_toggle)
+
+    let scroll_view = new ScrollView(new Rect(0,35,600,600));
+    map_view.add(scroll_view);
+
+    // lets you edit an entire tile map, using the currently selected tile
+    let map_editor = new MapEditor(doc);
+    scroll_view.add(map_editor);
+
+    return map_view
 }
 
 export function start() {
@@ -671,25 +707,7 @@ export function start() {
     panel_view.add(sheet_editor)
 
 
-    let map_view = new MapEditorView()
-
-    let grid_toggle = new ToggleButton("grid",()=>{
-        doc.map_grid_visible = !doc.map_grid_visible;
-        grid_toggle.selected = doc.map_grid_visible;
-        doc.fire("change", grid_toggle.selected);
-    });
-    grid_toggle.bounds.x = 300;
-    grid_toggle.bounds.y = 30;
-    map_view.add(grid_toggle)
-
-    let scroll_view = new ScrollView(new Rect(0,0,600,600));
-    map_view.add(scroll_view);
-
-    // lets you edit an entire tile map, using the currently selected tile
-    let map_editor = new MapEditor();
-    map_editor.doc = doc
-    scroll_view.add(map_editor);
-
+    let map_view = make_map_view(doc)
     panel_view.add(map_view)
 
 
