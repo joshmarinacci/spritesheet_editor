@@ -1,4 +1,4 @@
-import {BaseParentView, Button, HBox, Label, ToggleButton} from "./components";
+import {BaseParentView, Button, HBox, Label, LayerView, ToggleButton} from "./components";
 import {canvasToPNGBlob, forceDownloadBlob, gen_id, Observable, on, Point, Rect} from "./util";
 import {Doc, draw_sprite, Sprite} from "./app-model";
 import {
@@ -30,7 +30,8 @@ class TileEditor implements View, InputView {
         //clear the background
         g.fillBackground(this.bounds,'white');
         //draw each pixel in the tile as a rect
-        let sprite = this.doc.tiles[this.doc.selected_tile];
+        let sheet = this.doc.sheets[this.doc.selected_sheet];
+        let sprite = sheet.sprites[this.doc.selected_tile];
         let palette = this.doc.palette;
         if (sprite !== null) {
             sprite.forEachPixel((val:number,i:number,j:number) => {
@@ -48,7 +49,8 @@ class TileEditor implements View, InputView {
 
     input(e: CommonEvent): void {
         let pt = e.pt.divide_floor(this.scale);
-        let tile = this.doc.tiles[this.doc.selected_tile]
+        let sheet = this.doc.sheets[this.doc.selected_sheet]
+        let tile = sheet.sprites[this.doc.selected_tile]
         if (e.button == 2) {
             if(e.type === "mousedown") {
                 let value = tile.get_pixel(pt.x,pt.y);
@@ -86,7 +88,8 @@ class TileSelector implements View, InputView {
 
     draw(g: CanvasSurface) {
         g.fillBackground(this.bounds,EMPTY_COLOR);
-        this.doc.tiles.forEach((sprite,s)=>{
+        let sheet = this.doc.sheets[this.doc.selected_sheet]
+        sheet.sprites.forEach((sprite,s)=>{
             let pt = wrap_number(s,8);
             draw_sprite(sprite,g,pt.x*this.scale,pt.y*this.scale,4, this.doc)
         })
@@ -102,7 +105,8 @@ class TileSelector implements View, InputView {
     input(e: CommonEvent): void {
         let pt = e.pt.divide_floor(this.scale);
         let val = pt.x + pt.y * 8;
-        if(val >= 0 && val < this.doc.tiles.length) {
+        let sheet = this.doc.sheets[this.doc.selected_sheet]
+        if(val >= 0 && val < sheet.sprites.length) {
             this.doc.selected_tile = val;
             this.doc.fire('change', this.doc.selected_color)
         }
@@ -140,9 +144,12 @@ class MapEditor implements  View, InputView {
 
     draw(ctx: CanvasSurface) {
         ctx.fillBackground(this.bounds,EMPTY_COLOR)
-        this.doc.tilemap.forEachPixel((val,i,j) => {
+        let map = this.doc.maps[this.doc.selected_map]
+        if (!map) return;
+        map.forEachPixel((val,i,j) => {
             if (!val || val === 0) return;
-            let tile = this.doc.tiles.find((t:Sprite) => t.id ===val);
+            let sheet = this.doc.sheets[this.doc.selected_sheet]
+            let tile = sheet.sprites.find((t:Sprite) => t.id ===val);
             draw_sprite(tile,ctx,i*this.scale,j*this.scale,8,this.doc)
         })
         if(this.doc.map_grid_visible) draw_grid(ctx,this.bounds,this.scale)
@@ -155,9 +162,11 @@ class MapEditor implements  View, InputView {
     input(e: CommonEvent): void {
         if(e.type === "mousedown" || e.type === "mousedrag") {
             let pt = e.pt.divide_floor(this.scale);
-            let tile = this.doc.tiles[this.doc.selected_tile];
-            this.doc.tilemap.set_pixel(pt.x,pt.y,tile.id)
-            this.doc.fire('change',tile)
+            let map = this.doc.maps[this.doc.selected_map]
+            if(!map) return
+            // let tile = this.doc.tiles[this.doc.selected_tile];
+            // this.doc.tilemap.set_pixel(pt.x,pt.y,tile.id)
+            // this.doc.fire('change',tile)
         }
     }
 
@@ -203,6 +212,7 @@ class PaletteChooser implements View, InputView {
 
     input(e: CommonEvent): void {
         let val = e.pt.divide_floor(this.scale).x
+        console.log("clicked on palette",val);
         if (val >= 0 && val < this.doc.palette.length) {
             this.doc.selected_color = val;
             this.doc.fire('change',this.doc.selected_color)
@@ -369,10 +379,10 @@ function setup_toolbar(doc:Doc):HBox {
                 doc.selected_tile = doc_obj.selected_tile
                 doc.selected_color = doc_obj.selected_color
                 doc.map_grid_visible = doc_obj.map_grid_visible || false;
-                doc.tiles = doc_obj.tiles.map(tile => {
-                    return new Sprite('foo', 8, 8).fromJSONObj(tile);
-                });
-                doc.tilemap = new Sprite("foo",8,8).fromJSONObj(doc_obj.tilemap);
+                // doc.tiles = doc_obj.tiles.map(tile => {
+                //     return new Sprite('foo', 8, 8).fromJSONObj(tile);
+                // });
+                // doc.tilemap = new Sprite("foo",8,8).fromJSONObj(doc_obj.tilemap);
                 doc.fire('change',doc_obj)
             } catch (e) {
                 console.log("error parsing",str)
@@ -391,16 +401,16 @@ function setup_toolbar(doc:Doc):HBox {
         let ctx = canvas.getContext('2d')
         // ctx.fillStyle = 'red'
         // ctx.fillRect(0,0,canvas.width,canvas.height);
-        doc.tiles.forEach((sprite,s)=>{
-            let pt = wrap_number(s,8);
-            console.log("exporting tile",sprite)
-            let x = pt.x * size
-            let y = pt.y * size
-            sprite.forEachPixel((val: number, i: number, j: number) => {
-                ctx.fillStyle = doc.palette[val]
-                ctx.fillRect(x + i, y + j, 1,1);
-            });
-        })
+        // doc.tiles.forEach((sprite,s)=>{
+        //     let pt = wrap_number(s,8);
+        //     console.log("exporting tile",sprite)
+        //     let x = pt.x * size
+        //     let y = pt.y * size
+        //     sprite.forEachPixel((val: number, i: number, j: number) => {
+        //         ctx.fillStyle = doc.palette[val]
+        //         ctx.fillRect(x + i, y + j, 1,1);
+        //     });
+        // })
 
         canvasToPNGBlob(canvas).then((blob)=> forceDownloadBlob(`tileset@1.png`,blob))
     })
@@ -410,6 +420,155 @@ function setup_toolbar(doc:Doc):HBox {
     return toolbar
 }
 
+class MainView extends BaseParentView {
+    constructor() {
+        super('main',new Rect(0,0,100,100));
+    }
+    override layout(g: CanvasSurface, parent: View) {
+        this.bounds.x = 0;
+        this.bounds.y = 0;
+        this.bounds.w = g.canvas.width
+        this.bounds.h = g.canvas.height
+
+
+        let margin = 10
+        this.children.forEach(ch => {
+            // @ts-ignore
+            if (ch.id === 'tree') {
+                let b = ch.get_bounds()
+                b.x = margin
+                b.y = 50
+                b.w = 150
+                b.h = this.bounds.h - b.y - margin
+            }
+            // @ts-ignore
+            if (ch.id === 'app-title') {
+                let b = ch.get_bounds()
+                b.x = margin
+                b.y = margin
+                // b.w = 100
+                b.h = 30
+            }
+            // @ts-ignore
+            if (ch.id === 'toolbar') {
+                let b = ch.get_bounds()
+                b.x = 150
+                b.y = 10
+            }
+        })
+
+    }
+}
+
+class TreeView extends BaseParentView implements InputView {
+    private doc: Doc;
+    private data: any[];
+    constructor(doc:Doc) {
+        super('tree',new Rect(0,0,10,10));
+        this.doc = doc
+        this.data = []
+        this.rebuild()
+        on(doc,'change',()=>this.rebuild());
+    }
+    private rebuild() {
+        console.log("rebuilding",this.doc)
+        this.data = []
+        this.data.push({type:'header',text:'fonts'})
+        this.doc.fonts.forEach(font => {
+            this.data.push({type:'font',target:font})
+        })
+        this.data.push({type:'header',text:'sheets'})
+        this.doc.sheets.forEach(sheet => {
+            this.data.push({type:'sheet',target:sheet})
+        })
+        this.data.push({type:'header',text:'maps'})
+        this.doc.maps.forEach(map => {
+            this.data.push({type:'map',target:map})
+        })
+    }
+    override draw(g: CanvasSurface) {
+        g.fillBackground(this.bounds,'#ddd')
+        this.data.forEach((item,i) => {
+            if (i === this.doc.selected_tree_item_index) {
+                g.fillRect(0,30*i,this.get_bounds().w,25, 'cyan')
+            }
+
+            g.ctx.fillStyle = '#404040';
+            g.ctx.font = '20px sans-serif';
+            if(item.type === 'header') {
+                g.ctx.fillText(item.text, 4, 30 * i + 20)
+            }
+            if(item.type === 'sheet') {
+                g.ctx.fillText(item.target.name,20,30*i+20)
+            }
+            if(item.type === 'map') {
+                g.ctx.fillText(item.target.id,20,30*i+20)
+            }
+        })
+    }
+    input(event: CommonEvent): void {
+        if(event.type === 'mousedown') {
+            let pt = event.pt;
+            let y = Math.floor(pt.y/30)
+            let item = this.data[y]
+            if (item && item.type !== 'header') {
+                this.doc.selected_tree_item_index = y
+                this.doc.selected_tree_item = item
+                event.ctx.repaint()
+            }
+        }
+    }
+    is_input_view(): boolean {
+        return true
+    }
+
+}
+
+class PanelView extends BaseParentView {
+    private doc: Doc;
+    constructor(doc:Doc) {
+        super('panel-view', new Rect(200,100,500,500));
+        this.doc = doc
+    }
+    override draw(g: CanvasSurface) {
+        g.fillBackground(this.get_bounds(),'#dde')
+    }
+
+    override layout(g: CanvasSurface, parent: View) {
+        this.children.forEach(ch => {
+            ch.get_bounds().x = 0;
+            ch.get_bounds().y = 0;
+            ch.get_bounds().w = this.get_bounds().w
+            ch.get_bounds().h = this.get_bounds().h
+        })
+        console.log("selected view is",this.doc.selected_tree_item_index);
+        if(this.doc.selected_tree_item) {
+            let type = this.doc.selected_tree_item.type
+            console.log("type is",type)
+            this.children.forEach(ch => {
+                // @ts-ignore
+                if(type === 'sheet' && ch.id !== 'sheet-editor-view') {
+                    ch.get_bounds().y = -1000
+                }
+                // @ts-ignore
+                if(type === 'map' && ch.id !== 'map-editor-view') {
+                    ch.get_bounds().y = -1000
+                }
+            })
+        }
+    }
+}
+class SheetEditorView extends BaseParentView {
+    constructor() {
+        super('sheet-editor-view',new Rect(0,0,100,100));
+    }
+}
+
+class MapEditorView extends BaseParentView {
+    constructor() {
+        super('map-editor-view',new Rect(0,0,100,100));
+    }
+}
 export function start() {
     log("starting")
     let All = new Observable();
@@ -425,49 +584,56 @@ export function start() {
 
     let doc = new Doc();
     //draws border
-    let main_view = new BaseParentView("main",new Rect(0,0,surface.canvas.width,surface.canvas.height))
+    let main_view = new MainView()
+
+    main_view.add(new TreeView(doc))
 
     //label at the top
     let main_label = new Label("tile map editor");
+    main_label.id = 'app-title'
     main_label.bounds.y = 0
     main_view.add(main_label);
 
     let toolbar = setup_toolbar(doc);
-    toolbar.bounds.x = 0;
-    toolbar.bounds.y = main_label.bounds.bottom();
-
+    toolbar.id = 'toolbar'
     main_view.add(toolbar);
 
+    let panel_view = new PanelView(doc);
+    main_view.add(panel_view)
 
+    let sheet_editor = new SheetEditorView();
     let palette_chooser = new PaletteChooser();
     palette_chooser.doc = doc;
     palette_chooser.palette = doc.palette;
-    palette_chooser.bounds.y = toolbar.bounds.bottom() + 10;
-    palette_chooser.bounds.y = 80
-    main_view.add(palette_chooser);
-
+    palette_chooser.bounds.y = 0
+    sheet_editor.add(palette_chooser);
 
     // tile editor, edits the current tile
     let tile_editor = new TileEditor();
     tile_editor.doc = doc;
     tile_editor.bounds.y = palette_chooser.bounds.bottom() + 10;
     tile_editor.bounds.x = 0
-    main_view.add(tile_editor)
-
+    sheet_editor.add(tile_editor)
 
     let add_tile_button = new Button("add tile",()=>{
-        doc.tiles.push(new Sprite(gen_id("tile"), 8, 8));
+        let sheet = doc.sheets[doc.selected_sheet]
+        sheet.add(new Sprite(gen_id("tile"), 8, 8));
         doc.fire('change', "added a tile");
     });
     add_tile_button.bounds.y = tile_editor.bounds.bottom() + 10;
-    main_view.add(add_tile_button);
+    sheet_editor.add(add_tile_button);
 
 
     // lets you see all N tiles and choose one to edit
     let sprite_selector = new TileSelector()
     sprite_selector.doc = doc;
     sprite_selector.bounds.y = add_tile_button.bounds.bottom() + 10;
-    main_view.add(sprite_selector);
+    sheet_editor.add(sprite_selector);
+
+    panel_view.add(sheet_editor)
+
+
+    let map_view = new MapEditorView()
 
     let grid_toggle = new ToggleButton("grid",()=>{
         doc.map_grid_visible = !doc.map_grid_visible;
@@ -476,19 +642,22 @@ export function start() {
     });
     grid_toggle.bounds.x = 300;
     grid_toggle.bounds.y = 30;
-    main_view.add(grid_toggle)
+    map_view.add(grid_toggle)
 
-    let scroll_view = new ScrollView(new Rect(300,70,600,600));
-    main_view.add(scroll_view);
+    let scroll_view = new ScrollView(new Rect(0,0,600,600));
+    map_view.add(scroll_view);
 
     // lets you edit an entire tile map, using the currently selected tile
     let map_editor = new MapEditor();
     map_editor.doc = doc
     scroll_view.add(map_editor);
 
-    doc.addEventListener('change',() => {
-        surface.repaint();
-    });
+    panel_view.add(map_view)
+
+
+    // doc.addEventListener('change',() => {
+    //     surface.repaint();
+    // });
 
     surface.set_root(main_view)
     surface.addToPage();

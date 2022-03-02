@@ -65,13 +65,34 @@ export class Observable {
     }
 }
 
+export class Sheet {
+    sprites: Sprite[];
+    private id: string;
+    name: string;
+    constructor(id:string, name:string) {
+        this.id = id
+        this.name = name
+        this.sprites = []
+    }
+    add(sprite: Sprite) {
+        this.sprites.push(sprite)
+    }
+}
+export class SpriteFont {
+
+}
 export class Doc extends Observable {
-    selected_color: number;
-    palette: string[];
-    tiles: Sprite[]
-    selected_tile: number;
-    tilemap: Sprite;
+    selected_color: number
+    palette: string[]
+    sheets: Sheet[]
+    fonts: SpriteFont[]
+    selected_tile: number
+    maps:Sprite[]
+    selected_map: number
     map_grid_visible: boolean;
+    selected_tree_item_index:number
+    selected_tree_item:any
+    selected_sheet: number;
 
     constructor() {
         super();
@@ -83,13 +104,19 @@ export class Doc extends Observable {
             '#909090',
             '#404040',
         ];
-        this.tiles = [
-            new Sprite('sprite1', 8, 8)
-        ]
+        let sheet = new Sheet("sheet1", "first sheet")
+        sheet.add(new Sprite('sprite1',8,8))
+        sheet.add(new Sprite('sprite2',8,8))
+        this.sheets = [sheet]
+        this.selected_sheet = 0
         this.selected_tile = 0;
-        this.tilemap = new Sprite('main-map', 16, 16);
-        this.tilemap.set_pixel(0, 0, 'sprite1');
+        let tilemap = new Sprite('main-map', 16, 16);
+        tilemap.set_pixel(0, 0, 'sprite1');
+        this.maps = [tilemap]
         this.map_grid_visible = true;
+        this.fonts = []
+        this.selected_tree_item_index = -1
+        this.selected_tree_item = null
     }
 }
 

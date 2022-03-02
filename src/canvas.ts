@@ -215,6 +215,10 @@ export class CanvasSurface {
             down = true;
             let rect = this.canvas.getBoundingClientRect();
             let pt = new Point(evt.x-rect.x,evt.y-rect.y);
+            pt.x *= window.devicePixelRatio
+            pt.y *= window.devicePixelRatio
+            pt.x /= this.scale
+            pt.y /= this.scale
             button = evt.button as any
             let e = new CommonEvent('mousedown', pt, this)
             e.button = evt.button

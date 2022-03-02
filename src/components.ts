@@ -18,8 +18,6 @@ export class Label implements View {
     }
 
     draw(ctx: CanvasSurface) {
-        // ctx.fillRect(0,0,this.bounds.w,this.bounds.h);
-        // ctx.fillBounds(this.bounds,'#f0f0f0');
         ctx.ctx.fillStyle = '#404040';
         ctx.ctx.font = '20px sans-serif';
         ctx.ctx.fillText(this.text, 0, 20);
@@ -119,7 +117,7 @@ export class ToggleButton implements View, InputView {
 }
 
 export class BaseParentView implements View, ParentView {
-    private id: string;
+    id: string;
     bounds: Rect
     children: View[];
 
@@ -181,7 +179,12 @@ export class LayerView extends BaseParentView{
     }
 
     layout(g: CanvasSurface, parent: View): void {
-        this.bounds.w = parent.get_bounds().w
-        this.bounds.h = parent.get_bounds().h
+        if(parent) {
+            this.bounds.w = parent.get_bounds().w
+            this.bounds.h = parent.get_bounds().h
+        } else {
+            this.bounds.w = g.canvas.width
+            this.bounds.h = g.canvas.height
+        }
     }
 }
