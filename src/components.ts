@@ -10,6 +10,10 @@ export class Label implements View {
     private text: string;
     children: View[];
 
+    visible(): boolean {
+        return true;
+    }
+
     constructor(text: string) {
         this.id = gen_id('label')
         this.bounds = new Rect(0, 0, 100, 30);
@@ -38,6 +42,9 @@ export class Button implements View, InputView {
     private title: string
     private cb: any
 
+    visible(): boolean {
+        return true;
+    }
     get_bounds(): Rect {
         return this.bounds
     }
@@ -90,6 +97,10 @@ export class ToggleButton implements View, InputView {
         this.cb = cb;
     }
 
+    visible(): boolean {
+        return true;
+    }
+
     draw(ctx: CanvasSurface) {
         ctx.fillBackground(this.bounds, this.selected?BUTTON_BORDER_COLOR:BUTTON_COLOR)
         ctx.strokeBackground(this.bounds,BUTTON_BORDER_COLOR)
@@ -120,11 +131,13 @@ export class BaseParentView implements View, ParentView {
     id: string;
     bounds: Rect
     children: View[];
+    private _visible: boolean;
 
     constructor(id: string, bounds?: Rect) {
         this.id = id
         this.bounds = bounds || new Rect(0, 0, 100, 100)
         this.children = []
+        this._visible = true;
     }
 
     add(view: View) {
@@ -136,6 +149,7 @@ export class BaseParentView implements View, ParentView {
     }
 
     draw(g: CanvasSurface): void {
+        // console.log('drawing base view',this.id, this.visible())
     }
 
     get_bounds(): Rect {
@@ -151,6 +165,13 @@ export class BaseParentView implements View, ParentView {
     }
 
     layout(g: CanvasSurface, parent: View): void {
+    }
+
+    visible(): boolean {
+        return this._visible;
+    }
+    set_visible(vis:boolean) {
+        this._visible = vis
     }
 }
 

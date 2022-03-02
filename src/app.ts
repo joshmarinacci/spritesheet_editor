@@ -71,6 +71,10 @@ class TileEditor implements View, InputView {
 
     layout(g: CanvasSurface, parent: View): void {
     }
+
+    visible(): boolean {
+        return true
+    }
 }
 
 class TileSelector implements View, InputView {
@@ -118,6 +122,10 @@ class TileSelector implements View, InputView {
 
     layout(g: CanvasSurface, parent: View): void {
     }
+
+    visible(): boolean {
+        return true;
+    }
 }
 
 function wrap_number(num:number,width:number):Point {
@@ -142,6 +150,9 @@ class MapEditor implements  View, InputView {
         this.bounds = new Rect(0,0,16*this.scale,16*this.scale)
     }
 
+    visible(): boolean {
+        return true;
+    }
     draw(ctx: CanvasSurface) {
         ctx.fillBackground(this.bounds,EMPTY_COLOR)
         let map = this.doc.maps[this.doc.selected_map]
@@ -193,6 +204,10 @@ class PaletteChooser implements View, InputView {
         this.bounds = new Rect(0,0,this.scale*8,this.scale);
     }
 
+    visible(): boolean {
+        return true;
+    }
+
     draw(ctx: CanvasSurface) {
         if (this.palette) {
             ctx.fillBackground(this.bounds,EMPTY_COLOR)
@@ -236,6 +251,10 @@ class WrapperView implements View, ParentView {
         this.id = 'wrapper-view'
         this.children = []
         this.bounds = bounds
+    }
+
+    visible(): boolean {
+        return true;
     }
 
     draw(ctx: CanvasSurface) {
@@ -318,6 +337,10 @@ class ScrollView implements View, ParentView, InputView {
         })
         right.bounds = new Rect(this.bounds.w-30-30,this.bounds.h-30,30,30);
         this.children.push(right);
+    }
+
+    visible(): boolean {
+        return true;
     }
 
     add(view: View) {
@@ -524,7 +547,7 @@ class TreeView extends BaseParentView implements InputView {
 
 }
 
-class PanelView extends BaseParentView {
+class SinglePanel extends BaseParentView {
     private doc: Doc;
     constructor(doc:Doc) {
         super('panel-view', new Rect(200,100,500,500));
@@ -544,15 +567,18 @@ class PanelView extends BaseParentView {
         console.log("selected view is",this.doc.selected_tree_item_index);
         if(this.doc.selected_tree_item) {
             let type = this.doc.selected_tree_item.type
-            console.log("type is",type)
             this.children.forEach(ch => {
                 // @ts-ignore
-                if(type === 'sheet' && ch.id !== 'sheet-editor-view') {
-                    ch.get_bounds().y = -1000
+                ch.set_visible(false)
+                // @ts-ignore
+                if(type === 'sheet' && ch.id === 'sheet-editor-view') {
+                    // @ts-ignore
+                    ch.set_visible(true)
                 }
                 // @ts-ignore
-                if(type === 'map' && ch.id !== 'map-editor-view') {
-                    ch.get_bounds().y = -1000
+                if(type === 'map' && ch.id === 'map-editor-view') {
+                    // @ts-ignore
+                    ch.set_visible(true)
                 }
             })
         }
@@ -598,7 +624,7 @@ export function start() {
     toolbar.id = 'toolbar'
     main_view.add(toolbar);
 
-    let panel_view = new PanelView(doc);
+    let panel_view = new SinglePanel(doc);
     main_view.add(panel_view)
 
     let sheet_editor = new SheetEditorView();

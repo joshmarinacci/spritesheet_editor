@@ -9,6 +9,7 @@ export interface View {
     get_bounds():Rect
     layout(g:CanvasSurface, parent:View):void;
     draw(g:CanvasSurface):void;
+    visible():boolean
 }
 export interface ParentView {
     is_parent_view():boolean,
@@ -117,9 +118,11 @@ export class CanvasSurface {
         this.ctx.save();
         let bds = view.get_bounds();
         this.ctx.translate(bds.x, bds.y)
-        view.draw(this);
+        if(view.visible()) {
+            view.draw(this);
+        }
         // @ts-ignore
-        if (view.is_parent_view && view.is_parent_view()) {
+        if (view.is_parent_view && view.is_parent_view() && view.visible()) {
             let parent = view as unknown as ParentView;
             if(parent.clip_children()) {
                 this.ctx.beginPath()
