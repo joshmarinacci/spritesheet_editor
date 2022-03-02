@@ -30,8 +30,7 @@ class TileEditor implements View, InputView {
         //clear the background
         g.fillBackground(this.bounds,'white');
         //draw each pixel in the tile as a rect
-        let sheet = this.doc.get_selected_sheet()
-        let sprite = sheet.sprites[this.doc.selected_tile];
+        let sprite = this.doc.get_selected_tile()
         let palette = this.doc.palette;
         if (sprite !== null) {
             sprite.forEachPixel((val:number,i:number,j:number) => {
@@ -156,7 +155,6 @@ class MapEditor implements  View, InputView {
     draw(ctx: CanvasSurface) {
         ctx.fillBackground(this.bounds,EMPTY_COLOR)
         let map = this.doc.maps[this.doc.selected_map]
-        console.log("selected map",map)
         if (!map) return;
         map.forEachPixel((val,i,j) => {
             if (!val || val === 0) return;
@@ -177,8 +175,7 @@ class MapEditor implements  View, InputView {
             let map = this.doc.get_selected_map()
             if(!map) return
             let sheet = this.doc.get_selected_sheet()
-            let tile = sheet.sprites[this.doc.selected_tile];
-            console.log("drawing with tile")
+            let tile = this.doc.get_selected_tile();
             if(tile) {
                 map.set_pixel(pt.x,pt.y,tile.id)
                 this.doc.fire('change', tile)

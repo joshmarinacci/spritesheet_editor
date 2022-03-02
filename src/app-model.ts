@@ -134,6 +134,12 @@ export class Doc extends Observable {
     set_selected_map(target: Sprite) {
         this.selected_map = this.maps.indexOf(target)
     }
+
+    get_selected_tile() {
+        let sheet = this.get_selected_sheet();
+        let tile = sheet.sprites[this.selected_tile];
+        return tile
+    }
 }
 
 export function draw_sprite(sprite: Sprite, ctx: CanvasSurface, x: number, y: number, scale: number, doc: Doc) {
