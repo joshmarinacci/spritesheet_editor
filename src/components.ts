@@ -1,6 +1,7 @@
 import {gen_id, Rect} from "./util";
 import {CanvasSurface, CommonEvent, InputView, ParentView, View} from "./canvas";
 
+export const ACTIVE_BUTTON_COLOR = '#a3e3ff';
 export const BUTTON_COLOR = '#e3e3e0';
 export const BUTTON_BORDER_COLOR = '#949492';
 
@@ -41,6 +42,7 @@ export class Button implements View, InputView {
     id: string
     private title: string
     private cb: any
+    hover:boolean
 
     visible(): boolean {
         return true;
@@ -55,10 +57,11 @@ export class Button implements View, InputView {
         this.bounds = new Rect(0, 0, 100, 30);
         this.children = []
         this.cb = cb;
+        this.hover = false
     }
 
     draw(ctx: CanvasSurface) {
-        ctx.fillBackground(this.bounds, BUTTON_COLOR)
+        ctx.fillBackground(this.bounds, this.hover?ACTIVE_BUTTON_COLOR:BUTTON_COLOR)
         ctx.strokeBackground(this.bounds,BUTTON_BORDER_COLOR)
         ctx.ctx.fillStyle = '#404040';
         ctx.ctx.font = '20px sans-serif';
@@ -67,7 +70,13 @@ export class Button implements View, InputView {
 
     input(event: CommonEvent): void {
         if (event.type === 'mousedown') {
+            this.hover = true
             this.cb(event)
+            event.ctx.repaint()
+        }
+        if (event.type === 'mouseup') {
+            this.hover = false
+            event.ctx.repaint()
         }
     }
 

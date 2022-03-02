@@ -257,6 +257,7 @@ export class CanvasSurface {
 
     private dispatch(view: View, e:CommonEvent): View | null {
         if(this.debug) log("dispatching",view,view.get_bounds());
+        if (!view.visible()) return null
         if (view.get_bounds().contains(e.pt)) {
             // @ts-ignore
             if (view.is_parent_view && view.is_parent_view()) {

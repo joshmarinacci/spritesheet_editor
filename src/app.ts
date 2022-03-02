@@ -1,4 +1,4 @@
-import {BaseParentView, Button, HBox, Label, LayerView, ToggleButton} from "./components";
+import {ACTIVE_BUTTON_COLOR, BaseParentView, Button, HBox, Label, LayerView, ToggleButton} from "./components";
 import {canvasToPNGBlob, forceDownloadBlob, gen_id, Observable, on, Point, Rect} from "./util";
 import {Doc, draw_sprite, Sprite} from "./app-model";
 import {
@@ -231,6 +231,7 @@ class PaletteChooser implements View, InputView {
         if (val >= 0 && val < this.doc.palette.length) {
             this.doc.selected_color = val;
             this.doc.fire('change',this.doc.selected_color)
+            e.ctx.repaint()
         }
     }
 
@@ -478,6 +479,14 @@ class MainView extends BaseParentView {
                 b.x = 150
                 b.y = 10
             }
+            // @ts-ignore
+            if (ch.id === 'panel-view') {
+                let b = ch.get_bounds()
+                b.x = 160
+                b.y = 50
+                b.w = this.bounds.w - 160
+                b.h = this.bounds.h - 50
+            }
         })
 
     }
@@ -494,7 +503,6 @@ class TreeView extends BaseParentView implements InputView {
         on(doc,'change',()=>this.rebuild());
     }
     private rebuild() {
-        console.log("rebuilding",this.doc)
         this.data = []
         this.data.push({type:'header',text:'fonts'})
         this.doc.fonts.forEach(font => {
@@ -513,7 +521,7 @@ class TreeView extends BaseParentView implements InputView {
         g.fillBackground(this.bounds,'#ddd')
         this.data.forEach((item,i) => {
             if (i === this.doc.selected_tree_item_index) {
-                g.fillRect(0,30*i,this.get_bounds().w,25, 'cyan')
+                g.fillRect(0,30*i,this.get_bounds().w,25, ACTIVE_BUTTON_COLOR)
             }
 
             g.ctx.fillStyle = '#404040';
@@ -564,7 +572,6 @@ class SinglePanel extends BaseParentView {
             ch.get_bounds().w = this.get_bounds().w
             ch.get_bounds().h = this.get_bounds().h
         })
-        console.log("selected view is",this.doc.selected_tree_item_index);
         if(this.doc.selected_tree_item) {
             let type = this.doc.selected_tree_item.type
             this.children.forEach(ch => {
@@ -595,6 +602,39 @@ class MapEditorView extends BaseParentView {
         super('map-editor-view',new Rect(0,0,100,100));
     }
 }
+
+function make_sheet_editor_view(doc: Doc) {
+    let sheet_editor = new SheetEditorView();
+    let palette_chooser = new PaletteChooser();
+    palette_chooser.doc = doc;
+    palette_chooser.palette = doc.palette;
+    palette_chooser.bounds.y = 0
+    sheet_editor.add(palette_chooser);
+
+    // tile editor, edits the current tile
+    let tile_editor = new TileEditor();
+    tile_editor.doc = doc;
+    tile_editor.bounds.y = palette_chooser.bounds.bottom() + 10;
+    tile_editor.bounds.x = 0
+    sheet_editor.add(tile_editor)
+
+    let add_tile_button = new Button("add tile",()=>{
+        let sheet = doc.sheets[doc.selected_sheet]
+        sheet.add(new Sprite(gen_id("tile"), 8, 8));
+        doc.fire('change', "added a tile");
+    });
+    add_tile_button.bounds.y = tile_editor.bounds.bottom() + 10;
+    sheet_editor.add(add_tile_button);
+
+
+    // lets you see all N tiles and choose one to edit
+    let sprite_selector = new TileSelector()
+    sprite_selector.doc = doc;
+    sprite_selector.bounds.y = add_tile_button.bounds.bottom() + 10;
+    sheet_editor.add(sprite_selector);
+    return sheet_editor
+}
+
 export function start() {
     log("starting")
     let All = new Observable();
@@ -627,35 +667,7 @@ export function start() {
     let panel_view = new SinglePanel(doc);
     main_view.add(panel_view)
 
-    let sheet_editor = new SheetEditorView();
-    let palette_chooser = new PaletteChooser();
-    palette_chooser.doc = doc;
-    palette_chooser.palette = doc.palette;
-    palette_chooser.bounds.y = 0
-    sheet_editor.add(palette_chooser);
-
-    // tile editor, edits the current tile
-    let tile_editor = new TileEditor();
-    tile_editor.doc = doc;
-    tile_editor.bounds.y = palette_chooser.bounds.bottom() + 10;
-    tile_editor.bounds.x = 0
-    sheet_editor.add(tile_editor)
-
-    let add_tile_button = new Button("add tile",()=>{
-        let sheet = doc.sheets[doc.selected_sheet]
-        sheet.add(new Sprite(gen_id("tile"), 8, 8));
-        doc.fire('change', "added a tile");
-    });
-    add_tile_button.bounds.y = tile_editor.bounds.bottom() + 10;
-    sheet_editor.add(add_tile_button);
-
-
-    // lets you see all N tiles and choose one to edit
-    let sprite_selector = new TileSelector()
-    sprite_selector.doc = doc;
-    sprite_selector.bounds.y = add_tile_button.bounds.bottom() + 10;
-    sheet_editor.add(sprite_selector);
-
+    let sheet_editor = make_sheet_editor_view(doc);
     panel_view.add(sheet_editor)
 
 
@@ -681,9 +693,9 @@ export function start() {
     panel_view.add(map_view)
 
 
-    // doc.addEventListener('change',() => {
-    //     surface.repaint();
-    // });
+    doc.addEventListener('change',() => {
+        surface.repaint();
+    });
 
     surface.set_root(main_view)
     surface.addToPage();
