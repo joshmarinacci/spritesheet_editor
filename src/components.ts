@@ -1,17 +1,22 @@
-import {gen_id, Rect} from "./util";
+import {Callback, gen_id, Rect} from "./util";
 import {CanvasSurface, CommonEvent, InputView, ParentView, View} from "./canvas";
 import {
     ButtonBackgroundColor_active,
     ButtonBorderColor,
     ButtonBackgroundColor,
     StandardTextColor,
-    StandardTextStyle, StandardTextHeight, StandardVerticalMargin, StandardLeftPadding, StandardSelectionColor
+    StandardTextStyle,
+    StandardTextHeight,
+    StandardVerticalMargin,
+    StandardLeftPadding,
+    StandardSelectionColor,
+    StandardPanelBackgroundColor
 } from "./style";
 
 export class Label implements View {
     bounds: Rect;
     id: string;
-    private text: string;
+    text: string;
 
     visible(): boolean {
         return true;
@@ -37,6 +42,17 @@ export class Label implements View {
     }
 }
 
+export class CustomLabel extends Label {
+    private cb: Callback;
+    constructor(text:string,cb:Callback) {
+        super(text);
+        this.cb = cb
+    }
+    override draw(ctx: CanvasSurface) {
+        this.text = this.cb({})
+        super.draw(ctx);
+    }
+}
 export class ActionButton implements View, InputView {
     bounds: Rect
     id: string
@@ -108,7 +124,7 @@ export class ToggleButton implements View, InputView {
     }
 
     draw(ctx: CanvasSurface) {
-        ctx.fillBackground(this.bounds, this.selected?ButtonBorderColor:ButtonBackgroundColor)
+        ctx.fillBackground(this.bounds, this.selected?ButtonBackgroundColor_active:ButtonBackgroundColor)
         ctx.strokeBackground(this.bounds,ButtonBorderColor)
         ctx.ctx.fillStyle = StandardTextColor
         ctx.ctx.font = StandardTextStyle
@@ -219,6 +235,7 @@ export class BaseParentView implements View, ParentView {
 
     draw(g: CanvasSurface): void {
         // console.log('drawing base view',this.id, this.visible())
+        g.fillBackground(this.bounds,StandardPanelBackgroundColor)
     }
 
     get_bounds(): Rect {

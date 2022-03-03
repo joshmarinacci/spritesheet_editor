@@ -1,4 +1,4 @@
-import {Observable, Point, Rect} from "./util";
+import {Callback, Observable, Point, Rect} from "./util";
 
 export function log(...args) {
     console.log('SNAKE:', ...args);
@@ -49,6 +49,7 @@ export class CanvasSurface {
     ctx: CanvasRenderingContext2D;
     debug: boolean;
     private scale: number;
+    private _input_callback: Callback;
 
     constructor(w: number, h: number) {
         this.w = w;
@@ -226,6 +227,7 @@ export class CanvasSurface {
             let e = new CommonEvent('mousedown', pt, this)
             e.button = evt.button
             this.dispatch(this.root,e);
+            if(this._input_callback) this._input_callback(e)
         })
         this.canvas.addEventListener('mousemove',(evt)=>{
             if(down) {
@@ -234,6 +236,7 @@ export class CanvasSurface {
                 let e = new CommonEvent('mousedrag', pt, this)
                 e.button = evt.button
                 this.dispatch(this.root,e)// {type:'mousedrag', pt:pt, button:button, ctx:this});
+                if(this._input_callback) this._input_callback(e)
             }
         })
         this.canvas.addEventListener('mouseup',(evt)=>{
@@ -243,6 +246,7 @@ export class CanvasSurface {
             let e = new CommonEvent('mouseup', pt, this)
             e.button = evt.button
             this.dispatch(this.root,e)//{type:'mouseup',pt:pt, button:button, ctx:this});
+            if(this._input_callback) this._input_callback(e)
         })
         this.canvas.addEventListener('wheel',(evt)=>{
             let rect = this.canvas.getBoundingClientRect();
@@ -280,6 +284,9 @@ export class CanvasSurface {
         return null;
     }
 
+    on_input(cb: Callback) {
+        this._input_callback = cb
+    }
 }
 
 export class SpriteSheet {

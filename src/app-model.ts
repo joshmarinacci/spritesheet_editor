@@ -126,6 +126,7 @@ export class Doc extends Observable {
     selected_tree_item_index:number
     selected_tree_item:any
     selected_sheet: number;
+    private _dirty: boolean;
 
     constructor() {
         super();
@@ -150,6 +151,7 @@ export class Doc extends Observable {
         this.fonts = []
         this.selected_tree_item_index = -1
         this.selected_tree_item = null
+        this._dirty = false
     }
 
     get_selected_sheet():Sheet {
@@ -218,6 +220,30 @@ export class Doc extends Observable {
         console.log('selected tile is',this.get_selected_tile())
         console.log("selected map is",this.get_selected_map())
         this.fire('reload',this)
+    }
+
+    dirty() {
+        return this._dirty
+    }
+
+    mark_dirty() {
+        this._dirty = true
+    }
+
+    persist() {
+        let json = this.toJsonObj()
+        let str = JSON.stringify(json,null, '  ')
+        localStorage.setItem('backup',str)
+        console.log("persisted to backup")
+        this._dirty = false
+    }
+
+    check_backup() {
+        let item = localStorage.getItem('backup')
+        if(item) {
+            let data = JSON.parse(item)
+            this.reset_from_json(data)
+        }
     }
 }
 

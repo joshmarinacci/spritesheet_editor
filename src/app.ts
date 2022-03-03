@@ -1,4 +1,4 @@
-import {BaseParentView, ActionButton, HBox, Label, ToggleButton, SelectList} from "./components";
+import {BaseParentView, ActionButton, HBox, Label, ToggleButton, SelectList, CustomLabel} from "./components";
 import {
     canvasToPNGBlob, fileToJSON,
     forceDownloadBlob,
@@ -70,6 +70,7 @@ class TileEditor implements View, InputView {
             return
         }
         tile.set_pixel(pt.x, pt.y, this.doc.selected_color);
+        this.doc.mark_dirty()
         this.doc.fire('change', "tile edited");
     }
 
@@ -189,6 +190,7 @@ class MapEditor implements  View, InputView {
             let tile = this.doc.get_selected_tile();
             if(tile) {
                 map.set_pixel(pt.x,pt.y,tile.id)
+                this.doc.mark_dirty()
                 this.doc.fire('change', tile)
             }
         }
@@ -314,6 +316,11 @@ function setup_toolbar(doc:Doc):HBox {
     export_button.bounds.w = 70
     toolbar.add(export_button);
 
+    let dirty_label = new CustomLabel("initial-text",()=>{
+        return doc.dirty()?"dirty":"clean"
+    });
+    toolbar.add(dirty_label)
+
     return toolbar
 }
 
@@ -384,7 +391,6 @@ class SinglePanel extends BaseParentView {
         })
         let item = this.doc.selected_tree_item
         if(item) {
-            console.log("laying out single with",item)
             this.children.forEach(ch => {
                 // @ts-ignore
                 ch.set_visible(false)
@@ -433,6 +439,7 @@ function make_sheet_editor_view(doc: Doc) {
     let add_tile_button = new ActionButton("add tile",()=>{
         let sheet = doc.get_selected_sheet()
         sheet.add(new Sprite(gen_id("tile"), 8, 8));
+        doc.mark_dirty()
         doc.fire('change', "added a tile");
     });
     add_tile_button.bounds.y = tile_editor.bounds.bottom() + 10;
@@ -450,14 +457,6 @@ function make_sheet_editor_view(doc: Doc) {
 function make_map_view(doc: Doc) {
     let map_view = new MapEditorView()
 
-    let grid_toggle = new ToggleButton("grid",()=>{
-        doc.map_grid_visible = !doc.map_grid_visible;
-        grid_toggle.selected = doc.map_grid_visible;
-        doc.fire("change", grid_toggle.selected);
-    });
-    grid_toggle.bounds.x = 0;
-    grid_toggle.bounds.y = 0;
-    map_view.add(grid_toggle)
 
     // lets you edit an entire tile map, using the currently selected tile
     let map_editor = new MapEditor(doc);
@@ -467,6 +466,15 @@ function make_map_view(doc: Doc) {
     selector.doc = doc;
     selector.bounds.x = map_editor.get_bounds().right()
     map_view.add(selector)
+
+    let grid_toggle = new ToggleButton("grid",()=>{
+        doc.map_grid_visible = !doc.map_grid_visible;
+        grid_toggle.selected = doc.map_grid_visible;
+        doc.fire("change", grid_toggle.selected);
+    });
+    grid_toggle.bounds.x = 0;
+    grid_toggle.bounds.y = 550;
+    map_view.add(grid_toggle)
 
     return map_view
 }
@@ -485,6 +493,18 @@ export function start() {
     })
 
     let doc = new Doc();
+    doc.check_backup();
+    let timeout_id = 0
+    function check_dirty() {
+        if(doc.dirty()) {
+            doc.persist()
+            surface.repaint()
+        }
+    }
+    surface.on_input((e)=>{
+        clearTimeout(timeout_id)
+        timeout_id = setTimeout(check_dirty,2000)
+    })
     //draws border
     let main_view = new MainView()
 
