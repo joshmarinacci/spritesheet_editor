@@ -1,4 +1,4 @@
-import {ACTIVE_BUTTON_COLOR, BaseParentView, Button, HBox, Label, LayerView, ToggleButton} from "./components";
+import {BaseParentView, Button, HBox, Label, ToggleButton} from "./components";
 import {canvasToPNGBlob, forceDownloadBlob, gen_id, Observable, on, Point, Rect} from "./util";
 import {Doc, draw_sprite, Sprite} from "./app-model";
 import {
@@ -11,6 +11,7 @@ import {
     setup_keyboard_input,
     View
 } from "./canvas";
+import {StandardSelectionColor} from "./style";
 
 export const EMPTY_COLOR = '#62fcdc'
 
@@ -523,7 +524,7 @@ class TreeView extends BaseParentView implements InputView {
         g.fillBackground(this.bounds,'#ddd')
         this.data.forEach((item,i) => {
             if (i === this.doc.selected_tree_item_index) {
-                g.fillRect(0,30*i,this.get_bounds().w,25, ACTIVE_BUTTON_COLOR)
+                g.fillRect(0,30*i,this.get_bounds().w,25, StandardSelectionColor)
             }
 
             g.ctx.fillStyle = '#404040';

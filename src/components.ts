@@ -1,15 +1,17 @@
 import {gen_id, Rect} from "./util";
 import {CanvasSurface, CommonEvent, InputView, ParentView, View} from "./canvas";
-
-export const ACTIVE_BUTTON_COLOR = '#a3e3ff';
-export const BUTTON_COLOR = '#e3e3e0';
-export const BUTTON_BORDER_COLOR = '#949492';
+import {
+    ButtonBackgroundColor_active,
+    ButtonBorderColor,
+    ButtonBackgroundColor,
+    StandardTextColor,
+    StandardTextStyle, StandardTextHeight, StandardVerticalMargin, StandardLeftPadding
+} from "./style";
 
 export class Label implements View {
     bounds: Rect;
     id: string;
     private text: string;
-    children: View[];
 
     visible(): boolean {
         return true;
@@ -17,15 +19,14 @@ export class Label implements View {
 
     constructor(text: string) {
         this.id = gen_id('label')
-        this.bounds = new Rect(0, 0, 100, 30);
+        this.bounds = new Rect(0, 0, 100, StandardTextHeight+StandardVerticalMargin);
         this.text = text;
-        this.children = []
     }
 
     draw(ctx: CanvasSurface) {
-        ctx.ctx.fillStyle = '#404040';
-        ctx.ctx.font = '20px sans-serif';
-        ctx.ctx.fillText(this.text, 0, 20);
+        ctx.ctx.fillStyle = StandardTextColor;
+        ctx.ctx.font = StandardTextStyle
+        ctx.ctx.fillText(this.text, 0, StandardTextHeight);
     }
 
     get_bounds(): Rect {
@@ -38,7 +39,6 @@ export class Label implements View {
 
 export class Button implements View, InputView {
     bounds: Rect
-    children: View[]
     id: string
     private title: string
     private cb: any
@@ -54,18 +54,17 @@ export class Button implements View, InputView {
     constructor(title: string, cb) {
         this.title = title;
         this.id = gen_id('button')
-        this.bounds = new Rect(0, 0, 100, 30);
-        this.children = []
+        this.bounds = new Rect(0, 0, 100, StandardTextHeight+StandardVerticalMargin);
         this.cb = cb;
         this.hover = false
     }
 
     draw(ctx: CanvasSurface) {
-        ctx.fillBackground(this.bounds, this.hover?ACTIVE_BUTTON_COLOR:BUTTON_COLOR)
-        ctx.strokeBackground(this.bounds,BUTTON_BORDER_COLOR)
-        ctx.ctx.fillStyle = '#404040';
-        ctx.ctx.font = '20px sans-serif';
-        ctx.ctx.fillText(this.title, 5, 20);
+        ctx.fillBackground(this.bounds, this.hover?ButtonBackgroundColor_active:ButtonBackgroundColor)
+        ctx.strokeBackground(this.bounds,ButtonBorderColor)
+        ctx.ctx.fillStyle = StandardTextColor
+        ctx.ctx.font = StandardTextStyle
+        ctx.ctx.fillText(this.title, StandardLeftPadding, StandardTextHeight);
     }
 
     input(event: CommonEvent): void {
@@ -91,7 +90,6 @@ export class Button implements View, InputView {
 
 export class ToggleButton implements View, InputView {
     bounds: Rect
-    children: View[]
     id: string
     private title: string
     selected:boolean
@@ -101,7 +99,6 @@ export class ToggleButton implements View, InputView {
         this.title = title;
         this.id = "a toggle button";
         this.bounds = new Rect(0, 0, 100, 30);
-        this.children = []
         this.selected = false;
         this.cb = cb;
     }
@@ -111,11 +108,11 @@ export class ToggleButton implements View, InputView {
     }
 
     draw(ctx: CanvasSurface) {
-        ctx.fillBackground(this.bounds, this.selected?BUTTON_BORDER_COLOR:BUTTON_COLOR)
-        ctx.strokeBackground(this.bounds,BUTTON_BORDER_COLOR)
-        ctx.ctx.fillStyle = '#404040';
-        ctx.ctx.font = '20px sans-serif';
-        ctx.ctx.fillText(this.title, 5, 20);
+        ctx.fillBackground(this.bounds, this.selected?ButtonBorderColor:ButtonBackgroundColor)
+        ctx.strokeBackground(this.bounds,ButtonBorderColor)
+        ctx.ctx.fillStyle = StandardTextColor
+        ctx.ctx.font = StandardTextStyle
+        ctx.ctx.fillText(this.title, StandardLeftPadding, StandardTextHeight);
     }
 
     get_bounds(): Rect {
