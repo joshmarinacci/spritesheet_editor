@@ -42,6 +42,16 @@ export class Sprite {
         let n = y * this.w + x;
         return this.data[n]
     }
+
+    toJsonObj() {
+        return {
+            clazz:'Sprite',
+            id:this.id,
+            w:this.w,
+            h:this.h,
+            data:this.data,
+        }
+    }
 }
 
 export type CB = (any) => void;
@@ -77,9 +87,23 @@ export class Sheet {
     add(sprite: Sprite) {
         this.sprites.push(sprite)
     }
+
+    toJsonObj() {
+        return {
+            clazz:'Sheet',
+            id:this.id,
+            name:this.name,
+            sprites: this.sprites.map(sp => sp.toJsonObj())
+        }
+    }
 }
 export class SpriteFont {
 
+    toJsonObj() {
+        return {
+            clazz:'SpriteFont',
+        }
+    }
 }
 export class Doc extends Observable {
     selected_color: number
@@ -139,6 +163,15 @@ export class Doc extends Observable {
         let sheet = this.get_selected_sheet();
         let tile = sheet.sprites[this.selected_tile];
         return tile
+    }
+
+    toJsonObj() {
+        return {
+            version:1,
+            sheets: this.sheets.map(sh => sh.toJsonObj()),
+            fonts:  this.fonts.map(fnt => fnt.toJsonObj()),
+            maps:   this.maps.map(mp => mp.toJsonObj()),
+        }
     }
 }
 

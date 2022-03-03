@@ -1,5 +1,14 @@
 import {BaseParentView, ActionButton, HBox, Label, ToggleButton, SelectList} from "./components";
-import {canvasToPNGBlob, forceDownloadBlob, gen_id, Observable, on, Point, Rect} from "./util";
+import {
+    canvasToPNGBlob,
+    forceDownloadBlob,
+    gen_id,
+    jsonObjToBlob,
+    Observable,
+    on,
+    Point,
+    Rect
+} from "./util";
 import {Doc, draw_sprite, Sheet, Sprite} from "./app-model";
 import {
     CanvasSurface,
@@ -251,8 +260,8 @@ function setup_toolbar(doc:Doc):HBox {
     let toolbar = new HBox();
 
     let save_button = new ActionButton("save",()=>{
-        let str = JSON.stringify(doc,null, '  ');
-        localStorage.setItem("doc",str);
+        let blob = jsonObjToBlob(doc.toJsonObj())
+        forceDownloadBlob('project.json',blob)
     });
     save_button.bounds.w = 60
     toolbar.add(save_button);

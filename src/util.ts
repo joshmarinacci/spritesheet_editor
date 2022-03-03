@@ -84,6 +84,12 @@ export function forceDownloadBlob(title,blob) {
     document.body.removeChild(a)
 }
 
+export function jsonObjToBlob(toJsonObj: any) {
+    let str = JSON.stringify(toJsonObj,null, '   ');
+    return new Blob([str]);
+}
+
+
 export class Point {
     x: number
     y: number
