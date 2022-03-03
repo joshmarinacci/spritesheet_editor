@@ -147,7 +147,7 @@ class MapEditor implements  View, InputView {
         this.id = 'map-editor'
         this.scale = 64;
         this.children = []
-        this.bounds = new Rect(0,0,16*this.scale,16*this.scale)
+        this.bounds = new Rect(0,0,8*this.scale,8*this.scale)
     }
 
     visible(): boolean {
@@ -240,144 +240,6 @@ class PaletteChooser implements View, InputView {
 
     is_input_view(): boolean {
         return true
-    }
-
-    layout(g: CanvasSurface, parent: View): void {
-    }
-
-}
-
-class WrapperView implements View, ParentView {
-    bounds: Rect;
-    children: View[];
-    id: string;
-    constructor(bounds:Rect) {
-        this.id = 'wrapper-view'
-        this.children = []
-        this.bounds = bounds
-    }
-
-    visible(): boolean {
-        return true;
-    }
-
-    draw(ctx: CanvasSurface) {
-        ctx.fillBackground(this.bounds,'green')
-    }
-
-    scroll_by(x: number, y: number) {
-        let ch = this.children[0].get_bounds();
-        ch.x += x;
-        ch.y += y;
-        if(ch.x >= 0) ch.x = 0;
-        if(ch.y >= 0) ch.y = 0;
-        let maxy = ch.h - this.bounds.h
-        if(maxy < -ch.y) ch.y = - (maxy)
-        let maxx = ch.w - this.bounds.w
-        if(maxx < -ch.x) ch.x = - (maxx)
-    }
-
-    get_bounds(): Rect {
-        return this.bounds
-    }
-
-    get_children(): View[] {
-        return this.children
-    }
-
-    is_parent_view(): boolean {
-        return true
-    }
-
-    clip_children(): boolean {
-        return true;
-    }
-
-    layout(g: CanvasSurface, parent: View): void {
-    }
-}
-
-class ScrollView implements View, ParentView, InputView {
-    bounds: Rect;
-    children: View[];
-    id: string;
-    private wrapper: WrapperView;
-    constructor(bounds:Rect) {
-        this.id = 'scroll-view'
-        this.children = []
-        this.bounds = bounds
-
-
-        this.wrapper = new WrapperView(new Rect(0,0,this.bounds.w-30,this.bounds.h-30));
-        this.children.push(this.wrapper)
-
-        let step = 20;
-
-        let up = new ActionButton("u",(evt:CommonEvent)=>{
-            this.wrapper.scroll_by(0,+step);
-            evt.ctx.repaint()
-        });
-        up.bounds = new Rect(this.bounds.w-30,0,30,30);
-        this.children.push(up)
-
-        let down = new ActionButton("d",(evt:CommonEvent)=>{
-            this.wrapper.scroll_by(0,-step);
-            evt.ctx.repaint()
-        });
-        down.bounds = new Rect(this.bounds.w-30,this.bounds.h-30-30,30,30);
-        this.children.push(down);
-
-        let left = new ActionButton('l',(evt:CommonEvent)=>{
-            this.wrapper.scroll_by(+step,-0);
-            evt.ctx.repaint()
-        })
-        left.bounds = new Rect(0,this.bounds.h-30,30,30);
-        this.children.push(left);
-
-
-        let right = new ActionButton('r',(evt:CommonEvent)=>{
-            this.wrapper.scroll_by(-step,-0);
-            evt.ctx.repaint()
-        })
-        right.bounds = new Rect(this.bounds.w-30-30,this.bounds.h-30,30,30);
-        this.children.push(right);
-    }
-
-    visible(): boolean {
-        return true;
-    }
-
-    add(view: View) {
-        this.wrapper.children.push(view);
-    }
-
-    draw(ctx: CanvasSurface) {
-        ctx.fillBackground(this.bounds,'red')
-    }
-
-    get_bounds(): Rect {
-        return this.bounds
-    }
-
-    get_children(): View[] {
-        return this.children
-    }
-
-    is_parent_view(): boolean {
-        return true;
-    }
-
-    clip_children(): boolean {
-        return false
-    }
-    is_input_view(): boolean {
-        return true
-    }
-    input(evt: CommonEvent) {
-        if(evt.type === 'wheel') {
-            this.wrapper.scroll_by(-evt.details.deltaX, -evt.details.deltaY);
-            evt.ctx.repaint()
-        }
     }
 
     layout(g: CanvasSurface, parent: View): void {
@@ -589,12 +451,14 @@ function make_map_view(doc: Doc) {
     grid_toggle.bounds.y = 0;
     map_view.add(grid_toggle)
 
-    let scroll_view = new ScrollView(new Rect(0,35,600,600));
-    map_view.add(scroll_view);
-
     // lets you edit an entire tile map, using the currently selected tile
     let map_editor = new MapEditor(doc);
-    scroll_view.add(map_editor);
+    map_view.add(map_editor);
+
+    let selector = new TileSelector()
+    selector.doc = doc;
+    selector.bounds.x = map_editor.get_bounds().right()
+    map_view.add(selector)
 
     return map_view
 }
