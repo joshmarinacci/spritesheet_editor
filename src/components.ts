@@ -5,7 +5,7 @@ import {
     ButtonBorderColor,
     ButtonBackgroundColor,
     StandardTextColor,
-    StandardTextStyle, StandardTextHeight, StandardVerticalMargin, StandardLeftPadding
+    StandardTextStyle, StandardTextHeight, StandardVerticalMargin, StandardLeftPadding, StandardSelectionColor
 } from "./style";
 
 export class Label implements View {
@@ -37,7 +37,7 @@ export class Label implements View {
     }
 }
 
-export class Button implements View, InputView {
+export class ActionButton implements View, InputView {
     bounds: Rect
     id: string
     private title: string
@@ -131,6 +131,66 @@ export class ToggleButton implements View, InputView {
 
     layout(g: CanvasSurface, parent: View): void {
     }
+}
+
+export class SelectList implements View, InputView {
+    private data: any[];
+    private id: string;
+    private bounds: Rect;
+    private renderer: any;
+    private listeners: any[];
+    private selected_index: number;
+    constructor(data:any[], renderer) {
+        this.id = 'tree'
+        this.bounds = new Rect(0,0,10,10)
+        this.data = data
+        this.renderer = renderer
+        this.listeners = []
+        this.selected_index = -1
+    }
+    on(type,cb) {
+        this.listeners.push(cb)
+    }
+    draw(g: CanvasSurface): void {
+        g.fillBackground(this.bounds,'#ddd')
+        this.data.forEach((item,i) => {
+            if (i === this.selected_index) {
+                g.fillRect(0,30*i,this.get_bounds().w,25, StandardSelectionColor)
+            }
+            g.ctx.fillStyle = StandardTextColor
+            g.ctx.font = StandardTextStyle
+            let str = this.renderer(item)
+            g.ctx.fillText(str, StandardLeftPadding, i*30 + 20)
+        })
+    }
+
+    get_bounds(): Rect {
+        return this.bounds
+    }
+
+    input(event: CommonEvent): void {
+        if(event.type === 'mousedown') {
+            let pt = event.pt;
+            let y = Math.floor(pt.y / 30)
+            let item = this.data[y]
+            console.log("clicked on the item",item)
+            this.selected_index = y
+            this.listeners.forEach(cb => cb(item,y))
+            event.ctx.repaint()
+        }
+    }
+
+    is_input_view(): boolean {
+        return true
+    }
+
+    layout(g: CanvasSurface, parent: View): void {
+    }
+
+    visible(): boolean {
+        return true
+    }
+
 }
 
 export class BaseParentView implements View, ParentView {

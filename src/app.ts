@@ -1,6 +1,6 @@
-import {BaseParentView, Button, HBox, Label, ToggleButton} from "./components";
+import {BaseParentView, ActionButton, HBox, Label, ToggleButton, SelectList} from "./components";
 import {canvasToPNGBlob, forceDownloadBlob, gen_id, Observable, on, Point, Rect} from "./util";
-import {Doc, draw_sprite, Sprite} from "./app-model";
+import {Doc, draw_sprite, Sheet, Sprite} from "./app-model";
 import {
     CanvasSurface,
     CommonEvent,
@@ -313,21 +313,21 @@ class ScrollView implements View, ParentView, InputView {
 
         let step = 20;
 
-        let up = new Button("u",(evt:CommonEvent)=>{
+        let up = new ActionButton("u",(evt:CommonEvent)=>{
             this.wrapper.scroll_by(0,+step);
             evt.ctx.repaint()
         });
         up.bounds = new Rect(this.bounds.w-30,0,30,30);
         this.children.push(up)
 
-        let down = new Button("d",(evt:CommonEvent)=>{
+        let down = new ActionButton("d",(evt:CommonEvent)=>{
             this.wrapper.scroll_by(0,-step);
             evt.ctx.repaint()
         });
         down.bounds = new Rect(this.bounds.w-30,this.bounds.h-30-30,30,30);
         this.children.push(down);
 
-        let left = new Button('l',(evt:CommonEvent)=>{
+        let left = new ActionButton('l',(evt:CommonEvent)=>{
             this.wrapper.scroll_by(+step,-0);
             evt.ctx.repaint()
         })
@@ -335,7 +335,7 @@ class ScrollView implements View, ParentView, InputView {
         this.children.push(left);
 
 
-        let right = new Button('r',(evt:CommonEvent)=>{
+        let right = new ActionButton('r',(evt:CommonEvent)=>{
             this.wrapper.scroll_by(-step,-0);
             evt.ctx.repaint()
         })
@@ -388,14 +388,14 @@ class ScrollView implements View, ParentView, InputView {
 function setup_toolbar(doc:Doc):HBox {
     let toolbar = new HBox();
 
-    let save_button = new Button("save",()=>{
+    let save_button = new ActionButton("save",()=>{
         let str = JSON.stringify(doc,null, '  ');
         localStorage.setItem("doc",str);
     });
     save_button.bounds.w = 60
     toolbar.add(save_button);
 
-    let load_button = new Button("load",()=>{
+    let load_button = new ActionButton("load",()=>{
         console.log("trying to load")
         let str = localStorage.getItem("doc");
         if(str) {
@@ -419,7 +419,7 @@ function setup_toolbar(doc:Doc):HBox {
     load_button.bounds.w = 60
     toolbar.add(load_button);
 
-    let export_button = new Button("export",() => {
+    let export_button = new ActionButton("export",() => {
         console.log("exporting");
         let canvas = document.createElement('canvas')
         let size = 8
@@ -495,78 +495,6 @@ class MainView extends BaseParentView {
     }
 }
 
-class TreeView extends BaseParentView implements InputView {
-    private doc: Doc;
-    private data: any[];
-    constructor(doc:Doc) {
-        super('tree',new Rect(0,0,10,10));
-        this.doc = doc
-        this.data = []
-        this.rebuild()
-        on(doc,'change',()=>this.rebuild());
-    }
-    private rebuild() {
-        this.data = []
-        this.data.push({type:'header',text:'fonts'})
-        this.doc.fonts.forEach(font => {
-            this.data.push({type:'font',target:font})
-        })
-        this.data.push({type:'header',text:'sheets'})
-        this.doc.sheets.forEach(sheet => {
-            this.data.push({type:'sheet',target:sheet})
-        })
-        this.data.push({type:'header',text:'maps'})
-        this.doc.maps.forEach(map => {
-            this.data.push({type:'map',target:map})
-        })
-    }
-    override draw(g: CanvasSurface) {
-        g.fillBackground(this.bounds,'#ddd')
-        this.data.forEach((item,i) => {
-            if (i === this.doc.selected_tree_item_index) {
-                g.fillRect(0,30*i,this.get_bounds().w,25, StandardSelectionColor)
-            }
-
-            g.ctx.fillStyle = '#404040';
-            g.ctx.font = '20px sans-serif';
-            if(item.type === 'header') {
-                g.ctx.fillText(item.text, 4, 30 * i + 20)
-            }
-            if(item.type === 'sheet') {
-                g.ctx.fillText(item.target.name,20,30*i+20)
-            }
-            if(item.type === 'map') {
-                g.ctx.fillText(item.target.id,20,30*i+20)
-            }
-        })
-    }
-    input(event: CommonEvent): void {
-        if(event.type === 'mousedown') {
-            let pt = event.pt;
-            let y = Math.floor(pt.y/30)
-            let item = this.data[y]
-            if (item && item.type !== 'header') {
-                this.doc.selected_tree_item_index = y
-                this.doc.selected_tree_item = item
-                let target = this.doc.selected_tree_item.target;
-                console.log("selecting",target)
-                if(this.doc.selected_tree_item.type === 'sheet') {
-                    this.doc.set_selected_sheet(target)
-                }
-                if(this.doc.selected_tree_item.type === 'map') {
-                    this.doc.set_selected_map(target)
-                }
-                // if(this.doc.se)
-                event.ctx.repaint()
-            }
-        }
-    }
-    is_input_view(): boolean {
-        return true
-    }
-
-}
-
 class SinglePanel extends BaseParentView {
     private doc: Doc;
     constructor(doc:Doc) {
@@ -584,18 +512,20 @@ class SinglePanel extends BaseParentView {
             ch.get_bounds().w = this.get_bounds().w
             ch.get_bounds().h = this.get_bounds().h
         })
-        if(this.doc.selected_tree_item) {
-            let type = this.doc.selected_tree_item.type
+        let item = this.doc.selected_tree_item
+        if(item) {
+            console.log("laying out single with",item)
             this.children.forEach(ch => {
                 // @ts-ignore
                 ch.set_visible(false)
                 // @ts-ignore
-                if(type === 'sheet' && ch.id === 'sheet-editor-view') {
+
+                if (item instanceof Sheet && ch.id === 'sheet-editor-view') {
                     // @ts-ignore
                     ch.set_visible(true)
                 }
                 // @ts-ignore
-                if(type === 'map' && ch.id === 'map-editor-view') {
+                if(item instanceof Sprite && ch.id === 'map-editor-view') {
                     // @ts-ignore
                     ch.set_visible(true)
                 }
@@ -630,7 +560,7 @@ function make_sheet_editor_view(doc: Doc) {
     tile_editor.bounds.x = 0
     sheet_editor.add(tile_editor)
 
-    let add_tile_button = new Button("add tile",()=>{
+    let add_tile_button = new ActionButton("add tile",()=>{
         let sheet = doc.get_selected_sheet()
         sheet.add(new Sprite(gen_id("tile"), 8, 8));
         doc.fire('change', "added a tile");
@@ -686,7 +616,31 @@ export function start() {
     //draws border
     let main_view = new MainView()
 
-    main_view.add(new TreeView(doc))
+    let data = []
+    doc.fonts.forEach(font => data.push(font))
+    doc.sheets.forEach(sheet => data.push(sheet))
+    doc.maps.forEach(map => data.push(map))
+    let itemlist = new SelectList(data,(item)=>{
+        if (item instanceof Sheet) {
+            return (item as Sheet).name
+        }
+        if (item instanceof Sprite) {
+            return (item as Sprite).id
+        }
+        return "???"
+    })
+    itemlist.on('change',(item,i)  => {
+        doc.selected_tree_item = item
+        doc.selected_tree_item_index = i
+        if (item instanceof Sheet) {
+            doc.set_selected_sheet(item as Sheet)
+        }
+        if (item instanceof Sprite) {
+            doc.set_selected_map(item as Sprite)
+        }
+    })
+    main_view.add(itemlist)
+
 
     //label at the top
     let main_label = new Label("tile map editor");
