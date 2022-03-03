@@ -11,7 +11,7 @@ import {
     setup_keyboard_input,
     View
 } from "./canvas";
-import {StandardSelectionColor} from "./style";
+import {StandardPanelBackgroundColor, StandardSelectionColor} from "./style";
 
 export const EMPTY_COLOR = '#62fcdc'
 
@@ -502,7 +502,7 @@ class SinglePanel extends BaseParentView {
         this.doc = doc
     }
     override draw(g: CanvasSurface) {
-        g.fillBackground(this.get_bounds(),'#dde')
+        g.fillBackground(this.get_bounds(),StandardPanelBackgroundColor)
     }
 
     override layout(g: CanvasSurface, parent: View) {
