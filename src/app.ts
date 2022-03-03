@@ -1,6 +1,6 @@
 import {BaseParentView, ActionButton, HBox, Label, ToggleButton, SelectList} from "./components";
 import {
-    canvasToPNGBlob,
+    canvasToPNGBlob, fileToJSON,
     forceDownloadBlob,
     gen_id,
     jsonObjToBlob,
@@ -42,7 +42,7 @@ class TileEditor implements View, InputView {
         //draw each pixel in the tile as a rect
         let sprite = this.doc.get_selected_tile()
         let palette = this.doc.palette;
-        if (sprite !== null) {
+        if (sprite) {
             sprite.forEachPixel((val:number,i:number,j:number) => {
                 g.ctx.fillStyle = palette[val]
                 g.ctx.fillRect(i*this.scale,j*this.scale,this.scale,this.scale)
@@ -58,8 +58,7 @@ class TileEditor implements View, InputView {
 
     input(e: CommonEvent): void {
         let pt = e.pt.divide_floor(this.scale);
-        let sheet = this.doc.get_selected_sheet()
-        let tile = sheet.sprites[this.doc.selected_tile]
+        let tile = this.doc.get_selected_tile()
         if (e.button == 2) {
             if(e.type === "mousedown") {
                 let value = tile.get_pixel(pt.x,pt.y);
@@ -102,10 +101,12 @@ class TileSelector implements View, InputView {
     draw(g: CanvasSurface) {
         g.fillBackground(this.bounds,EMPTY_COLOR);
         let sheet = this.doc.get_selected_sheet()
-        sheet.sprites.forEach((sprite,s)=>{
-            let pt = wrap_number(s,8);
-            draw_sprite(sprite,g,pt.x*this.scale,pt.y*this.scale,4, this.doc)
-        })
+        if(sheet) {
+            sheet.sprites.forEach((sprite, s) => {
+                let pt = wrap_number(s, 8);
+                draw_sprite(sprite, g, pt.x * this.scale, pt.y * this.scale, 4, this.doc)
+            })
+        }
         draw_grid(g,this.bounds,this.scale);
         let pt = wrap_number(this.doc.selected_tile,8);
         draw_selection_rect(g,new Rect(pt.x*this.scale,pt.y*this.scale,this.scale,this.scale));
@@ -268,24 +269,22 @@ function setup_toolbar(doc:Doc):HBox {
 
     let load_button = new ActionButton("load",()=>{
         console.log("trying to load")
-        let str = localStorage.getItem("doc");
-        if(str) {
-            try {
-                let doc_obj = JSON.parse(str);
-                console.log("parsed the obj",doc_obj)
-                doc.palette = doc_obj.palette
-                doc.selected_tile = doc_obj.selected_tile
-                doc.selected_color = doc_obj.selected_color
-                doc.map_grid_visible = doc_obj.map_grid_visible || false;
-                // doc.tiles = doc_obj.tiles.map(tile => {
-                //     return new Sprite('foo', 8, 8).fromJSONObj(tile);
-                // });
-                // doc.tilemap = new Sprite("foo",8,8).fromJSONObj(doc_obj.tilemap);
-                doc.fire('change',doc_obj)
-            } catch (e) {
-                console.log("error parsing",str)
-            }
-        }
+
+        let input_element = document.createElement('input')
+        input_element.setAttribute('type','file')
+        input_element.style.display = 'none'
+        document.body.appendChild(input_element)
+        input_element.addEventListener('change',() => {
+            console.log("user picked a file, we hope");
+            let files = input_element.files;
+            if(files.length <= 0) return;
+            let file = files[0]
+            console.log(file)
+            fileToJSON(file).then(data => {
+                doc.reset_from_json(data)
+            })
+        })
+        input_element.click()
     });
     load_button.bounds.w = 60
     toolbar.add(load_button);
@@ -489,10 +488,14 @@ export function start() {
     //draws border
     let main_view = new MainView()
 
-    let data = []
-    doc.fonts.forEach(font => data.push(font))
-    doc.sheets.forEach(sheet => data.push(sheet))
-    doc.maps.forEach(map => data.push(map))
+    function rebuild_data(doc) {
+        let data = []
+        doc.fonts.forEach(font => data.push(font))
+        doc.sheets.forEach(sheet => data.push(sheet))
+        doc.maps.forEach(map => data.push(map))
+        return data
+    }
+    let data = rebuild_data(doc)
     let itemlist = new SelectList(data,(item)=>{
         if (item instanceof Sheet) {
             return (item as Sheet).name
@@ -539,6 +542,11 @@ export function start() {
     doc.addEventListener('change',() => {
         surface.repaint();
     });
+    doc.addEventListener('reload',() => {
+        let data = rebuild_data(doc)
+        itemlist.set_data(data)
+        surface.repaint()
+    })
 
     surface.set_root(main_view)
     surface.addToPage();

@@ -89,6 +89,16 @@ export function jsonObjToBlob(toJsonObj: any) {
     return new Blob([str]);
 }
 
+export async function fileToJSON(file) {
+    return new Promise((resolve, reject) => {
+        const fileReader = new FileReader()
+        // @ts-ignore
+        fileReader.onload = event => resolve(JSON.parse(event.target.result))
+        fileReader.onerror = error => reject(error)
+        fileReader.readAsText(file)
+    })
+}
+
 
 export class Point {
     x: number

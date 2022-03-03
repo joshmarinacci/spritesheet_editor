@@ -4,7 +4,7 @@ export class Sprite {
     id: string;
     private w: number;
     private h: number;
-    private data: number[];
+    data: number[];
 
     constructor(id, w, h) {
         this.id = id;
@@ -31,13 +31,6 @@ export class Sprite {
         this.data[n] = color;
     }
 
-    fromJSONObj(obj) {
-        let sprite = new Sprite(obj.id, obj.w, obj.h);
-        sprite.data = obj.data;
-        return sprite;
-
-    }
-
     get_pixel(x: number, y: number):any {
         let n = y * this.w + x;
         return this.data[n]
@@ -55,7 +48,7 @@ export class Sprite {
 }
 
 export type CB = (any) => void;
-export type Etype = "change"
+export type Etype = "change"|"reload"
 
 export class Observable {
     listeners: Map<Etype, Array<CB>>
@@ -105,13 +98,29 @@ export class SpriteFont {
         }
     }
 }
+
+function obj_to_class(sh) {
+    if(sh.clazz === 'Sprite') {
+        let sprite = new Sprite(sh.id, sh.w, sh.h)
+        sprite.data = sh.data
+        return sprite
+    }
+    if(sh.clazz === 'Sheet') {
+        let sheet = new Sheet(sh.id,sh.name)
+        sheet.sprites = sh.sprites.map(sp => obj_to_class(sp))
+        return sheet
+    }
+    throw new Error(`don't know how to deserialize ${sh.clazz}`)
+}
+
 export class Doc extends Observable {
-    selected_color: number
-    palette: string[]
     sheets: Sheet[]
     fonts: SpriteFont[]
-    selected_tile: number
     maps:Sprite[]
+
+    selected_color: number
+    palette: string[]
+    selected_tile: number
     selected_map: number
     map_grid_visible: boolean;
     selected_tree_item_index:number
@@ -161,6 +170,7 @@ export class Doc extends Observable {
 
     get_selected_tile() {
         let sheet = this.get_selected_sheet();
+        if (!sheet) return null
         let tile = sheet.sprites[this.selected_tile];
         return tile
     }
@@ -172,6 +182,42 @@ export class Doc extends Observable {
             fonts:  this.fonts.map(fnt => fnt.toJsonObj()),
             maps:   this.maps.map(mp => mp.toJsonObj()),
         }
+    }
+
+    reset_from_json(data) {
+        console.log('data is',data)
+        if(data.version !== 1) throw new Error("we can only parse version 1 json")
+        console.log("processing",data);
+
+        this.sheets = data.sheets.map(sh => {
+            console.log("sheet",sh)
+            return obj_to_class(sh)
+        })
+        this.fonts = data.fonts.map(fnt => {
+            console.log("font",fnt)
+            return obj_to_class(fnt)
+        })
+        this.maps = data.maps.map(mp => {
+            console.log("map is",mp)
+            let mp2 = obj_to_class(mp)
+            console.log("restored map is",mp2)
+            return mp2
+        })
+
+
+        this.selected_color = 0
+        this.selected_tile = 0
+        this.selected_map = 0
+        this.map_grid_visible = true
+        this.selected_tree_item_index = -1
+        this.selected_tree_item = null
+        this.selected_sheet = 0
+
+        console.log("final version of the doc is",this)
+        console.log("selected sheet is",this.get_selected_sheet())
+        console.log('selected tile is',this.get_selected_tile())
+        console.log("selected map is",this.get_selected_map())
+        this.fire('reload',this)
     }
 }
 

@@ -191,6 +191,9 @@ export class SelectList implements View, InputView {
         return true
     }
 
+    set_data(data: any[]) {
+        this.data = data
+    }
 }
 
 export class BaseParentView implements View, ParentView {
