@@ -14,12 +14,12 @@ import {
 } from "./style";
 
 export class BaseView implements View {
-    bounds: Rect;
+    _bounds: Rect;
     id:string
     _name:string
     private _listeners:Map<string,Callback[]>
     constructor(bounds:Rect) {
-        this.bounds = bounds
+        this._bounds = bounds
         this.id = gen_id('baseview')
         this._name = 'BaseView'
         this._listeners = new Map()
@@ -37,8 +37,8 @@ export class BaseView implements View {
     }
     draw(g: CanvasSurface): void {
     }
-    get_bounds(): Rect {
-        return this.bounds
+    bounds(): Rect {
+        return this._bounds
     }
     input(event: CommonEvent): void {
     }
@@ -85,8 +85,8 @@ export class ActionButton extends BaseView{
     }
 
     draw(ctx: CanvasSurface) {
-        ctx.fillBackground(this.bounds, this.hover?ButtonBackgroundColor_active:ButtonBackgroundColor)
-        ctx.strokeBackground(this.bounds,ButtonBorderColor)
+        ctx.fillBackground(this._bounds, this.hover?ButtonBackgroundColor_active:ButtonBackgroundColor)
+        ctx.strokeBackground(this._bounds,ButtonBorderColor)
         ctx.ctx.fillStyle = StandardTextColor
         ctx.ctx.font = StandardTextStyle
         ctx.ctx.fillText(this.title, StandardLeftPadding, StandardTextHeight);
@@ -121,8 +121,8 @@ export class ToggleButton extends BaseView {
     }
 
     draw(ctx: CanvasSurface) {
-        ctx.fillBackground(this.bounds, this.selected?ButtonBackgroundColor_active:ButtonBackgroundColor)
-        ctx.strokeBackground(this.bounds,ButtonBorderColor)
+        ctx.fillBackground(this._bounds, this.selected?ButtonBackgroundColor_active:ButtonBackgroundColor)
+        ctx.strokeBackground(this._bounds,ButtonBorderColor)
         ctx.ctx.fillStyle = StandardTextColor
         ctx.ctx.font = StandardTextStyle
         ctx.ctx.fillText(this.title, StandardLeftPadding, StandardTextHeight);
@@ -141,26 +141,34 @@ export class ToggleButton extends BaseView {
 export class SelectList implements View {
     private data: any[];
     private id: string;
-    private bounds: Rect;
+    private _bounds: Rect;
     private renderer: any;
-    private listeners: any[];
+    private _listeners:Map<string,Callback[]>
     private selected_index: number;
     constructor(data:any[], renderer) {
         this.id = 'tree'
-        this.bounds = new Rect(0,0,10,10)
+        this._bounds = new Rect(0,0,10,10)
         this.data = data
         this.renderer = renderer
-        this.listeners = []
         this.selected_index = -1
+        this._listeners = new Map()
     }
-    on(type,cb) {
-        this.listeners.push(cb)
+    name(): string {
+        return "SelectList";
+    }
+    on(type:string, cb:Callback) {
+        if(!this._listeners.has(type)) this._listeners.set(type,[])
+        this._listeners.get(type).push(cb)
+    }
+    off(type:string, cb:Callback) {
+        if(!this._listeners.has(type)) this._listeners.set(type,[])
+        this._listeners.set(type,this._listeners.get(type).filter( c => c != cb))
     }
     draw(g: CanvasSurface): void {
-        g.fillBackground(this.bounds,'#ddd')
+        g.fillBackground(this._bounds,'#ddd')
         this.data.forEach((item,i) => {
             if (i === this.selected_index) {
-                g.fillRect(0,30*i,this.get_bounds().w,25, StandardSelectionColor)
+                g.fillRect(0,30*i,this.bounds().w,25, StandardSelectionColor)
             }
             g.ctx.fillStyle = StandardTextColor
             g.ctx.font = StandardTextStyle
@@ -169,8 +177,8 @@ export class SelectList implements View {
         })
     }
 
-    get_bounds(): Rect {
-        return this.bounds
+    bounds(): Rect {
+        return this._bounds
     }
 
     input(event: CommonEvent): void {
@@ -179,7 +187,8 @@ export class SelectList implements View {
             let y = Math.floor(pt.y / 30)
             let item = this.data[y]
             this.selected_index = y
-            this.listeners.forEach(cb => cb(item,y))
+            // @ts-ignore
+            this._listeners.get('change').forEach(cb => cb(item,y))
             event.ctx.repaint()
         }
     }
@@ -198,15 +207,17 @@ export class SelectList implements View {
 
 export class BaseParentView implements View, ParentView {
     id: string;
-    bounds: Rect
+    _bounds: Rect
     children: View[];
     private _visible: boolean;
+    private _listeners:Map<string,Callback[]>
 
     constructor(id: string, bounds?: Rect) {
         this.id = id
-        this.bounds = bounds || new Rect(0, 0, 100, 100)
+        this._bounds = bounds || new Rect(0, 0, 100, 100)
         this.children = []
         this._visible = true;
+        this._listeners = new Map()
     }
 
     add(view: View) {
@@ -219,11 +230,11 @@ export class BaseParentView implements View, ParentView {
 
     draw(g: CanvasSurface): void {
         // console.log('drawing base view',this.id, this.visible())
-        g.fillBackground(this.bounds,StandardPanelBackgroundColor)
+        g.fillBackground(this._bounds,StandardPanelBackgroundColor)
     }
 
-    get_bounds(): Rect {
-        return this.bounds
+    bounds(): Rect {
+        return this._bounds
     }
 
     get_children(): View[] {
@@ -246,6 +257,19 @@ export class BaseParentView implements View, ParentView {
 
     input(event: CommonEvent): void {
     }
+
+    name(): string {
+        return "BaseParentView";
+    }
+
+    on(type:string, cb:Callback) {
+        if(!this._listeners.has(type)) this._listeners.set(type,[])
+        this._listeners.get(type).push(cb)
+    }
+    off(type:string, cb:Callback) {
+        if(!this._listeners.has(type)) this._listeners.set(type,[])
+        this._listeners.set(type,this._listeners.get(type).filter( c => c != cb))
+    }
 }
 export class HBox extends BaseParentView {
     constructor() {
@@ -256,13 +280,13 @@ export class HBox extends BaseParentView {
         let y = 0;
         let my = 0;
         this.children.forEach(ch => {
-            ch.get_bounds().x = x;
-            ch.get_bounds().y = y;
-            x += ch.get_bounds().w + 5
-            my = Math.max(my,ch.get_bounds().h)
+            ch.bounds().x = x;
+            ch.bounds().y = y;
+            x += ch.bounds().w + 5
+            my = Math.max(my,ch.bounds().h)
         })
-        this.bounds.w = x;
-        this.bounds.h = my;
+        this._bounds.w = x;
+        this._bounds.h = my;
     }
 }
 export class LayerView extends BaseParentView{
@@ -272,11 +296,11 @@ export class LayerView extends BaseParentView{
 
     layout(g: CanvasSurface, parent: View): void {
         if(parent) {
-            this.bounds.w = parent.get_bounds().w
-            this.bounds.h = parent.get_bounds().h
+            this._bounds.w = parent.bounds().w
+            this._bounds.h = parent.bounds().h
         } else {
-            this.bounds.w = g.canvas.width
-            this.bounds.h = g.canvas.height
+            this._bounds.w = g.canvas.width
+            this._bounds.h = g.canvas.height
         }
     }
 }

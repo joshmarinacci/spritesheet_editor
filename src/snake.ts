@@ -1,4 +1,4 @@
-import {Observable, on, Point, randi, Rect, SuperArray} from "./util";
+import {Callback, Observable, on, Point, randi, Rect, SuperArray} from "./util";
 // @ts-ignore
 import tileset_url from "./tileset@1.png";
 import {
@@ -16,7 +16,7 @@ import {LayerView} from "./components";
 class GridView implements View {
     private model: GridModel;
     private id: string;
-    bounds: Rect;
+    _bounds: Rect;
     private spritesheet: SpriteSheet;
     private wall: SpriteSlice;
     private empty: SpriteSlice;
@@ -25,18 +25,18 @@ class GridView implements View {
     constructor(model: GridModel, spritesheet: SpriteSheet) {
         this.id = 'grid-view'
         this.model = model;
-        this.bounds = new Rect(0,0,this.model.w*16,this.model.h*16);
+        this._bounds = new Rect(0,0,this.model.w*16,this.model.h*16);
         this.spritesheet = spritesheet
         this.wall = spritesheet.get_slice(0)
         this.empty = spritesheet.get_slice(1)
         this.tail = spritesheet.get_slice(3)
         this.food = spritesheet.get_slice(4);
     }
-    get_bounds(): Rect {
-        return this.bounds
+    bounds(): Rect {
+        return this._bounds
     }
     draw(g: CanvasSurface): void {
-        g.fill(this.get_bounds(),'white')
+        g.fill(this.bounds(),'white')
         this.model.forEach((w,x,y)=>{
             let color = 'white'
             if (w === EMPTY) color = 'white'
@@ -58,6 +58,16 @@ class GridView implements View {
     visible(): boolean {
         return true
     }
+
+    name(): string {
+        return "";
+    }
+
+    off(type: string, cb: Callback): void {
+    }
+
+    on(type: string, cb: Callback): void {
+    }
 }
 class SnakeView implements View {
     private model: SnakeModel;
@@ -74,7 +84,7 @@ class SnakeView implements View {
         g.fill(new Rect(0,0,16,16),'yellow')
         g.draw_slice(0,0,this.sprite_slice,2)
     }
-    get_bounds(): Rect {
+    bounds(): Rect {
         let pos = this.model.position;
         return new Rect(pos.x*16,pos.y*16,16,16)
     }
@@ -84,6 +94,16 @@ class SnakeView implements View {
     }
     visible(): boolean {
         return true
+    }
+
+    name(): string {
+        return "";
+    }
+
+    off(type: string, cb: Callback): void {
+    }
+
+    on(type: string, cb: Callback): void {
     }
 }
 
@@ -114,11 +134,11 @@ const FOOD = 3;
 
 class ScoreView implements View {
     private score: ScoreModel;
-    private bounds: Rect;
+    private _bounds: Rect;
     private slices: SpriteSlice[];
     constructor(score: ScoreModel, spritesheet:SpriteSheet) {
         this.score = score;
-        this.bounds = new Rect(8*9,0,32,16)
+        this._bounds = new Rect(8*9,0,32,16)
         this.slices = []
         for(let i=0; i<=9; i++) {
             this.slices[i] = spritesheet.get_slice(4+i)
@@ -134,11 +154,11 @@ class ScoreView implements View {
             ones = this.score.level%10;
             tens = Math.floor(this.score.level/10)
         }
-        g.draw_slice(this.bounds.x, 0, this.slices[tens], 2)
-        g.draw_slice(this.bounds.x+16, 0, this.slices[ones], 2)
+        g.draw_slice(this._bounds.x, 0, this.slices[tens], 2)
+        g.draw_slice(this._bounds.x+16, 0, this.slices[ones], 2)
     }
-    get_bounds(): Rect {
-        return this.bounds
+    bounds(): Rect {
+        return this._bounds
     }
     input(event: CommonEvent): void {
     }
@@ -146,6 +166,16 @@ class ScoreView implements View {
     }
     visible(): boolean {
         return true
+    }
+
+    name(): string {
+        return "";
+    }
+
+    off(type: string, cb: Callback): void {
+    }
+
+    on(type: string, cb: Callback): void {
     }
 }
 

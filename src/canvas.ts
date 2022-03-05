@@ -6,11 +6,14 @@ export function log(...args) {
 
 const CLEAR_COLOR = '#f0f0f0'
 export interface View {
-    get_bounds():Rect
+    bounds():Rect
     layout(g:CanvasSurface, parent:View):void
     draw(g:CanvasSurface):void
     visible():boolean
     input(event:CommonEvent):void
+    on(type:string, cb:Callback):void
+    off(type:string, cb:Callback):void
+    name():string
 }
 export interface ParentView {
     is_parent_view():boolean,
@@ -86,13 +89,17 @@ export class CanvasSurface {
     }
 
     private layout_stack() {
-        this.layout_view(this.root,null)
+        if(!this.root) {
+            console.warn("root is null")
+        } else {
+            this.layout_view(this.root, null)
+        }
     }
     private layout_view(view: View, parent:View) {
         // if(!this.debug) { // @ts-ignore
         //     log("laying out",view.id)
         // }
-        let bds = view.get_bounds()
+        let bds = view.bounds()
         view.layout(this,parent)
         // @ts-ignore
         if (view.is_parent_view && view.is_parent_view()) {
@@ -114,7 +121,7 @@ export class CanvasSurface {
 
     private draw_view(view: View) {
         this.ctx.save();
-        let bds = view.get_bounds();
+        let bds = view.bounds();
         this.ctx.translate(bds.x, bds.y)
         if(view.visible()) {
             view.draw(this);
@@ -124,7 +131,7 @@ export class CanvasSurface {
             let parent = view as unknown as ParentView;
             if(parent.clip_children()) {
                 this.ctx.beginPath()
-                this.ctx.rect(0,0,view.get_bounds().w,view.get_bounds().h);
+                this.ctx.rect(0,0,view.bounds().w,view.bounds().h);
                 this.ctx.clip()
             }
             parent.get_children().forEach(ch => {
@@ -257,20 +264,20 @@ export class CanvasSurface {
     }
 
     private dispatch(view: View, e:CommonEvent): View | null {
-        if(this.debug) log("dispatching",view,view.get_bounds());
+        if(this.debug) log("dispatching",view,view.bounds());
         if (!view.visible()) return null
-        if (view.get_bounds().contains(e.pt)) {
+        if (view.bounds().contains(e.pt)) {
             // @ts-ignore
             if (view.is_parent_view && view.is_parent_view()) {
                 let parent = view as unknown as ParentView;
                 for (let i = 0; i < parent.get_children().length; i++) {
                     let ch = parent.get_children()[i]
-                    let e2 = e.translate(view.get_bounds().x,view.get_bounds().y);
+                    let e2 = e.translate(view.bounds().x,view.bounds().y);
                     let picked = this.dispatch(ch, e2)
                     if (picked) return picked;
                 }
             }
-            let e2 = e.translate(view.get_bounds().x,view.get_bounds().y)
+            let e2 = e.translate(view.bounds().x,view.bounds().y)
             view.input(e2);
             return view;
         }

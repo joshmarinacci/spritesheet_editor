@@ -1,7 +1,7 @@
 import {CanvasSurface, CommonEvent, EVENTS, View} from "./canvas";
 import {GridModel} from "./models";
 import {LayerView} from "./components";
-import {Rect} from "./util";
+import {Callback, Rect} from "./util";
 
 /*
 
@@ -85,14 +85,14 @@ class MinesweeperModel {
 
 class MinesweeperView implements View {
     private model: MinesweeperModel;
-    private bounds: Rect;
+    private _bounds: Rect;
     private scale: number;
     private id: string;
     constructor(model:MinesweeperModel) {
         this.id = 'minesweepr-view'
         this.model = model
         this.scale = 32
-        this.bounds = new Rect(0,0,this.model.grid.w*this.scale,this.model.grid.h*this.scale);
+        this._bounds = new Rect(0,0,this.model.grid.w*this.scale,this.model.grid.h*this.scale);
     }
     layout(g: CanvasSurface, parent: View): void {
     }
@@ -100,7 +100,7 @@ class MinesweeperView implements View {
         return true
     }
     draw(g: CanvasSurface): void {
-        g.fillBackground(this.bounds,'black')
+        g.fillBackground(this._bounds,'black')
         this.model.grid.forEach((w,x,y)=>{
             let color = '#ccc'
             if(w.mine) {
@@ -115,10 +115,10 @@ class MinesweeperView implements View {
                 g.ctx.fillText(`${w.adjacent}`, x * this.scale+8, y * this.scale+16)
             }
         })
-        g.strokeBackground(this.bounds,'black')
+        g.strokeBackground(this._bounds,'black')
     }
-    get_bounds(): Rect {
-        return this.bounds
+    bounds(): Rect {
+        return this._bounds
     }
     input(e: CommonEvent): void {
         if(e.type === 'mousedown') {
@@ -131,6 +131,16 @@ class MinesweeperView implements View {
             }
         }
     }
+
+    name(): string {
+        return "";
+    }
+
+    off(type: string, cb: Callback): void {
+    }
+
+    on(type: string, cb: Callback): void {
+    }
 }
 
 export function start() {
@@ -140,11 +150,11 @@ export function start() {
 
     let surface = new CanvasSurface(500,500);
     let root = new LayerView()
-    root.bounds.w = 500
-    root.bounds.h = 500
+    root._bounds.w = 500
+    root._bounds.h = 500
     let board_layer = new LayerView();
-    board_layer.bounds.w = 500;
-    board_layer.bounds.h = 500;
+    board_layer._bounds.w = 500;
+    board_layer._bounds.h = 500;
     board_layer.id = 'board'
     board_layer.add(new MinesweeperView(model))
     root.add(board_layer)

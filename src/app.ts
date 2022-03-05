@@ -1,5 +1,6 @@
 import {BaseParentView, ActionButton, HBox, Label, ToggleButton, SelectList, CustomLabel, BaseView} from "./components";
 import {
+    Callback,
     canvasToPNGBlob, fileToJSON,
     forceDownloadBlob,
     gen_id,
@@ -26,34 +27,37 @@ export const EMPTY_COLOR = '#62fcdc'
 class TileEditor extends BaseView {
     children: View[];
     doc: Doc;
-    scale:number
+    scale: number
+
     constructor() {
-        super(new Rect(0,0,32*8 + 1, 32*8 + 1))
+        super(new Rect(0, 0, 32 * 8 + 1, 32 * 8 + 1))
         this.id = 'tile editor'
         this.scale = 32;
         this.children = []
     }
+
     draw(g: CanvasSurface) {
         //clear the background
-        g.fillBackground(this.bounds,'white');
+        g.fillBackground(this._bounds, 'white');
         //draw each pixel in the tile as a rect
         let sprite = this.doc.get_selected_tile()
         let palette = this.doc.palette;
         if (sprite) {
-            sprite.forEachPixel((val:number,i:number,j:number) => {
+            sprite.forEachPixel((val: number, i: number, j: number) => {
                 g.ctx.fillStyle = palette[val]
-                g.ctx.fillRect(i*this.scale,j*this.scale,this.scale,this.scale)
+                g.ctx.fillRect(i * this.scale, j * this.scale, this.scale, this.scale)
             });
         }
 
-        draw_grid(g,this.bounds,this.scale)
+        draw_grid(g, this._bounds, this.scale)
     }
+
     input(e: CommonEvent): void {
         let pt = e.pt.divide_floor(this.scale);
         let tile = this.doc.get_selected_tile()
         if (e.button == 2) {
-            if(e.type === "mousedown") {
-                let value = tile.get_pixel(pt.x,pt.y);
+            if (e.type === "mousedown") {
+                let value = tile.get_pixel(pt.x, pt.y);
                 if (typeof value === 'number') {
                     this.doc.selected_color = value
                     this.doc.fire('change', "tile edited");
@@ -65,25 +69,37 @@ class TileEditor extends BaseView {
         this.doc.mark_dirty()
         this.doc.fire('change', "tile edited");
     }
+
     layout(g: CanvasSurface, parent: View): void {
     }
 }
 
 class TileSelector implements View {
-    bounds: Rect;
+    _bounds: Rect;
     children: View[];
     id: string;
     doc: Doc;
-    scale:number;
+    scale: number;
+
     constructor() {
         this.scale = 32;
-        this.bounds = new Rect(0,0,8*this.scale,8*this.scale)
+        this._bounds = new Rect(0, 0, 8 * this.scale, 8 * this.scale)
         this.children = []
         this.id = 'tile selector'
     }
 
+    on(type: string, cb: Callback): void {
+        throw new Error("Method not implemented.");
+    }
+    off(type: string, cb: Callback): void {
+        throw new Error("Method not implemented.");
+    }
+    name(): string {
+        throw new Error("Method not implemented.");
+    }
+
     draw(g: CanvasSurface) {
-        g.fillBackground(this.bounds,EMPTY_COLOR);
+        g.fillBackground(this._bounds,EMPTY_COLOR);
         let sheet = this.doc.get_selected_sheet()
         if(sheet) {
             sheet.sprites.forEach((sprite, s) => {
@@ -91,13 +107,13 @@ class TileSelector implements View {
                 draw_sprite(sprite, g, pt.x * this.scale, pt.y * this.scale, 4, this.doc)
             })
         }
-        draw_grid(g,this.bounds,this.scale);
+        draw_grid(g,this._bounds,this.scale);
         let pt = wrap_number(this.doc.selected_tile,8);
         draw_selection_rect(g,new Rect(pt.x*this.scale,pt.y*this.scale,this.scale,this.scale));
     }
 
-    get_bounds(): Rect {
-        return this.bounds
+    bounds(): Rect {
+        return this._bounds
     }
 
     input(e: CommonEvent): void {
@@ -110,9 +126,6 @@ class TileSelector implements View {
         }
     }
 
-    is_input_view(): boolean {
-        return true;
-    }
 
     layout(g: CanvasSurface, parent: View): void {
     }
@@ -130,7 +143,7 @@ function wrap_number(num:number,width:number):Point {
 }
 
 class MapEditor implements  View {
-    bounds: Rect;
+    _bounds: Rect;
     children: View[];
     id: string;
     doc: Doc;
@@ -141,14 +154,14 @@ class MapEditor implements  View {
         this.id = 'map-editor'
         this.scale = 64;
         this.children = []
-        this.bounds = new Rect(0,0,8*this.scale,8*this.scale)
+        this._bounds = new Rect(0,0,8*this.scale,8*this.scale)
     }
 
     visible(): boolean {
         return true;
     }
     draw(ctx: CanvasSurface) {
-        ctx.fillBackground(this.bounds,EMPTY_COLOR)
+        ctx.fillBackground(this._bounds,EMPTY_COLOR)
         let map = this.doc.maps[this.doc.selected_map]
         if (!map) return;
         map.forEachPixel((val,i,j) => {
@@ -157,11 +170,11 @@ class MapEditor implements  View {
             let tile = sheet.sprites.find((t:Sprite) => t.id ===val);
             draw_sprite(tile,ctx,i*this.scale,j*this.scale,8,this.doc)
         })
-        if(this.doc.map_grid_visible) draw_grid(ctx,this.bounds,this.scale)
+        if(this.doc.map_grid_visible) draw_grid(ctx,this._bounds,this.scale)
     }
 
-    get_bounds(): Rect {
-        return this.bounds
+    bounds(): Rect {
+        return this._bounds
     }
 
     input(e: CommonEvent): void {
@@ -179,17 +192,23 @@ class MapEditor implements  View {
         }
     }
 
-    is_input_view(): boolean {
-        return true
+    layout(g: CanvasSurface, parent: View): void {
     }
 
-    layout(g: CanvasSurface, parent: View): void {
+    name(): string {
+        return "";
+    }
+
+    off(type: string, cb: Callback): void {
+    }
+
+    on(type: string, cb: Callback): void {
     }
 
 }
 
 class PaletteChooser implements View {
-    bounds: Rect;
+    _bounds: Rect;
     children: View[];
     id: string;
     palette: any;
@@ -199,7 +218,7 @@ class PaletteChooser implements View {
         this.id = 'palette chooser';
         this.children = [];
         this.scale = 32;
-        this.bounds = new Rect(0,0,this.scale*8,this.scale);
+        this._bounds = new Rect(0,0,this.scale*8,this.scale);
     }
 
     visible(): boolean {
@@ -208,19 +227,19 @@ class PaletteChooser implements View {
 
     draw(ctx: CanvasSurface) {
         if (this.palette) {
-            ctx.fillBackground(this.bounds,EMPTY_COLOR)
+            ctx.fillBackground(this._bounds,EMPTY_COLOR)
             for (let i=0; i<5; i++) {
                 ctx.fillRect(i*this.scale+0.5,0+0.5,this.scale,this.scale,this.palette[i]);
             }
-            draw_grid(ctx,this.bounds,this.scale)
+            draw_grid(ctx,this._bounds,this.scale)
             let i = this.doc.selected_color;
             let rect = new Rect(i*this.scale+1,1,this.scale-2,this.scale-2);
             draw_selection_rect(ctx,rect)
         }
     }
 
-    get_bounds(): Rect {
-        return this.bounds
+    bounds(): Rect {
+        return this._bounds
     }
 
     input(e: CommonEvent): void {
@@ -232,11 +251,17 @@ class PaletteChooser implements View {
         }
     }
 
-    is_input_view(): boolean {
-        return true
+    layout(g: CanvasSurface, parent: View): void {
     }
 
-    layout(g: CanvasSurface, parent: View): void {
+    name(): string {
+        return "";
+    }
+
+    off(type: string, cb: Callback): void {
+    }
+
+    on(type: string, cb: Callback): void {
     }
 
 }
@@ -248,7 +273,7 @@ function setup_toolbar(doc:Doc):HBox {
         let blob = jsonObjToBlob(doc.toJsonObj())
         forceDownloadBlob('project.json',blob)
     });
-    save_button.bounds.w = 60
+    save_button._bounds.w = 60
     toolbar.add(save_button);
 
     let load_button = new ActionButton("load",()=>{
@@ -270,7 +295,7 @@ function setup_toolbar(doc:Doc):HBox {
         })
         input_element.click()
     });
-    load_button.bounds.w = 60
+    load_button._bounds.w = 60
     toolbar.add(load_button);
 
     let export_button = new ActionButton("export",() => {
@@ -295,7 +320,7 @@ function setup_toolbar(doc:Doc):HBox {
 
         canvasToPNGBlob(canvas).then((blob)=> forceDownloadBlob(`tileset@1.png`,blob))
     })
-    export_button.bounds.w = 70
+    export_button._bounds.w = 70
     toolbar.add(export_button);
 
     let dirty_label = new CustomLabel("initial-text",()=>{
@@ -311,25 +336,25 @@ class MainView extends BaseParentView {
         super('main',new Rect(0,0,100,100));
     }
     override layout(g: CanvasSurface, parent: View) {
-        this.bounds.x = 0;
-        this.bounds.y = 0;
-        this.bounds.w = g.canvas.width
-        this.bounds.h = g.canvas.height
+        this._bounds.x = 0;
+        this._bounds.y = 0;
+        this._bounds.w = g.canvas.width
+        this._bounds.h = g.canvas.height
 
 
         let margin = 10
         this.children.forEach(ch => {
             // @ts-ignore
             if (ch.id === 'tree') {
-                let b = ch.get_bounds()
+                let b = ch.bounds()
                 b.x = margin
                 b.y = 50
                 b.w = 150
-                b.h = this.bounds.h - b.y - margin
+                b.h = this._bounds.h - b.y - margin
             }
             // @ts-ignore
             if (ch.id === 'app-title') {
-                let b = ch.get_bounds()
+                let b = ch.bounds()
                 b.x = margin
                 b.y = margin
                 // b.w = 100
@@ -337,17 +362,17 @@ class MainView extends BaseParentView {
             }
             // @ts-ignore
             if (ch.id === 'toolbar') {
-                let b = ch.get_bounds()
+                let b = ch.bounds()
                 b.x = 150
                 b.y = 10
             }
             // @ts-ignore
             if (ch.id === 'panel-view') {
-                let b = ch.get_bounds()
+                let b = ch.bounds()
                 b.x = 160
                 b.y = 50
-                b.w = this.bounds.w - 160
-                b.h = this.bounds.h - 50
+                b.w = this._bounds.w - 160
+                b.h = this._bounds.h - 50
             }
         })
 
@@ -361,15 +386,15 @@ class SinglePanel extends BaseParentView {
         this.doc = doc
     }
     override draw(g: CanvasSurface) {
-        g.fillBackground(this.get_bounds(),StandardPanelBackgroundColor)
+        g.fillBackground(this.bounds(),StandardPanelBackgroundColor)
     }
 
     override layout(g: CanvasSurface, parent: View) {
         this.children.forEach(ch => {
-            ch.get_bounds().x = 0;
-            ch.get_bounds().y = 0;
-            ch.get_bounds().w = this.get_bounds().w
-            ch.get_bounds().h = this.get_bounds().h
+            ch.bounds().x = 0;
+            ch.bounds().y = 0;
+            ch.bounds().w = this.bounds().w
+            ch.bounds().h = this.bounds().h
         })
         let item = this.doc.selected_tree_item
         if(item) {
@@ -408,14 +433,14 @@ function make_sheet_editor_view(doc: Doc) {
     let palette_chooser = new PaletteChooser();
     palette_chooser.doc = doc;
     palette_chooser.palette = doc.palette;
-    palette_chooser.bounds.y = 0
+    palette_chooser._bounds.y = 0
     sheet_editor.add(palette_chooser);
 
     // tile editor, edits the current tile
     let tile_editor = new TileEditor();
     tile_editor.doc = doc;
-    tile_editor.bounds.y = palette_chooser.bounds.bottom() + 10;
-    tile_editor.bounds.x = 0
+    tile_editor._bounds.y = palette_chooser._bounds.bottom() + 10;
+    tile_editor._bounds.x = 0
     sheet_editor.add(tile_editor)
 
     let add_tile_button = new ActionButton("add tile",()=>{
@@ -424,14 +449,14 @@ function make_sheet_editor_view(doc: Doc) {
         doc.mark_dirty()
         doc.fire('change', "added a tile");
     });
-    add_tile_button.bounds.y = tile_editor.bounds.bottom() + 10;
+    add_tile_button._bounds.y = tile_editor._bounds.bottom() + 10;
     sheet_editor.add(add_tile_button);
 
 
     // lets you see all N tiles and choose one to edit
     let sprite_selector = new TileSelector()
     sprite_selector.doc = doc;
-    sprite_selector.bounds.y = add_tile_button.bounds.bottom() + 10;
+    sprite_selector._bounds.y = add_tile_button._bounds.bottom() + 10;
     sheet_editor.add(sprite_selector);
     return sheet_editor
 }
@@ -446,7 +471,7 @@ function make_map_view(doc: Doc) {
 
     let selector = new TileSelector()
     selector.doc = doc;
-    selector.bounds.x = map_editor.get_bounds().right()
+    selector._bounds.x = map_editor.bounds().right()
     map_view.add(selector)
 
     let grid_toggle = new ToggleButton("grid",()=>{
@@ -454,8 +479,8 @@ function make_map_view(doc: Doc) {
         grid_toggle.selected = doc.map_grid_visible;
         doc.fire("change", grid_toggle.selected);
     });
-    grid_toggle.bounds.x = 0;
-    grid_toggle.bounds.y = 550;
+    grid_toggle._bounds.x = 0;
+    grid_toggle._bounds.y = 550;
     map_view.add(grid_toggle)
 
     return map_view
@@ -507,6 +532,7 @@ export function start() {
         }
         return "???"
     })
+    // @ts-ignore
     itemlist.on('change',(item,i)  => {
         doc.selected_tree_item = item
         doc.selected_tree_item_index = i
@@ -523,7 +549,7 @@ export function start() {
     //label at the top
     let main_label = new Label("tile map editor");
     main_label.id = 'app-title'
-    main_label.bounds.y = 0
+    main_label._bounds.y = 0
     main_view.add(main_label);
 
     let toolbar = setup_toolbar(doc);
