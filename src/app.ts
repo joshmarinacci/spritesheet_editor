@@ -147,14 +147,23 @@ class MapEditor implements  View {
     children: View[];
     id: string;
     doc: Doc;
-    scale:number;
+    _scale:number;
 
     constructor(doc:Doc) {
         this.doc = doc
         this.id = 'map-editor'
-        this.scale = 64;
+        this._scale = 64;
         this.children = []
-        this._bounds = new Rect(0,0,8*this.scale,8*this.scale)
+        this._bounds = new Rect(0,0,8*this._scale,8*this._scale)
+    }
+
+    scale() {
+        return this._scale
+    }
+    set_scale(scale) {
+        this._scale = scale
+        this._bounds.w = this._scale*8
+        this._bounds.h = this._scale*8
     }
 
     visible(): boolean {
@@ -168,9 +177,9 @@ class MapEditor implements  View {
             if (!val || val === 0) return;
             let sheet = this.doc.get_selected_sheet()
             let tile = sheet.sprites.find((t:Sprite) => t.id ===val);
-            draw_sprite(tile,ctx,i*this.scale,j*this.scale,8,this.doc)
+            draw_sprite(tile,ctx,i*this._scale,j*this._scale,this._scale/8,this.doc)
         })
-        if(this.doc.map_grid_visible) draw_grid(ctx,this._bounds,this.scale)
+        if(this.doc.map_grid_visible) draw_grid(ctx,this._bounds,this._scale)
     }
 
     bounds(): Rect {
@@ -179,7 +188,7 @@ class MapEditor implements  View {
 
     input(e: CommonEvent): void {
         if(e.type === "mousedown" || e.type === "mousedrag") {
-            let pt = e.pt.divide_floor(this.scale);
+            let pt = e.pt.divide_floor(this._scale);
             let map = this.doc.get_selected_map()
             if(!map) return
             let sheet = this.doc.get_selected_sheet()
@@ -487,6 +496,8 @@ function make_map_view(doc: Doc) {
 
     // lets you edit an entire tile map, using the currently selected tile
     let map_editor = new MapEditor(doc);
+    map_editor._bounds.x = 40
+    map_editor._bounds.y = 40
     map_view.add(map_editor);
 
     let selector = new TileSelector()
@@ -494,15 +505,29 @@ function make_map_view(doc: Doc) {
     selector._bounds.x = map_editor.bounds().right()
     map_view.add(selector)
 
+    let toolbar = new HBox()
     let grid_toggle = new ToggleButton("grid",()=>{
         doc.map_grid_visible = !doc.map_grid_visible;
         grid_toggle.selected = doc.map_grid_visible;
         doc.fire("change", grid_toggle.selected);
     });
-    grid_toggle._bounds.x = 0;
-    grid_toggle._bounds.y = 550;
-    map_view.add(grid_toggle)
+    toolbar.add(grid_toggle)
 
+    let zoom = 6
+    let zoom_in = new ActionButton('+',()=>{
+        zoom += 1
+        map_editor.set_scale(Math.pow(2,zoom))
+    })
+    toolbar.add(zoom_in)
+    let zoom_out = new ActionButton('-',()=>{
+        zoom -= 1
+        map_editor.set_scale(Math.pow(2,zoom))
+    })
+    toolbar.add(zoom_out)
+
+    toolbar._bounds.x = 0;
+    toolbar._bounds.y = 0;
+    map_view.add(toolbar)
     return map_view
 }
 
