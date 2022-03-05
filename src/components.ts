@@ -1,5 +1,5 @@
 import {Callback, gen_id, Rect} from "./util";
-import {CanvasSurface, CommonEvent, InputView, ParentView, View} from "./canvas";
+import {CanvasSurface, CommonEvent, ParentView, View} from "./canvas";
 import {
     ButtonBackgroundColor_active,
     ButtonBorderColor,
@@ -13,32 +13,51 @@ import {
     StandardPanelBackgroundColor
 } from "./style";
 
-export class Label implements View {
+export class BaseView implements View {
     bounds: Rect;
-    id: string;
-    text: string;
-
-    visible(): boolean {
-        return true;
+    id:string
+    _name:string
+    private _listeners:Map<string,Callback[]>
+    constructor(bounds:Rect) {
+        this.bounds = bounds
+        this.id = gen_id('baseview')
+        this._name = 'BaseView'
+        this._listeners = new Map()
     }
-
+    on(type:string, cb:Callback) {
+        if(!this._listeners.has(type)) this._listeners.set(type,[])
+        this._listeners.get(type).push(cb)
+    }
+    off(type:string, cb:Callback) {
+        if(!this._listeners.has(type)) this._listeners.set(type,[])
+        this._listeners.set(type,this._listeners.get(type).filter( c => c != cb))
+    }
+    name() {
+        return this._name
+    }
+    draw(g: CanvasSurface): void {
+    }
+    get_bounds(): Rect {
+        return this.bounds
+    }
+    input(event: CommonEvent): void {
+    }
+    layout(g: CanvasSurface, parent: View): void {
+    }
+    visible(): boolean {
+        return true
+    }
+}
+export class Label extends BaseView{
+    text: string;
     constructor(text: string) {
-        this.id = gen_id('label')
-        this.bounds = new Rect(0, 0, 100, StandardTextHeight+StandardVerticalMargin);
+        super(new Rect(0, 0, 100, StandardTextHeight+StandardVerticalMargin))
         this.text = text;
     }
-
     draw(ctx: CanvasSurface) {
         ctx.ctx.fillStyle = StandardTextColor;
         ctx.ctx.font = StandardTextStyle
         ctx.ctx.fillText(this.text, 0, StandardTextHeight);
-    }
-
-    get_bounds(): Rect {
-        return this.bounds
-    }
-
-    layout(g: CanvasSurface, parent: View): void {
     }
 }
 
@@ -53,24 +72,14 @@ export class CustomLabel extends Label {
         super.draw(ctx);
     }
 }
-export class ActionButton implements View, InputView {
-    bounds: Rect
-    id: string
+export class ActionButton extends BaseView{
     private title: string
     private cb: any
     hover:boolean
 
-    visible(): boolean {
-        return true;
-    }
-    get_bounds(): Rect {
-        return this.bounds
-    }
-
     constructor(title: string, cb) {
+        super(new Rect(0, 0, 100, StandardTextHeight+StandardVerticalMargin))
         this.title = title;
-        this.id = gen_id('button')
-        this.bounds = new Rect(0, 0, 100, StandardTextHeight+StandardVerticalMargin);
         this.cb = cb;
         this.hover = false
     }
@@ -95,32 +104,20 @@ export class ActionButton implements View, InputView {
         }
     }
 
-    is_input_view(): boolean {
-        return true
-    }
-
     layout(g: CanvasSurface, parent: View): void {
     }
 
 }
-
-export class ToggleButton implements View, InputView {
-    bounds: Rect
-    id: string
-    private title: string
+export class ToggleButton extends BaseView {
+    title: string
     selected:boolean
     cb:any
 
     constructor(title: string, cb) {
+        super(new Rect(0,0,100,30))
         this.title = title;
-        this.id = "a toggle button";
-        this.bounds = new Rect(0, 0, 100, 30);
         this.selected = false;
         this.cb = cb;
-    }
-
-    visible(): boolean {
-        return true;
     }
 
     draw(ctx: CanvasSurface) {
@@ -131,25 +128,17 @@ export class ToggleButton implements View, InputView {
         ctx.ctx.fillText(this.title, StandardLeftPadding, StandardTextHeight);
     }
 
-    get_bounds(): Rect {
-        return this.bounds
-    }
-
     input(event: CommonEvent): void {
         if(event.type === 'mousedown') {
             this.cb(event)
         }
     }
 
-    is_input_view(): boolean {
-        return true;
-    }
-
     layout(g: CanvasSurface, parent: View): void {
     }
 }
 
-export class SelectList implements View, InputView {
+export class SelectList implements View {
     private data: any[];
     private id: string;
     private bounds: Rect;
@@ -189,15 +178,10 @@ export class SelectList implements View, InputView {
             let pt = event.pt;
             let y = Math.floor(pt.y / 30)
             let item = this.data[y]
-            console.log("clicked on the item",item)
             this.selected_index = y
             this.listeners.forEach(cb => cb(item,y))
             event.ctx.repaint()
         }
-    }
-
-    is_input_view(): boolean {
-        return true
     }
 
     layout(g: CanvasSurface, parent: View): void {
@@ -259,8 +243,10 @@ export class BaseParentView implements View, ParentView {
     set_visible(vis:boolean) {
         this._visible = vis
     }
-}
 
+    input(event: CommonEvent): void {
+    }
+}
 export class HBox extends BaseParentView {
     constructor() {
         super(gen_id('hbox'), new Rect(0,0,100,100))
@@ -279,7 +265,6 @@ export class HBox extends BaseParentView {
         this.bounds.h = my;
     }
 }
-
 export class LayerView extends BaseParentView{
     constructor() {
         super(gen_id('layer'),new Rect(0,0,100,100))

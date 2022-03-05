@@ -1,4 +1,4 @@
-import {CanvasSurface, CommonEvent, EVENTS, InputView, View} from "./canvas";
+import {CanvasSurface, CommonEvent, EVENTS, View} from "./canvas";
 import {GridModel} from "./models";
 import {LayerView} from "./components";
 import {Rect} from "./util";
@@ -83,7 +83,7 @@ class MinesweeperModel {
     }
 }
 
-class MinesweeperView implements View, InputView {
+class MinesweeperView implements View {
     private model: MinesweeperModel;
     private bounds: Rect;
     private scale: number;
@@ -93,6 +93,11 @@ class MinesweeperView implements View, InputView {
         this.model = model
         this.scale = 32
         this.bounds = new Rect(0,0,this.model.grid.w*this.scale,this.model.grid.h*this.scale);
+    }
+    layout(g: CanvasSurface, parent: View): void {
+    }
+    visible(): boolean {
+        return true
     }
     draw(g: CanvasSurface): void {
         g.fillBackground(this.bounds,'black')
@@ -112,15 +117,12 @@ class MinesweeperView implements View, InputView {
         })
         g.strokeBackground(this.bounds,'black')
     }
-
     get_bounds(): Rect {
         return this.bounds
     }
-
     input(e: CommonEvent): void {
         if(e.type === 'mousedown') {
             let pt = e.pt.divide_floor(this.scale);
-            console.log("clicked on", pt)
             let cell = this.model.grid.get_at(pt);
             console.log('cell is',cell);
             if (cell.covered === true) {
@@ -128,10 +130,6 @@ class MinesweeperView implements View, InputView {
                 e.ctx.repaint()
             }
         }
-    }
-
-    is_input_view(): boolean {
-        return true
     }
 }
 

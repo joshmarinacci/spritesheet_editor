@@ -1,4 +1,4 @@
-import {BaseParentView, ActionButton, HBox, Label, ToggleButton, SelectList, CustomLabel} from "./components";
+import {BaseParentView, ActionButton, HBox, Label, ToggleButton, SelectList, CustomLabel, BaseView} from "./components";
 import {
     canvasToPNGBlob, fileToJSON,
     forceDownloadBlob,
@@ -14,7 +14,6 @@ import {
     CanvasSurface,
     CommonEvent,
     EVENTS,
-    InputView,
     log,
     ParentView,
     setup_keyboard_input,
@@ -24,16 +23,14 @@ import {StandardPanelBackgroundColor, StandardSelectionColor} from "./style";
 
 export const EMPTY_COLOR = '#62fcdc'
 
-class TileEditor implements View, InputView {
-    bounds: Rect;
+class TileEditor extends BaseView {
     children: View[];
-    id: string;
     doc: Doc;
     scale:number
     constructor() {
+        super(new Rect(0,0,32*8 + 1, 32*8 + 1))
         this.id = 'tile editor'
         this.scale = 32;
-        this.bounds = new Rect(0,0,this.scale*8 + 1, this.scale*8 + 1)
         this.children = []
     }
     draw(g: CanvasSurface) {
@@ -51,11 +48,6 @@ class TileEditor implements View, InputView {
 
         draw_grid(g,this.bounds,this.scale)
     }
-
-    get_bounds(): Rect {
-        return this.bounds
-    }
-
     input(e: CommonEvent): void {
         let pt = e.pt.divide_floor(this.scale);
         let tile = this.doc.get_selected_tile()
@@ -73,20 +65,11 @@ class TileEditor implements View, InputView {
         this.doc.mark_dirty()
         this.doc.fire('change', "tile edited");
     }
-
-    is_input_view(): boolean {
-        return true;
-    }
-
     layout(g: CanvasSurface, parent: View): void {
-    }
-
-    visible(): boolean {
-        return true
     }
 }
 
-class TileSelector implements View, InputView {
+class TileSelector implements View {
     bounds: Rect;
     children: View[];
     id: string;
@@ -146,7 +129,7 @@ function wrap_number(num:number,width:number):Point {
     )
 }
 
-class MapEditor implements  View, InputView {
+class MapEditor implements  View {
     bounds: Rect;
     children: View[];
     id: string;
@@ -205,7 +188,7 @@ class MapEditor implements  View, InputView {
 
 }
 
-class PaletteChooser implements View, InputView {
+class PaletteChooser implements View {
     bounds: Rect;
     children: View[];
     id: string;
@@ -242,7 +225,6 @@ class PaletteChooser implements View, InputView {
 
     input(e: CommonEvent): void {
         let val = e.pt.divide_floor(this.scale).x
-        console.log("clicked on palette",val);
         if (val >= 0 && val < this.doc.palette.length) {
             this.doc.selected_color = val;
             this.doc.fire('change',this.doc.selected_color)

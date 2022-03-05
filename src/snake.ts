@@ -2,7 +2,7 @@ import {Observable, on, Point, randi, Rect, SuperArray} from "./util";
 // @ts-ignore
 import tileset_url from "./tileset@1.png";
 import {
-    CanvasSurface,
+    CanvasSurface, CommonEvent,
     EVENTS,
     log,
     setup_keyboard_input,
@@ -22,7 +22,6 @@ class GridView implements View {
     private empty: SpriteSlice;
     private tail: SpriteSlice;
     private food: SpriteSlice;
-
     constructor(model: GridModel, spritesheet: SpriteSheet) {
         this.id = 'grid-view'
         this.model = model;
@@ -33,11 +32,9 @@ class GridView implements View {
         this.tail = spritesheet.get_slice(3)
         this.food = spritesheet.get_slice(4);
     }
-
     get_bounds(): Rect {
         return this.bounds
     }
-
     draw(g: CanvasSurface): void {
         g.fill(this.get_bounds(),'white')
         this.model.forEach((w,x,y)=>{
@@ -54,13 +51,19 @@ class GridView implements View {
 
         })
     }
+    input(event: CommonEvent): void {
+    }
+    layout(g: CanvasSurface, parent: View): void {
+    }
+    visible(): boolean {
+        return true
+    }
 }
 class SnakeView implements View {
     private model: SnakeModel;
     private id: string;
     private spritesheet: SpriteSheet;
     private sprite_slice: SpriteSlice;
-
     constructor(model: SnakeModel, spritesheet: SpriteSheet) {
         this.id = 'snake'
         this.model = model;
@@ -71,10 +74,16 @@ class SnakeView implements View {
         g.fill(new Rect(0,0,16,16),'yellow')
         g.draw_slice(0,0,this.sprite_slice,2)
     }
-
     get_bounds(): Rect {
         let pos = this.model.position;
         return new Rect(pos.x*16,pos.y*16,16,16)
+    }
+    input(event: CommonEvent): void {
+    }
+    layout(g: CanvasSurface, parent: View): void {
+    }
+    visible(): boolean {
+        return true
     }
 }
 
@@ -115,7 +124,6 @@ class ScoreView implements View {
             this.slices[i] = spritesheet.get_slice(4+i)
         }
     }
-
     draw(g: CanvasSurface): void {
         let ones = 0;
         let tens = 0;
@@ -129,11 +137,16 @@ class ScoreView implements View {
         g.draw_slice(this.bounds.x, 0, this.slices[tens], 2)
         g.draw_slice(this.bounds.x+16, 0, this.slices[ones], 2)
     }
-
     get_bounds(): Rect {
         return this.bounds
     }
-
+    input(event: CommonEvent): void {
+    }
+    layout(g: CanvasSurface, parent: View): void {
+    }
+    visible(): boolean {
+        return true
+    }
 }
 
 export async function start() {

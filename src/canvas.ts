@@ -7,9 +7,10 @@ export function log(...args) {
 const CLEAR_COLOR = '#f0f0f0'
 export interface View {
     get_bounds():Rect
-    layout(g:CanvasSurface, parent:View):void;
-    draw(g:CanvasSurface):void;
+    layout(g:CanvasSurface, parent:View):void
+    draw(g:CanvasSurface):void
     visible():boolean
+    input(event:CommonEvent):void
 }
 export interface ParentView {
     is_parent_view():boolean,
@@ -35,10 +36,6 @@ export class CommonEvent {
         ce.details = this.details
         return ce
     }
-}
-export interface InputView {
-    is_input_view():boolean
-    input(event:CommonEvent):void
 }
 
 export class CanvasSurface {
@@ -273,13 +270,9 @@ export class CanvasSurface {
                     if (picked) return picked;
                 }
             }
-            // @ts-ignore
-            if (view.is_input_view && view.is_input_view()) {
-                let inputview = view as unknown as InputView
-                let e2 = e.translate(view.get_bounds().x,view.get_bounds().y)
-                inputview.input(e2);
-                return view;
-            }
+            let e2 = e.translate(view.get_bounds().x,view.get_bounds().y)
+            view.input(e2);
+            return view;
         }
         return null;
     }
