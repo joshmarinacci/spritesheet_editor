@@ -171,7 +171,7 @@ class MapEditor implements  View {
     }
     draw(ctx: CanvasSurface) {
         ctx.fillBackground(this._bounds,EMPTY_COLOR)
-        let map = this.doc.maps[this.doc.selected_map]
+        let map = this.doc.get_selected_map()
         if (!map) return;
         map.forEachPixel((val,i,j) => {
             if (!val || val === 0) return;
@@ -202,6 +202,15 @@ class MapEditor implements  View {
     }
 
     layout(g: CanvasSurface, parent: View): void {
+        let map = this.doc.get_selected_map()
+        if(!map) {
+            this._bounds.w = 100
+            this._bounds.h = 100
+            return
+        }
+
+        this._bounds.w = this._scale * map.w
+        this._bounds.h = this._scale * map.h
     }
 
     name(): string {
@@ -275,7 +284,7 @@ class PaletteChooser implements View {
 
 }
 
-function setup_toolbar(doc:Doc):HBox {
+function setup_toolbar(doc: Doc, surface: CanvasSurface):HBox {
     let toolbar = new HBox();
 
     let new_button = new ActionButton('new',()=>{
@@ -328,25 +337,24 @@ function setup_toolbar(doc:Doc):HBox {
     toolbar.add(load_button);
 
     let export_button = new ActionButton("export",() => {
-        console.log("exporting");
         let canvas = document.createElement('canvas')
-        let size = 8
-        canvas.width = 8*size
-        canvas.height = 8*size
+        let map = doc.get_selected_map()
+        canvas.width = map.w*64
+        canvas.height = map.h*64
         let ctx = canvas.getContext('2d')
-        // ctx.fillStyle = 'red'
-        // ctx.fillRect(0,0,canvas.width,canvas.height);
-        // doc.tiles.forEach((sprite,s)=>{
-        //     let pt = wrap_number(s,8);
-        //     console.log("exporting tile",sprite)
-        //     let x = pt.x * size
-        //     let y = pt.y * size
-        //     sprite.forEachPixel((val: number, i: number, j: number) => {
-        //         ctx.fillStyle = doc.palette[val]
-        //         ctx.fillRect(x + i, y + j, 1,1);
-        //     });
-        // })
-
+        ctx.fillStyle = 'red'
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        map.forEachPixel((val,i,j) => {
+            if (!val || val === 0) return;
+            let sheet = doc.get_selected_sheet()
+            let tile = sheet.sprites.find((t:Sprite) => t.id ===val);
+            let x = i*64
+            let y = j*64
+            tile.forEachPixel((val: number, i: number, j: number) => {
+                ctx.fillStyle = doc.palette[val]
+                ctx.fillRect(x+i*8, y+j*8, 8,8);
+            });
+        })
         canvasToPNGBlob(canvas).then((blob)=> forceDownloadBlob(`tileset@1.png`,blob))
     })
     export_button._bounds.w = 70
@@ -597,7 +605,7 @@ export function start() {
     main_label._bounds.y = 0
     main_view.add(main_label);
 
-    let toolbar = setup_toolbar(doc);
+    let toolbar = setup_toolbar(doc, surface);
     toolbar.id = 'toolbar'
     main_view.add(toolbar);
 

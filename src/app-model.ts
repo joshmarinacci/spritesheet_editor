@@ -2,8 +2,8 @@ import {CanvasSurface} from "./canvas";
 
 export class Sprite {
     id: string;
-    private w: number;
-    private h: number;
+    w: number;
+    h: number;
     data: number[];
 
     constructor(id, w, h) {
