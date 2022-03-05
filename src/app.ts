@@ -269,6 +269,26 @@ class PaletteChooser implements View {
 function setup_toolbar(doc:Doc):HBox {
     let toolbar = new HBox();
 
+    let new_button = new ActionButton('new',()=>{
+        let sprite = new Sprite('spritex',8,8)
+        let sheet = new Sheet("sheetx", "the sheet")
+        sheet.add(new Sprite('spritex',8,8))
+        let tilemap = new Sprite('mapx', 16, 16);
+        tilemap.set_pixel(0, 0, 'spritex');
+        let empty = {
+            version:1,
+            sheets:[
+                sheet.toJsonObj(),
+            ],
+            maps:[
+                tilemap.toJsonObj()
+            ],
+            fonts:[]
+        }
+        doc.reset_from_json(empty)
+    })
+    new_button._bounds.w = 50
+    toolbar.add(new_button)
     let save_button = new ActionButton("save",()=>{
         let blob = jsonObjToBlob(doc.toJsonObj())
         forceDownloadBlob('project.json',blob)
