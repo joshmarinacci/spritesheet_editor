@@ -1,5 +1,5 @@
-import {Callback, Point} from "./util";
-import {log} from "./canvas";
+import {log} from "./uilib/canvas";
+import {Callback, Point} from "./uilib/common";
 
 export class GridModel {
     w: number;

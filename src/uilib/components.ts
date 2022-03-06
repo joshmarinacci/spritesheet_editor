@@ -1,25 +1,25 @@
-import {Callback, gen_id, Rect} from "./util";
 import {CanvasSurface, CommonEvent, ParentView, View} from "./canvas";
 import {
+    ButtonBackgroundColor,
     ButtonBackgroundColor_active,
     ButtonBorderColor,
-    ButtonBackgroundColor,
-    StandardTextColor,
-    StandardTextStyle,
-    StandardTextHeight,
-    StandardVerticalMargin,
     StandardLeftPadding,
+    StandardPanelBackgroundColor,
     StandardSelectionColor,
-    StandardPanelBackgroundColor
-} from "./style";
+    StandardTextColor,
+    StandardTextHeight,
+    StandardTextStyle,
+    StandardVerticalMargin
+} from "../style";
+import {Callback, gen_id, Rect} from "./common";
 
 export class BaseView implements View {
     _bounds: Rect;
     id:string
     _name:string
     private _listeners:Map<string,Callback[]>
-    constructor(bounds:Rect) {
-        this._bounds = bounds
+    constructor(bounds?:Rect) {
+        this._bounds = bounds || new Rect(0, 0, 100, 100)
         this.id = gen_id('baseview')
         this._name = 'BaseView'
         this._listeners = new Map()
@@ -77,7 +77,7 @@ export class ActionButton extends BaseView{
     private cb: any
     hover:boolean
 
-    constructor(title: string, cb) {
+    constructor(title: string, cb?:any) {
         super(new Rect(0, 0, 100, StandardTextHeight+StandardVerticalMargin))
         this.title = title;
         this.cb = cb;
@@ -304,3 +304,4 @@ export class LayerView extends BaseParentView{
         }
     }
 }
+

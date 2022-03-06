@@ -1,4 +1,4 @@
-import {CanvasSurface} from "./canvas";
+import {CanvasSurface} from "./uilib/canvas";
 
 export class Sprite {
     id: string;

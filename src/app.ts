@@ -1,14 +1,9 @@
-import {BaseParentView, ActionButton, HBox, Label, ToggleButton, SelectList, CustomLabel, BaseView} from "./components";
+import {BaseParentView, ActionButton, HBox, Label, ToggleButton, SelectList, CustomLabel, BaseView} from "./uilib/components";
 import {
-    Callback,
     canvasToPNGBlob, fileToJSON,
     forceDownloadBlob,
-    gen_id,
     jsonObjToBlob,
-    Observable,
-    on,
-    Point,
-    Rect
+    on
 } from "./util";
 import {Doc, draw_sprite, Sheet, Sprite} from "./app-model";
 import {
@@ -19,8 +14,9 @@ import {
     ParentView,
     setup_keyboard_input,
     View
-} from "./canvas";
+} from "./uilib/canvas";
 import {StandardPanelBackgroundColor, StandardSelectionColor} from "./style";
+import {Callback, gen_id, Observable, Point, Rect} from "./uilib/common";
 
 export const EMPTY_COLOR = '#62fcdc'
 
@@ -458,7 +454,6 @@ class SheetEditorView extends BaseParentView {
         super('sheet-editor-view',new Rect(0,0,100,100));
     }
 }
-
 class MapEditorView extends BaseParentView {
     constructor() {
         super('map-editor-view',new Rect(0,0,100,100));

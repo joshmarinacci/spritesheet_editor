@@ -1,7 +1,7 @@
-import {CanvasSurface, CommonEvent, EVENTS, View} from "./canvas";
+import {CanvasSurface, CommonEvent, EVENTS, View} from "./uilib/canvas";
 import {GridModel} from "./models";
-import {LayerView} from "./components";
-import {Callback, Rect} from "./util";
+import {LayerView} from "./uilib/components";
+import {Callback, Rect} from "./uilib/common";
 
 /*
 

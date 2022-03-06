@@ -1,4 +1,5 @@
-import {Callback, Observable, Point, Rect} from "./util";
+import {Callback, Observable, Point, Rect, Size} from "./common";
+import {StandardTextColor, StandardTextStyle} from "../style";
 
 export function log(...args) {
     console.log('SNAKE:', ...args);
@@ -92,7 +93,20 @@ export class CanvasSurface {
         if(!this.root) {
             console.warn("root is null")
         } else {
-            this.layout_view(this.root, null)
+            // @ts-ignore
+            if(this.root.layout2) {
+                // @ts-ignore
+                let size =this.root.layout2(this, new Size(this.w,this.h))
+                console.log("canvas, root requested",size)
+                if(size.maxw) {
+                    this.root.bounds().w = this.w
+                }
+                if(size.maxh) {
+                    this.root.bounds().h = this.h
+                }
+            } else {
+                this.layout_view(this.root, null)
+            }
         }
     }
     private layout_view(view: View, parent:View) {
@@ -181,14 +195,14 @@ export class CanvasSurface {
         }
         let str = `${title} (${bds.x},${bds.y}) (${bds.w}x${bds.h})`
         for (let i = 0; i < 3; i++) {
-            this.ctx.font = '16px sans-serif';
+            this.ctx.font = '10px sans-serif';
             this.ctx.fillStyle = 'white'
-            this.ctx.fillText(str, 3 + i, 3 + i + 12)
+            this.ctx.fillText(str, 3 + i, 3 + i + bds.h)
         }
         for (let i = 0; i < 1; i++) {
-            this.ctx.font = '16px sans-serif';
+            this.ctx.font = '10px sans-serif';
             this.ctx.fillStyle = 'black'
-            this.ctx.fillText(str, 3 + i + 1, 3 + i + 1 + 12)
+            this.ctx.fillText(str, 3 + i + 1, 3 + i + 1 + bds.h)
         }
     }
 
@@ -286,6 +300,18 @@ export class CanvasSurface {
 
     on_input(cb: Callback) {
         this._input_callback = cb
+    }
+
+    measureText(caption: string):Size {
+        this.ctx.font = StandardTextStyle
+        let metrics = this.ctx.measureText(caption)
+        return new Size(metrics.width, metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent);
+    }
+
+    fillStandardText(caption: string, x: number, y: number) {
+        this.ctx.fillStyle = StandardTextColor
+        this.ctx.font = StandardTextStyle
+        this.ctx.fillText(caption,x, y)
     }
 }
 

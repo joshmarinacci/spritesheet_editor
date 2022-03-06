@@ -1,4 +1,4 @@
-import {Callback, Observable, on, Point, randi, Rect, SuperArray} from "./util";
+import {on, randi} from "./util";
 // @ts-ignore
 import tileset_url from "./tileset@1.png";
 import {
@@ -9,9 +9,10 @@ import {
     SpriteSheet,
     SpriteSlice,
     View
-} from "./canvas";
+} from "./uilib/canvas";
 import {GridModel} from "./models";
-import {LayerView} from "./components";
+import {LayerView} from "./uilib/components";
+import {Callback, Observable, Point, Rect, SuperArray} from "./uilib/common";
 
 class GridView implements View {
     private model: GridModel;

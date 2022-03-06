@@ -8,6 +8,7 @@
     "build": "npx tsc",
     "local-dev": "npx parcel src/index.html",
     "snake-dev": "npx parcel src/snake.html",
+    "guitest": "npx parcel src/guitest.html",
     "minesweeper-dev": "npx parcel src/minesweeper.html"
   },
   "author": "",
