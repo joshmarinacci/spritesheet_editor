@@ -305,7 +305,13 @@ export class CanvasSurface {
     measureText(caption: string):Size {
         this.ctx.font = StandardTextStyle
         let metrics = this.ctx.measureText(caption)
-        return new Size(metrics.width, metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent);
+        if('fontBoundingBoxAscent' in metrics) {
+            return new Size(metrics.width, metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent);
+        }
+        if('actualBoundingBoxAscent' in metrics) {
+            return new Size(metrics.width, metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+        }
+        throw new Error(`cannot get correct metrics ${metrics}`)
     }
 
     fillStandardText(caption: string, x: number, y: number) {

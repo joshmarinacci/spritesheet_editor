@@ -10,69 +10,69 @@ import {
 } from "./style";
 
 interface LayoutView {
+    hflex:boolean
+    vflex:boolean
     layout2(g:CanvasSurface, available:Size):Size
 }
 class HBox extends BaseParentView implements LayoutView {
     fill: string;
     constructor() {
         super(gen_id('hbox'));
+        this.hflex = true
+        this.vflex = false
     }
     layout2(g: CanvasSurface, available:Size):Size {
         let pad = 10
         // this.log("taking all the space", available)
         available = available.shrink(pad);
-        let sizes = this.children.map(ch => {
-            // @ts-ignore
-            if(ch.layout2) {
-                // @ts-ignore
-                return [ch,ch.layout2(g,available)]
-            } else {
-                console.warn("child doesnt have layout 2",ch)
-                return [ch,null]
-            }
+
+        //split out flex and non-flex children
+        let yes_flex = this.children.filter(ch => ch.hflex)
+        let non_flex = this.children.filter(ch => !ch.hflex)
+        this.log("yes flex",yes_flex)
+        this.log("non flex",non_flex)
+        //call layout on the non-flex children first
+        let sizes:Map<LayoutView,Size> = new Map()
+        let total_w = 0
+        non_flex.map(ch => {
+            let ch2 = ch as unknown as LayoutView
+            let size = ch2.layout2(g,available)
+            total_w += size.w
+            sizes.set(ch2,size)
         })
-        this.log("child sizes",sizes)
-        let y = pad
-        let x = pad
-        let total = 0
-        sizes.forEach(args => total += args[1].w)
-        this.log('we need space',total,'and ahve',available)
-        let leftover = available.w - total
-        this.log("leftover is",leftover)
+        this.log("first sizes are",sizes)
+        this.log("total used is",total_w)
+        if(yes_flex.length > 0) {
+            //allocate the rest of the space equally to the flex children
+            let flex_avail = new Size(total_w / yes_flex.length, available.h)
+            //call layout on the flex children
+            yes_flex.map(ch => {
+                let ch2 = ch as unknown as LayoutView
+                let size = ch2.layout2(g,flex_avail)
+                total_w += size.w
+                sizes.set(ch2,size)
+            })
+        }
+        console.log("final sizes",sizes)
+        //place all children (they've already set their width and height)
+        let nx = pad
+        let ny = pad
         let maxh = 0
-
-        let w_grow_count = 0
-        let h_grow_count = 0
-        sizes.forEach(args => {
-            let size = args[1]
-            console.log("size",size)
-            if(size.maxw) w_grow_count+=1
-            if(size.maxh) h_grow_count+=1
-        })
-
-        sizes.forEach(args => {
-            let ch = args[0]
-            let size = args[1]
-            // this.log("setting child",ch)
-            // this.log('to size',size)
-            ch.bounds().x = x
-            ch.bounds().y = y
-            ch.bounds().w = size.w
-            if(size.maxw) {
-                ch.bounds().w = leftover/w_grow_count
-            }
-            x += ch.bounds().w
+        this.children.forEach(ch => {
+            let size = sizes.get(ch as unknown as LayoutView)
+            ch.bounds().x = nx
             ch.bounds().h = size.h
-            if(size.maxh) {
-                ch.bounds().h = available.h
-            }
-            maxh = Math.max(maxh,ch.bounds().h)
+            nx += ch.bounds().w
+            ch.bounds().y = ny
+            maxh = Math.max(ch.bounds().h,maxh)
         })
-
-        // console.log("max h is",maxh)
-        let size = new Size(x+pad*2,maxh+pad*2)
+        //return own size
+        this.bounds().w = nx+pad*2
+        this.bounds().h = maxh+pad*2
+        let size = new Size(this.bounds().w,this.bounds().h)
         size.maxh = false
         size.maxw = false
+        this.log("final self size",this.bounds())
         return size
     }
 
@@ -86,6 +86,9 @@ class HBox extends BaseParentView implements LayoutView {
     private log(...args) {
         console.log(this.id+": ",...args)
     }
+
+    hflex: boolean;
+    vflex: boolean;
 }
 class VBox extends BaseParentView {
     constructor() {
@@ -157,12 +160,20 @@ class VBox extends BaseParentView {
 }
 
 class HSpacer extends BaseView implements LayoutView{
+    constructor() {
+        super();
+        this.hflex = true
+        this.vflex = false
+    }
     layout2(g: CanvasSurface, available: Size): Size {
         let size = new Size(0,20)
         size.maxh = false
         size.maxw = true
         return size
    }
+
+    hflex: boolean;
+    vflex: boolean;
 }
 
 class GrowPanel extends BaseParentView implements LayoutView {
@@ -196,10 +207,14 @@ class Button2 implements View, LayoutView {
     private caption: string
     _bounds:Rect
     private id: string;
+    hflex:boolean
+    vflex:boolean
     constructor(button1: string) {
         this.id = gen_id("button2")
         this._bounds = new Rect(0,0,200,200)
         this.caption = button1
+        this.hflex = false
+        this.vflex = false
     }
 
     bounds(): Rect {
@@ -245,7 +260,7 @@ export function start() {
     surface.debug = false
 
 
-    let root = new VBox();
+    // let root = new VBox();
     let toolbar = new HBox();
     toolbar.fill = '#f0ffc0'
     toolbar.add(new Button2("button 1"))
@@ -254,18 +269,18 @@ export function start() {
     toolbar.add(new Button2("Button 3"))
     // toolbar.add(new Label("a text label"))
 
-    root.add(toolbar)
+    // root.add(toolbar)
 
 
-    let middle_layer = new HBox()
-    middle_layer.fill = 'aqua'
-    middle_layer.add(new GrowPanel().with_fill('red'))
-    middle_layer.add(new GrowPanel().with_fill('yellow'))
-
-    root.add(middle_layer)
+    // let middle_layer = new HBox()
+    // middle_layer.fill = 'aqua'
+    // middle_layer.add(new GrowPanel().with_fill('red'))
+    // middle_layer.add(new GrowPanel().with_fill('yellow'))
     //
-    surface.set_root(root)
-    // surface.set_root(toolbar)
+    // root.add(middle_layer)
+    //
+    // surface.set_root(root)
+    surface.set_root(toolbar)
 
     surface.addToPage();
     surface.repaint()
