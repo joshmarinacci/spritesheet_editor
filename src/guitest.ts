@@ -249,9 +249,7 @@ class Button2 implements View, LayoutView {
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        let size = g.measureText(this.caption).grow(StandardLeftPadding)
-        // this.log("size of button",this.caption,size)
-        return size
+        return g.measureText(this.caption).grow(StandardLeftPadding)
     }
 
     name(): string {
