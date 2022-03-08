@@ -21,10 +21,10 @@ class HBox extends BaseParentView implements LayoutView {
         this.hflex = true
         this.vflex = false
     }
-    layout2(g: CanvasSurface, available:Size):Size {
+    layout2(g: CanvasSurface, real_available:Size):Size {
         let pad = 10
-        // this.log("taking all the space", available)
-        available = available.shrink(pad);
+        this.log("taking all the space", real_available)
+        let available = real_available.shrink(pad);
 
         //split out flex and non-flex children
         let yes_flex = this.children.filter(ch => ch.hflex)
@@ -38,13 +38,15 @@ class HBox extends BaseParentView implements LayoutView {
             let ch2 = ch as unknown as LayoutView
             let size = ch2.layout2(g,available)
             total_w += size.w
+            // this.log("size of ch",ch,size)
             sizes.set(ch2,size)
         })
         this.log("first sizes are",sizes)
         this.log("total used is",total_w)
+        this.log("avail is",available)
         if(yes_flex.length > 0) {
             //allocate the rest of the space equally to the flex children
-            let flex_avail = new Size(total_w / yes_flex.length, available.h)
+            let flex_avail = new Size((available.w - total_w) / yes_flex.length, available.h)
             //call layout on the flex children
             yes_flex.map(ch => {
                 let ch2 = ch as unknown as LayoutView
@@ -53,7 +55,7 @@ class HBox extends BaseParentView implements LayoutView {
                 sizes.set(ch2,size)
             })
         }
-        console.log("final sizes",sizes)
+        this.log("final sizes",sizes)
         //place all children (they've already set their width and height)
         let nx = pad
         let ny = pad
@@ -62,6 +64,7 @@ class HBox extends BaseParentView implements LayoutView {
             let size = sizes.get(ch as unknown as LayoutView)
             ch.bounds().x = nx
             ch.bounds().h = size.h
+            ch.bounds().w = size.w
             nx += ch.bounds().w
             ch.bounds().y = ny
             maxh = Math.max(ch.bounds().h,maxh)
@@ -69,9 +72,11 @@ class HBox extends BaseParentView implements LayoutView {
         //return own size
         this.bounds().w = nx+pad*2
         this.bounds().h = maxh+pad*2
+        if(this.vflex) {
+            this.bounds().h = real_available.h
+            this.log("hbox growing! to ",this.bounds().h)
+        }
         let size = new Size(this.bounds().w,this.bounds().h)
-        size.maxh = false
-        size.maxw = false
         this.log("final self size",this.bounds())
         return size
     }
@@ -102,7 +107,7 @@ class VBox extends BaseParentView implements LayoutView {
     hflex: boolean;
     vflex: boolean;
     layout2(g: CanvasSurface, available:Size):Size {
-        // this.log("taking all the space", available)
+        this.log("taking all the space", available)
         let pad = 10
         available = available.shrink(pad);
 
@@ -124,7 +129,8 @@ class VBox extends BaseParentView implements LayoutView {
         this.log("total used is",total_h)
         if(yes_flex.length > 0) {
             //allocate the rest of the space equally to the flex children
-            let flex_avail = new Size(available.w, total_h / yes_flex.length)
+            let flex_avail = new Size(available.w, (available.h-total_h) / yes_flex.length)
+            this.log("orig avail",available)
             this.log("flex avail",flex_avail)
             //call layout on the flex children
             yes_flex.map(ch => {
@@ -174,9 +180,7 @@ class HSpacer extends BaseView implements LayoutView{
         this.vflex = false
     }
     layout2(g: CanvasSurface, available: Size): Size {
-        let size = new Size(0,20)
-        size.maxh = false
-        size.maxw = true
+        let size = new Size(available.w,0)
         return size
    }
 
@@ -189,13 +193,13 @@ class GrowPanel extends BaseParentView implements LayoutView {
     constructor() {
         super(gen_id('grow'));
         this.fill = null
+        this.hflex = true
+        this.vflex = true
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        let size = new Size(10,10)
-        size.maxw = true
-        size.maxh = true
-        return size
+        console.log("grow getting available",available)
+        return available
     }
 
     draw(g: CanvasSurface) {
@@ -209,6 +213,9 @@ class GrowPanel extends BaseParentView implements LayoutView {
         this.fill = fill
         return this
     }
+
+    hflex: boolean;
+    vflex: boolean;
 }
 
 class Button2 implements View, LayoutView {
@@ -242,7 +249,9 @@ class Button2 implements View, LayoutView {
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        return g.measureText(this.caption).grow(StandardLeftPadding)
+        let size = g.measureText(this.caption).grow(StandardLeftPadding)
+        // this.log("size of button",this.caption,size)
+        return size
     }
 
     name(): string {
