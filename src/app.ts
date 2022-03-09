@@ -1,4 +1,4 @@
-import {ActionButton, HBox, Label, ToggleButton, SelectList, CustomLabel, VBox} from "./uilib/components";
+import {ActionButton, HBox, Label, ToggleButton, SelectList, CustomLabel, VBox, Header} from "./uilib/components";
 import {
     canvasToPNGBlob, fileToJSON,
     forceDownloadBlob,
@@ -217,6 +217,8 @@ class PaletteChooser extends SuperChildView{
 
 function setup_toolbar(doc: Doc, surface: CanvasSurface):HBox {
     let toolbar = new HBox();
+    toolbar.pad = 0
+    toolbar.fill = '#ccc'
 
     let new_button = new ActionButton('new')
         new_button.on('action',()=>{
@@ -347,18 +349,22 @@ class SinglePanel extends SuperParentView {
 }
 
 function make_sheet_editor_view(doc: Doc) {
-    let sheet_editor = new VBox()
+    let sheet_editor = new HBox()
     sheet_editor._name = 'sheet-editor-view'
+
+    let vb1 = new VBox()
     let palette_chooser = new PaletteChooser();
     palette_chooser.doc = doc;
     palette_chooser.palette = doc.palette;
-    sheet_editor.add(palette_chooser);
+    vb1.add(palette_chooser);
 
     // tile editor, edits the current tile
     let tile_editor = new TileEditor();
     tile_editor.doc = doc;
-    sheet_editor.add(tile_editor)
+    vb1.add(tile_editor)
+    sheet_editor.add(vb1)
 
+    let vb2 = new VBox()
     let add_tile_button = new ActionButton("add tile")
     add_tile_button.on('action',()=>{
         let sheet = doc.get_selected_sheet()
@@ -366,13 +372,14 @@ function make_sheet_editor_view(doc: Doc) {
         doc.mark_dirty()
         doc.fire('change', "added a tile");
     });
-    sheet_editor.add(add_tile_button);
+    vb2.add(add_tile_button);
 
 
     // lets you see all N tiles and choose one to edit
     let sprite_selector = new TileSelector()
     sprite_selector.doc = doc;
-    sheet_editor.add(sprite_selector);
+    vb2.add(sprite_selector);
+    sheet_editor.add(vb2)
     return sheet_editor
 }
 
@@ -425,7 +432,7 @@ export function start() {
     log("starting")
     let All = new Observable();
 
-    let surface = new CanvasSurface(500,500);
+    let surface = new CanvasSurface(800,500);
     surface.debug = false
     let KeyboardInput = setup_keyboard_input()
     on(KeyboardInput,EVENTS.KEYDOWN,(e)=>{
@@ -450,12 +457,13 @@ export function start() {
     })
     //draws border
     let main_view = new VBox()
+    main_view.pad = 0
     main_view._name = 'main-view'
     main_view.hflex = true
     main_view.vflex = true
 
     //label at the top
-    let main_label = new Label("tile map editor");
+    let main_label = new Header('Tile Map Editor')
     main_view.add(main_label);
 
     let toolbar = setup_toolbar(doc, surface);
@@ -467,6 +475,7 @@ export function start() {
     hb.vflex = true
     hb.hflex = true
     hb.fill = 'blue'
+    hb.pad = 0
     main_view.add(hb)
 
     function rebuild_data(doc) {

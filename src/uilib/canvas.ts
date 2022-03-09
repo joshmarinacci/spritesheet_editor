@@ -18,7 +18,7 @@ export class CanvasSurface {
     private scale: number;
     private _input_callback: Callback;
 
-    constructor(w: number, h: number, scale:number) {
+    constructor(w: number, h: number, scale?:number) {
         this.log("making canvas ",w,h)
         this.w = w;
         this.h = h;

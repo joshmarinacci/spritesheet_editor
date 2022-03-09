@@ -88,13 +88,13 @@ export class ToggleButton extends SuperChildView {
         ctx.ctx.font = StandardTextStyle
         ctx.ctx.fillText(this.title, StandardLeftPadding, StandardTextHeight);
     }
-//
-//     input(event: CommonEvent): void {
-//         if(event.type === 'mousedown') {
-//             this.cb(event)
-//         }
-//     }
-//
+
+    input(event: CommonEvent): void {
+        if(event.type === 'mousedown') {
+            this.fire('action',event)
+        }
+    }
+
     layout2(g: CanvasSurface, available: Size): Size {
         return g.measureText(this.title).grow(StandardLeftPadding)
     }
@@ -159,16 +159,19 @@ export class LayerView extends SuperParentView {
 
 export class Header extends SuperChildView {
     private caption: string
+    private fill: string;
 
     constructor(caption: string) {
         super(gen_id("header"))
         this._name = 'header'
+        this.fill = 'white'
         this.caption = caption
         this.hflex = true
         this.vflex = false
     }
 
     draw(g: CanvasSurface): void {
+        g.fillBackground(this.bounds(),this.fill)
         let size = g.measureText(this.caption)
         let x = (this.bounds().w - size.w) / 2
         g.fillStandardText(this.caption, x, StandardTextHeight);
@@ -182,17 +185,18 @@ export class Header extends SuperChildView {
 
 export class HBox extends SuperParentView {
     fill: string;
+    pad: number;
 
     constructor() {
         super(gen_id('hbox'));
         this.hflex = true
         this.vflex = false
+        this.pad = 0
     }
 
     layout2(g: CanvasSurface, real_available: Size): Size {
         this.log("start avail",real_available)
-        let pad = 3
-        let available = real_available.shrink(pad);
+        let available = real_available.shrink(this.pad);
         //split out flex and non-flex children
         // @ts-ignore
         let yes_flex = this._children.filter(ch => ch.hflex)
@@ -219,8 +223,8 @@ export class HBox extends SuperParentView {
             })
         }
         //place all children (they've already set their width and height)
-        let nx = pad
-        let ny = pad
+        let nx = this.pad
+        let ny = this.pad
         let maxh = 0
         this._children.forEach(ch => {
             let size = sizes.get(ch as unknown as View)
@@ -232,8 +236,8 @@ export class HBox extends SuperParentView {
             maxh = Math.max(ch.bounds().h, maxh)
         })
         //return own size
-        this.bounds().w = nx + pad * 2
-        this.bounds().h = maxh + pad * 2
+        this.bounds().w = nx + this.pad * 2
+        this.bounds().h = maxh + this.pad * 2
         if (this.vflex) {
             this.bounds().h = real_available.h
         }
@@ -252,18 +256,19 @@ export class HBox extends SuperParentView {
 
 export class VBox extends SuperParentView {
     fill: string;
+    pad: number;
 
     constructor() {
         super(gen_id('vbox'));
         this.fill = 'gray'
         this.hflex = false
         this.vflex = true
+        this.pad = 0
     }
 
     layout2(g: CanvasSurface, real_available: Size): Size {
         this.log("start avail",real_available)
-        let pad = 10
-        let available = real_available.shrink(pad);
+        let available = real_available.shrink(this.pad);
 
         // @ts-ignore
         let yes_flex = this.get_children().filter(ch => ch.vflex)
@@ -290,8 +295,8 @@ export class VBox extends SuperParentView {
             })
         }
         //place all children (they've already set their width and height)
-        let nx = pad
-        let ny = pad
+        let nx = this.pad
+        let ny = this.pad
         let maxw = 0
         this.get_children().forEach(ch => {
             let size = sizes.get(ch as unknown as View)
@@ -303,8 +308,8 @@ export class VBox extends SuperParentView {
             maxw = Math.max(ch.bounds().w, maxw)
         })
         //return own size
-        this.bounds().w = maxw + pad * 2
-        this.bounds().h = ny + pad * 2
+        this.bounds().w = maxw + this.pad * 2
+        this.bounds().h = ny + this.pad * 2
         if(this.hflex) {
             this.bounds().w = available.w
         }
