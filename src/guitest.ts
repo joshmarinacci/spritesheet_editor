@@ -1,5 +1,5 @@
 import {CanvasSurface, CommonEvent, log, ParentView, View} from "./uilib/canvas";
-import {BaseParentView, LayerView} from "./uilib/components";
+import {LayerView} from "./uilib/components";
 import {Callback, gen_id, Rect, Size} from "./uilib/common";
 import {ButtonBackgroundColor, ButtonBorderColor, StandardLeftPadding, StandardTextHeight} from "./style";
 
@@ -166,7 +166,7 @@ class Header extends SuperChildView {
         return new Size(available.w,text_size.h)
     }
 }
-class HBox extends BaseParentView implements LayoutView {
+class HBox extends SuperParentView {
     fill: string;
     constructor() {
         super(gen_id('hbox'));
@@ -175,16 +175,12 @@ class HBox extends BaseParentView implements LayoutView {
     }
     layout2(g: CanvasSurface, real_available:Size):Size {
         let pad = 10
-        // this.log("taking all the space", real_available)
         let available = real_available.shrink(pad);
-
         //split out flex and non-flex children
         // @ts-ignore
-        let yes_flex = this.children.filter(ch => ch.hflex)
+        let yes_flex = this._children.filter(ch => ch.hflex)
         // @ts-ignore
-        let non_flex = this.children.filter(ch => !ch.hflex)
-        // this.log("yes flex",yes_flex)
-        // this.log("non flex",non_flex)
+        let non_flex = this._children.filter(ch => !ch.hflex)
         //call layout on the non-flex children first
         let sizes:Map<LayoutView,Size> = new Map()
         let total_w = 0
@@ -192,12 +188,8 @@ class HBox extends BaseParentView implements LayoutView {
             let ch2 = ch as unknown as LayoutView
             let size = ch2.layout2(g,available)
             total_w += size.w
-            // this.log("size of ch",ch,size)
             sizes.set(ch2,size)
         })
-        // this.log("first sizes are",sizes)
-        // this.log("total used is",total_w)
-        // this.log("avail is",available)
         if(yes_flex.length > 0) {
             //allocate the rest of the space equally to the flex children
             let flex_avail = new Size((available.w - total_w) / yes_flex.length, available.h)
@@ -209,12 +201,11 @@ class HBox extends BaseParentView implements LayoutView {
                 sizes.set(ch2,size)
             })
         }
-        // this.log("final sizes",sizes)
         //place all children (they've already set their width and height)
         let nx = pad
         let ny = pad
         let maxh = 0
-        this.children.forEach(ch => {
+        this._children.forEach(ch => {
             let size = sizes.get(ch as unknown as LayoutView)
             ch.bounds().x = nx
             ch.bounds().h = size.h
@@ -228,28 +219,16 @@ class HBox extends BaseParentView implements LayoutView {
         this.bounds().h = maxh+pad*2
         if(this.vflex) {
             this.bounds().h = real_available.h
-            // this.log("hbox growing! to ",this.bounds().h)
         }
-        let size = new Size(this.bounds().w,this.bounds().h)
-        // this.log("final self size",this.bounds())
-        return size
+        return new Size(this.bounds().w, this.bounds().h)
     }
-
     draw(g: CanvasSurface) {
         if(this.fill) {
-            this.log("DRAWING",this.fill,this.bounds())
             g.fillBackground(this.bounds(),this.fill)
         }
     }
-
-    private log(...args) {
-        console.log(this.id+": ",...args)
-    }
-
-    hflex: boolean;
-    vflex: boolean;
 }
-class VBox extends BaseParentView implements LayoutView {
+class VBox extends SuperParentView {
     fill: string;
     constructor() {
         super(gen_id('vbox'));
@@ -257,20 +236,14 @@ class VBox extends BaseParentView implements LayoutView {
         this.hflex = false
         this.vflex = true
     }
-
-    hflex: boolean;
-    vflex: boolean;
     layout2(g: CanvasSurface, available:Size):Size {
-        // this.log("taking all the space", available)
         let pad = 10
         available = available.shrink(pad);
 
         // @ts-ignore
-        let yes_flex = this.children.filter(ch => ch.vflex)
+        let yes_flex = this.get_children().filter(ch => ch.vflex)
         // @ts-ignore
-        let non_flex = this.children.filter(ch => !ch.vflex)
-        // this.log("yes flex",yes_flex)
-        // this.log("non flex",non_flex)
+        let non_flex = this.get_children().filter(ch => !ch.vflex)
         //call layout on the non-flex children first
         let sizes:Map<LayoutView,Size> = new Map()
         let total_h = 0
@@ -278,16 +251,11 @@ class VBox extends BaseParentView implements LayoutView {
             let ch2 = ch as unknown as LayoutView
             let size = ch2.layout2(g,available)
             total_h += size.h
-            // this.log("child is",ch,size)
             sizes.set(ch2,size)
         })
-        // this.log("first sizes are",sizes)
-        // this.log("total used is",total_h)
         if(yes_flex.length > 0) {
             //allocate the rest of the space equally to the flex children
             let flex_avail = new Size(available.w, (available.h-total_h) / yes_flex.length)
-            // this.log("orig avail",available)
-            // this.log("flex avail",flex_avail)
             //call layout on the flex children
             yes_flex.map(ch => {
                 let ch2 = ch as unknown as LayoutView
@@ -296,12 +264,11 @@ class VBox extends BaseParentView implements LayoutView {
                 sizes.set(ch2,size)
             })
         }
-        // this.log("final sizes",sizes)
         //place all children (they've already set their width and height)
         let nx = pad
         let ny = pad
         let maxw = 0
-        this.children.forEach(ch => {
+        this.get_children().forEach(ch => {
             let size = sizes.get(ch as unknown as LayoutView)
             ch.bounds().x = nx
             ch.bounds().y = ny
@@ -313,19 +280,12 @@ class VBox extends BaseParentView implements LayoutView {
         //return own size
         this.bounds().w = maxw+pad*2
         this.bounds().h = ny+pad*2
-
-        // this.log("final self size",this.bounds())
-        let size = new Size(this.bounds().w,this.bounds().h)
-        return size
+        return new Size(this.bounds().w, this.bounds().h)
     }
     draw(g: CanvasSurface) {
         if(this.fill) {
-            this.log("DRAWING",this.fill,this.bounds())
             g.fillBackground(this.bounds(),this.fill)
         }
-    }
-    private log(...args) {
-        console.log(this.id+": ",...args)
     }
 }
 class HSpacer extends SuperChildView {
@@ -383,75 +343,25 @@ class Button2 extends SuperChildView {
         return g.measureText(this.caption).grow(StandardLeftPadding)
     }
 }
-class PopupContainer implements View, LayoutView, ParentView{
-    hflex: boolean;
-    vflex: boolean;
-    private _bounds: Rect;
-    private _id: string;
-    private _children: View[];
+class PopupContainer extends SuperParentView {
     constructor() {
-        this._id = gen_id("popupcontainer")
-        this._bounds = new Rect(0,0,10,10)
-        this._children = []
+        super(gen_id("popupcontainer"))
+        this._name ="popup_container"
     }
-
-    is_parent_view(): boolean {
-        return true
-    }
-    get_children(): View[] {
-        return this._children
-    }
-    clip_children(): boolean {
-        return false
-    }
-    add(view:View) {
-        this._children.push(view)
-    }
-    log(...args) {
-        console.log(this.name(),...args)
-    }
-
-    bounds(): Rect {
-        return this._bounds
-    }
-
     draw(g: CanvasSurface): void {
         g.fillBackground(this._bounds,'gray')
-        this.log("drawing")
     }
-
-    input(event: CommonEvent): void {
-    }
-
-    layout(g: CanvasSurface, parent: View): void {
-    }
-
     layout2(g: CanvasSurface, available: Size): Size {
-        this.log('laying out the child')
+        // this.log('laying out the child')
         let box = this._children[0]
-        this.log("vbox child is",box)
+        // this.log("vbox child is",box)
         // @ts-ignore
         let size = box.layout2(g, new Size(100,100))
-        this.log("child size is",size)
+        // this.log("child size is",size)
         box.bounds().w = size.w
         box.bounds().h = size.h
         return new Size(size.w,size.h)
     }
-
-    name(): string {
-        return "popup_container";
-    }
-
-    off(type: string, cb: Callback): void {
-    }
-
-    on(type: string, cb: Callback): void {
-    }
-
-    visible(): boolean {
-        return true
-    }
-
     open_at(x: number, y: number) {
         this._bounds.x = x
         this._bounds.y = y
