@@ -10,22 +10,19 @@ import {
 } from "./uilib/canvas";
 import {GridModel} from "./models";
 import {LayerView} from "./uilib/components";
-import {Callback, Observable, Point, Rect, SuperArray} from "./uilib/common";
-import {CommonEvent, View} from "./uilib/core";
+import {Callback, Observable, Point, Rect, Size, SuperArray} from "./uilib/common";
+import {CommonEvent, SuperChildView, SuperParentView, View} from "./uilib/core";
 
-class GridView implements View {
+class GridView extends SuperParentView {
     private model: GridModel;
-    private id: string;
-    _bounds: Rect;
     private spritesheet: SpriteSheet;
     private wall: SpriteSlice;
     private empty: SpriteSlice;
     private tail: SpriteSlice;
     private food: SpriteSlice;
     constructor(model: GridModel, spritesheet: SpriteSheet) {
-        this.id = 'grid-view'
+        super('grid-view')
         this.model = model;
-        this._bounds = new Rect(0,0,this.model.w*16,this.model.h*16);
         this.spritesheet = spritesheet
         this.wall = spritesheet.get_slice(0)
         this.empty = spritesheet.get_slice(1)
@@ -53,29 +50,17 @@ class GridView implements View {
     }
     input(event: CommonEvent): void {
     }
-    layout(g: CanvasSurface, parent: View): void {
-    }
-    visible(): boolean {
-        return true
-    }
 
-    name(): string {
-        return "";
-    }
-
-    off(type: string, cb: Callback): void {
-    }
-
-    on(type: string, cb: Callback): void {
+    layout2(g: CanvasSurface, available: Size): Size {
+        return new Size(this.model.w*16,this.model.h*16)
     }
 }
-class SnakeView implements View {
+class SnakeView extends SuperChildView {
     private model: SnakeModel;
-    private id: string;
     private spritesheet: SpriteSheet;
     private sprite_slice: SpriteSlice;
     constructor(model: SnakeModel, spritesheet: SpriteSheet) {
-        this.id = 'snake'
+        super('snake')
         this.model = model;
         this.spritesheet = spritesheet
         this.sprite_slice = spritesheet.get_slice(2)
@@ -92,18 +77,9 @@ class SnakeView implements View {
     }
     layout(g: CanvasSurface, parent: View): void {
     }
-    visible(): boolean {
-        return true
-    }
 
-    name(): string {
-        return "";
-    }
-
-    off(type: string, cb: Callback): void {
-    }
-
-    on(type: string, cb: Callback): void {
+    layout2(g: CanvasSurface, available: Size): Size {
+        return new Size(16,16)
     }
 }
 
@@ -132,13 +108,13 @@ const TAIL = 2;
 const FOOD = 3;
 
 
-class ScoreView implements View {
+class ScoreView extends SuperChildView{
     private score: ScoreModel;
-    private _bounds: Rect;
     private slices: SpriteSlice[];
     constructor(score: ScoreModel, spritesheet:SpriteSheet) {
+        super('score-view')
         this.score = score;
-        this._bounds = new Rect(8*9,0,32,16)
+        // this._bounds = new Rect(8*9,0,32,16)
         this.slices = []
         for(let i=0; i<=9; i++) {
             this.slices[i] = spritesheet.get_slice(4+i)
@@ -157,25 +133,11 @@ class ScoreView implements View {
         g.draw_slice(this._bounds.x, 0, this.slices[tens], 2)
         g.draw_slice(this._bounds.x+16, 0, this.slices[ones], 2)
     }
-    bounds(): Rect {
-        return this._bounds
-    }
     input(event: CommonEvent): void {
     }
-    layout(g: CanvasSurface, parent: View): void {
-    }
-    visible(): boolean {
-        return true
-    }
 
-    name(): string {
-        return "";
-    }
-
-    off(type: string, cb: Callback): void {
-    }
-
-    on(type: string, cb: Callback): void {
+    layout2(g: CanvasSurface, available: Size): Size {
+        return new Size(32,16)
     }
 }
 
