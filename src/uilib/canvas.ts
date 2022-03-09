@@ -43,8 +43,8 @@ export class CommonEvent {
 }
 
 export class CanvasSurface {
-    private w: number;
-    private h: number;
+    w: number;
+    h: number;
     canvas: HTMLCanvasElement;
     private root: View;
     ctx: CanvasRenderingContext2D;
@@ -98,12 +98,12 @@ export class CanvasSurface {
                 // @ts-ignore
                 let size =this.root.layout2(this, new Size(this.w,this.h))
                 console.log("canvas, root requested",size)
-                if(size.maxw) {
-                    this.root.bounds().w = this.w
-                }
-                if(size.maxh) {
-                    this.root.bounds().h = this.h
-                }
+                // if(size.maxw) {
+                //     this.root.bounds().w = this.w
+                // }
+                // if(size.maxh) {
+                //     this.root.bounds().h = this.h
+                // }
             } else {
                 this.layout_view(this.root, null)
             }
@@ -114,7 +114,14 @@ export class CanvasSurface {
         //     log("laying out",view.id)
         // }
         let bds = view.bounds()
-        view.layout(this,parent)
+        // @ts-ignore
+        if(view.layout2) {
+            console.log("doing layout of view",view)
+            // @ts-ignore
+            let size = view.layout2(this, new Size(this.w,this.h))
+        } else {
+            view.layout(this, parent)
+        }
         // @ts-ignore
         if (view.is_parent_view && view.is_parent_view()) {
             let parent = view as unknown as ParentView;

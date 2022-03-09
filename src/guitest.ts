@@ -1,6 +1,6 @@
-import {CanvasSurface, CommonEvent, log, View} from "./uilib/canvas";
-import {ActionButton, BaseParentView, BaseView} from "./uilib/components";
-import {Callback, gen_id, Rect, Size} from "./uilib/common";
+import {CanvasSurface, CommonEvent, log, ParentView, View} from "./uilib/canvas";
+import {ActionButton, BaseParentView, BaseView, LayerView} from "./uilib/components";
+import {Callback, gen_id, Point, Rect, Size} from "./uilib/common";
 import {
     ButtonBackgroundColor,
     ButtonBackgroundColor_active,
@@ -224,12 +224,14 @@ class Button2 implements View, LayoutView {
     private id: string;
     hflex:boolean
     vflex:boolean
+    private _listeners:Map<string,Callback[]>
     constructor(button1: string) {
         this.id = gen_id("button2")
         this._bounds = new Rect(0,0,200,200)
         this.caption = button1
         this.hflex = false
         this.vflex = false
+        this._listeners = new Map()
     }
 
     bounds(): Rect {
@@ -243,6 +245,9 @@ class Button2 implements View, LayoutView {
     }
 
     input(event: CommonEvent): void {
+        if(event.type === "mousedown") {
+            this.fire('action',{})
+        }
     }
 
     layout(g: CanvasSurface, parent: View): void {
@@ -255,9 +260,13 @@ class Button2 implements View, LayoutView {
     name(): string {
         return "button2";
     }
-    off(type: string, cb: Callback): void {
+    on(type:string, cb:Callback) {
+        if(!this._listeners.has(type)) this._listeners.set(type,[])
+        this._listeners.get(type).push(cb)
     }
-    on(type: string, cb: Callback): void {
+    off(type:string, cb:Callback) {
+        if(!this._listeners.has(type)) this._listeners.set(type,[])
+        this._listeners.set(type,this._listeners.get(type).filter( c => c != cb))
     }
 
     visible(): boolean {
@@ -267,6 +276,163 @@ class Button2 implements View, LayoutView {
     private log(...args) {
         console.log(this.id + ":  ", ...args)
     }
+
+    private fire(type: string, payload: {}) {
+        if(!this._listeners.has(type)) this._listeners.set(type,[])
+        this._listeners.get(type).forEach(cb => cb(payload))
+    }
+}
+
+class PopupContainer implements View, LayoutView, ParentView{
+    hflex: boolean;
+    vflex: boolean;
+    private _bounds: Rect;
+    private _id: string;
+    private _children: View[];
+    constructor() {
+        this._id = gen_id("popupcontainer")
+        this._bounds = new Rect(0,0,10,10)
+        this._children = []
+    }
+
+    is_parent_view(): boolean {
+        return true
+    }
+    get_children(): View[] {
+        return this._children
+    }
+    clip_children(): boolean {
+        return false
+    }
+    add(view:View) {
+        this._children.push(view)
+    }
+    log(...args) {
+        console.log(this.name(),...args)
+    }
+
+    bounds(): Rect {
+        return this._bounds
+    }
+
+    draw(g: CanvasSurface): void {
+        g.fillBackground(this._bounds,'gray')
+        this.log("drawing")
+    }
+
+    input(event: CommonEvent): void {
+    }
+
+    layout(g: CanvasSurface, parent: View): void {
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        this.log('laying out the child')
+        let box = this._children[0]
+        this.log("vbox child is",box)
+        // @ts-ignore
+        let size = box.layout2(g, new Size(100,100))
+        this.log("child size is",size)
+        box.bounds().w = size.w
+        box.bounds().h = size.h
+        return new Size(size.w,size.h)
+    }
+
+    name(): string {
+        return "popup_container";
+    }
+
+    off(type: string, cb: Callback): void {
+    }
+
+    on(type: string, cb: Callback): void {
+    }
+
+    visible(): boolean {
+        return true
+    }
+
+    open_at(x: number, y: number) {
+        this._bounds.x = x
+        this._bounds.y = y
+    }
+}
+
+class DialogContainer implements View, LayoutView, ParentView{
+    hflex: boolean;
+    vflex: boolean;
+    private _bounds: Rect;
+    private _id: string;
+    private _children: View[];
+    constructor() {
+        this._id = gen_id("dialog-container")
+        this._bounds = new Rect(0,0,10,10)
+        this._children = []
+    }
+
+    is_parent_view(): boolean {
+        return true
+    }
+    get_children(): View[] {
+        return this._children
+    }
+    clip_children(): boolean {
+        return false
+    }
+    add(view:View) {
+        this._children.push(view)
+    }
+    log(...args) {
+        console.log(this.name(),...args)
+    }
+
+    bounds(): Rect {
+        return this._bounds
+    }
+
+    draw(g: CanvasSurface): void {
+        g.fillBackground(this._bounds,'gray')
+        this.log("drawing")
+    }
+
+    input(event: CommonEvent): void {
+    }
+
+    layout(g: CanvasSurface, parent: View): void {
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        this.log('dialog laying out')
+        let box = this._children[0]
+        this.log("vbox child is",box)
+        // @ts-ignore
+        let size = box.layout2(g, new Size(100,100))
+        this.log("child size is",size)
+        box.bounds().w = size.w
+        box.bounds().h = size.h
+        this._bounds.x = (g.w/2-size.w)/2
+        this._bounds.y = (g.h/2-size.h)/2
+        return new Size(size.w,size.h)
+    }
+
+    name(): string {
+        return "dialog_container";
+    }
+
+    off(type: string, cb: Callback): void {
+    }
+
+    on(type: string, cb: Callback): void {
+    }
+
+    visible(): boolean {
+        return true
+    }
+
+    open_at(x: number, y: number) {
+        this._bounds.x = x
+        this._bounds.y = y
+    }
 }
 
 export function start() {
@@ -274,17 +440,25 @@ export function start() {
     let surface = new CanvasSurface(640,400);
     surface.debug = false
 
+    let main = new LayerView();
+    let app_layer = new LayerView()
+    main.add(app_layer)
+
+    let dialog_layer = new LayerView()
+    main.add(dialog_layer)
+
+    let popup_layer = new LayerView()
+    main.add(popup_layer)
 
     let root = new VBox();
     root.fill = 'green'
     let toolbar = new HBox();
     toolbar.fill = '#f0ffc0'
+    let dialog_button = new Button2("dialog")
     toolbar.add(new Button2("button 1"))
-    toolbar.add(new Button2("Button two!g|"))
+    toolbar.add(dialog_button)
     toolbar.add(new HSpacer())
     toolbar.add(new Button2("Button 3"))
-    // toolbar.add(new Label("a text label"))
-
     root.add(toolbar)
 
 
@@ -295,13 +469,38 @@ export function start() {
     // middle_layer.add(new Button2("Button two!g|"))
     middle_layer.add(new GrowPanel().with_fill('red'))
     middle_layer.add(new GrowPanel().with_fill('yellow'))
-
     root.add(middle_layer)
 
-    root.add(new Button2("middle button"))
+    dialog_button.on('action',()=>{
+        console.log("triggering a dialog",dialog_button)
+        let dialog = new DialogContainer()
+        let box = new VBox()
+        box.add(new Button2("dialog header"))
+        box.add(new Button2("dialog body"))
+        let tb = new HBox()
+        tb.add(new Button2("okay"))
+        tb.add(new HSpacer())
+        tb.add(new Button2("cancel"))
+        box.add(tb)
+        dialog.add(box)
+        dialog_layer.add(dialog)
+        surface.repaint()
+    })
 
-    surface.set_root(root)
+    let popup = new PopupContainer();
+    let popup_box = new VBox()
+    popup_box.add(new Button2("item 1"))
+    popup_box.add(new Button2("item 2"))
+    popup_box.add(new Button2("item 3"))
+    popup.add(popup_box)
+    popup.open_at(200,200);
+    // popup_layer.add(popup)
+
+    // surface.set_root(root)
     // surface.set_root(toolbar)
+    app_layer.add(root)
+    surface.set_root(main)
+    surface.setup_mouse_input()
 
     surface.addToPage();
     surface.repaint()

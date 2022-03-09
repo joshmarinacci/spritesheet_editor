@@ -293,6 +293,9 @@ export class LayerView extends BaseParentView{
     constructor() {
         super(gen_id('layer'),new Rect(0,0,100,100))
     }
+    draw(g: CanvasSurface): void {
+
+    }
 
     layout(g: CanvasSurface, parent: View): void {
         if(parent) {
