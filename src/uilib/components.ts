@@ -192,6 +192,7 @@ export class HBox extends SuperParentView {
         this.hflex = true
         this.vflex = false
         this.pad = 0
+        this.fill = null
     }
 
     layout2(g: CanvasSurface, real_available: Size): Size {
@@ -260,7 +261,7 @@ export class VBox extends SuperParentView {
 
     constructor() {
         super(gen_id('vbox'));
-        this.fill = 'gray'
+        this.fill = null
         this.hflex = false
         this.vflex = true
         this.pad = 0

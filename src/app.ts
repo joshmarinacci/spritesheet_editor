@@ -306,21 +306,23 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface):HBox {
 //choose one to be visible based on the selected-tree-item
 class SinglePanel extends SuperParentView {
     private doc: Doc;
+    private pad: number;
     constructor(doc:Doc) {
         super('panel-view')
         this.doc = doc
         this._name = 'single-panel'
+        this.pad = 0
     }
     override draw(g: CanvasSurface) {
         g.fillBackground(this.bounds(),StandardPanelBackgroundColor)
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        let av = available.shrink(10)
+        let av = available.shrink(this.pad)
         this._children.forEach(ch => {
             ch.layout2(g,av)
-            ch.bounds().x = 10;
-            ch.bounds().y = 10;
+            ch.bounds().x = this.pad;
+            ch.bounds().y = this.pad;
         })
         let item = this.doc.selected_tree_item
         if(item) {
@@ -344,7 +346,9 @@ class SinglePanel extends SuperParentView {
                 }
             })
         }
-        return new Size(500,500)
+        this.bounds().w = available.w
+        this.bounds().h = available.h
+        return available
     }
 }
 
@@ -474,7 +478,7 @@ export function start() {
     hb._name = 'main-col'
     hb.vflex = true
     hb.hflex = true
-    hb.fill = 'blue'
+    hb.fill = 'red'
     hb.pad = 0
     main_view.add(hb)
 
