@@ -116,7 +116,7 @@ export class CanvasSurface {
         let bds = view.bounds()
         // @ts-ignore
         if(view.layout2) {
-            console.log("doing layout of view",view)
+            // console.log("doing layout of view",view)
             // @ts-ignore
             let size = view.layout2(this, new Size(this.w,this.h))
         } else {
