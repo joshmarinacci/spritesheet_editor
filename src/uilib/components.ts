@@ -196,7 +196,7 @@ export class HBox extends SuperParentView {
     }
 
     layout2(g: CanvasSurface, real_available: Size): Size {
-        this.log("start avail",real_available)
+        // this.log("start avail",real_available)
         let available = real_available.shrink(this.pad);
         //split out flex and non-flex children
         // @ts-ignore
@@ -268,7 +268,7 @@ export class VBox extends SuperParentView {
     }
 
     layout2(g: CanvasSurface, real_available: Size): Size {
-        this.log("start avail",real_available)
+        // this.log("start avail",real_available)
         let available = real_available.shrink(this.pad);
 
         // @ts-ignore

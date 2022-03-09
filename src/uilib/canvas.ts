@@ -83,7 +83,7 @@ export class CanvasSurface {
         let bds = view.bounds();
         this.ctx.translate(bds.x, bds.y)
         // @ts-ignore
-        console.log("drawing",view.id,view.name())
+        // console.log("drawing",view.id,view.name())
         if(view.visible()) {
             view.draw(this);
         }
@@ -196,6 +196,7 @@ export class CanvasSurface {
             // console.log("dispatching",e)
             this.dispatch(this.root,e);
             if(this._input_callback) this._input_callback(e)
+            this.repaint()
         })
         this.canvas.addEventListener('mousemove',(evt)=>{
             if(down) {
@@ -255,10 +256,7 @@ export class CanvasSurface {
         if('fontBoundingBoxAscent' in metrics) {
             return new Size(metrics.width, metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent);
         }
-        if('actualBoundingBoxAscent' in metrics) {
-            return new Size(metrics.width, metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
-        }
-        throw new Error(`cannot get correct metrics ${metrics}`)
+        return new Size(metrics.width, 16);
     }
 
     fillStandardText(caption: string, x: number, y: number) {
