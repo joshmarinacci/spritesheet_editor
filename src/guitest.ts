@@ -435,6 +435,132 @@ class DialogContainer implements View, LayoutView, ParentView{
     }
 }
 
+class FixedGridPanel implements View, LayoutView {
+    private sw: number;
+    private sh: number;
+    private _bounds: Rect;
+    constructor(w: number, h: number) {
+        this.hflex = false;
+        this.vflex = false
+        this.sw = w
+        this.sh = h
+        this._bounds = new Rect(0,0,w,h)
+    }
+
+    hflex: boolean;
+    vflex: boolean;
+
+    bounds(): Rect {
+        return this._bounds
+    }
+
+    draw(g: CanvasSurface): void {
+        g.fillBackground(this.bounds(),'#ccccff')
+        g.ctx.strokeStyle = 'black'
+        g.ctx.beginPath()
+        for(let i=0; i<this.sw; i+=25) {
+            g.ctx.moveTo(i,0)
+            g.ctx.lineTo(i,this.sh)
+        }
+        for(let i=0; i<this.sh; i+=25) {
+            g.ctx.moveTo(0,i)
+            g.ctx.lineTo(this.sw,i)
+        }
+        g.ctx.stroke()
+    }
+
+    input(event: CommonEvent): void {
+    }
+
+    layout(g: CanvasSurface, parent: View): void {
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        return new Size(this.sw,this.sh)
+    }
+
+    name(): string {
+        return "fixed-panel";
+    }
+
+    off(type: string, cb: Callback): void {
+    }
+
+    on(type: string, cb: Callback): void {
+    }
+
+    visible(): boolean {
+        return true
+    }
+
+}
+
+class ScrollView implements View, ParentView, LayoutView {
+    hflex: boolean;
+    vflex: boolean;
+    private _bounds: Rect;
+    private _children:View[]
+    constructor() {
+        this.hflex = false
+        this.vflex = false
+        this._bounds = new Rect(0,0,300,300)
+        this._children = []
+    }
+
+    add(view:View) {
+        this._children.push(view)
+    }
+
+    bounds(): Rect {
+        return this._bounds
+    }
+
+    clip_children(): boolean {
+        return true
+    }
+
+    draw(g: CanvasSurface): void {
+        g.fillBackground(this.bounds(),'magenta')
+    }
+
+    get_children(): View[] {
+        return this._children
+    }
+
+    input(event: CommonEvent): void {
+    }
+
+    is_parent_view(): boolean {
+        return true
+    }
+
+    layout(g: CanvasSurface, parent: View): void {
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        return new Size(300,300)
+    }
+
+    name(): string {
+        return "scroll-view";
+    }
+
+    off(type: string, cb: Callback): void {
+    }
+
+    on(type: string, cb: Callback): void {
+    }
+
+    visible(): boolean {
+        return true
+    }
+
+    private log(...args) {
+        console.log(this.name(),...args)
+    }
+
+}
+
 export function start() {
     log("starting")
     let surface = new CanvasSurface(640,400);
@@ -468,6 +594,9 @@ export function start() {
     // middle_layer.add(new Button2("button 1"))
     // middle_layer.add(new Button2("Button two!g|"))
     middle_layer.add(new GrowPanel().with_fill('red'))
+    let scroll = new ScrollView()
+    scroll.add(new FixedGridPanel(500,500))
+    middle_layer.add(scroll)
     middle_layer.add(new GrowPanel().with_fill('yellow'))
     root.add(middle_layer)
 
