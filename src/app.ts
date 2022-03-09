@@ -1,4 +1,14 @@
-import {ActionButton, HBox, Label, ToggleButton, SelectList, CustomLabel, VBox, Header} from "./uilib/components";
+import {
+    ActionButton,
+    HBox,
+    Label,
+    ToggleButton,
+    SelectList,
+    CustomLabel,
+    VBox,
+    Header,
+    ScrollView
+} from "./uilib/components";
 import {
     canvasToPNGBlob, fileToJSON,
     forceDownloadBlob,
@@ -121,7 +131,6 @@ class MapEditor extends SuperChildView {
         this._name = 'map-editor'
         this._scale = 16;
         this.doc = doc
-        this._bounds = new Rect(0,0,8*this._scale,8*this._scale)
     }
 
     scale() {
@@ -426,7 +435,9 @@ function make_map_view(doc: Doc) {
 
     map_view.add(toolbar)
     let hb = new HBox()
-    hb.add(map_editor)
+    let scroll = new ScrollView()
+    scroll.set_content(map_editor)
+    hb.add(scroll)
     hb.add(selector)
     map_view.add(hb)
     return map_view

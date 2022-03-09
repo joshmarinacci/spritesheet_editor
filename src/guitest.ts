@@ -1,5 +1,5 @@
 import {CanvasSurface} from "./uilib/canvas";
-import {ActionButton, GrowPanel, HBox, Header, HSpacer, Label, LayerView, VBox} from "./uilib/components";
+import {ActionButton, GrowPanel, HBox, Header, HSpacer, Label, LayerView, ScrollView, VBox} from "./uilib/components";
 import {gen_id, Point, Rect, Size} from "./uilib/common";
 import {SuperChildView, SuperParentView} from "./uilib/core";
 
@@ -88,27 +88,6 @@ class FixedGridPanel extends SuperChildView {
     layout2(g: CanvasSurface, available: Size): Size {
         return new Size(this.sw,this.sh)
     }
-}
-class ScrollView extends SuperParentView {
-    constructor() {
-        super(gen_id("scroll-view"))
-        this._name = 'scroll-view'
-        this.hflex = false
-        this.vflex = false
-    }
-
-    clip_children(): boolean {
-        return true
-    }
-
-    draw(g: CanvasSurface): void {
-        g.fillBackground(this.bounds(),'magenta')
-    }
-
-    layout2(g: CanvasSurface, available: Size): Size {
-        return new Size(300,300)
-    }
-
 }
 
 export function start() {

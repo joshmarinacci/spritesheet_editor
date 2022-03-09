@@ -7,10 +7,9 @@ import {
     StandardSelectionColor,
     StandardTextColor,
     StandardTextHeight,
-    StandardTextStyle,
-    StandardVerticalMargin
+    StandardTextStyle
 } from "../style";
-import {Callback, gen_id, Rect, Size} from "./common";
+import {Callback, gen_id, Size} from "./common";
 import {CommonEvent, SuperChildView, SuperParentView, View} from "./core";
 
 export class Label extends SuperChildView {
@@ -68,7 +67,10 @@ export class ActionButton extends SuperChildView {
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        return g.measureText(this.caption).grow(StandardLeftPadding)
+        let size = g.measureText(this.caption).grow(StandardLeftPadding)
+        this.bounds().w = size.w
+        this.bounds().h = size.h
+        return size
     }
 }
 
@@ -96,7 +98,10 @@ export class ToggleButton extends SuperChildView {
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        return g.measureText(this.title).grow(StandardLeftPadding)
+        let size = g.measureText(this.title).grow(StandardLeftPadding)
+        this.bounds().w = size.w
+        this.bounds().h = size.h
+        return size
     }
 }
 
@@ -368,3 +373,109 @@ export class GrowPanel extends SuperParentView {
     }
 }
 
+class ScrollWrapper extends SuperParentView {
+    xoff: number
+    yoff: number
+    constructor() {
+        super("scroll-wrapper");
+        this.xoff = 0
+        this.yoff = 0
+    }
+    clip_children(): boolean {
+        return true
+    }
+    layout2(g: CanvasSurface, available: Size): Size {
+        this.get_children().forEach(ch => {
+            ch.layout2(g,available)
+            ch.bounds().x = this.xoff
+            ch.bounds().y = this.yoff
+        })
+        this.bounds().w = available.w
+        this.bounds().h = available.h
+        return available
+    }
+
+}
+export class ScrollView extends SuperParentView {
+    private left: ActionButton
+    private right: ActionButton
+    private hbar: ActionButton
+    private content: View
+    private wrapper: ScrollWrapper;
+    private up: ActionButton;
+    private down: ActionButton;
+    private vbar: ActionButton;
+    constructor() {
+        super(gen_id("scroll-view"))
+        this._name = 'scroll-view'
+        this.hflex = false
+        this.vflex = false
+
+        this.left = new ActionButton('left')
+        this.add(this.left)
+        this.right = new ActionButton('right')
+        this.add(this.right)
+        this.hbar = new ActionButton('hhh')
+        this.add(this.hbar)
+
+        this.up = new ActionButton('u')
+        this.down = new ActionButton('d')
+        this.vbar = new ActionButton('v')
+        this.add(this.up)
+        this.add(this.down)
+        this.add(this.vbar)
+
+        this.wrapper = new ScrollWrapper()
+        this.left.on('action',() => {
+            this.wrapper.xoff += 20
+        })
+        this.right.on('action',() => {
+            this.wrapper.xoff -= 20
+        })
+        this.up.on('action',() => {
+            this.wrapper.yoff += 20
+        })
+        this.down.on('action',() => {
+            this.wrapper.yoff -= 20
+        })
+        this.add(this.wrapper)
+    }
+
+
+    draw(g: CanvasSurface): void {
+        g.fillBackground(this.bounds(), 'blue')
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        let ws = new Size(280,280)
+        this.get_children().forEach(ch => {
+            if(ch == this.wrapper) {
+                ch.layout2(g,ws)
+            } else {
+                ch.layout2(g, available)
+            }
+        })
+        this.bounds().w = 300
+        this.bounds().h = 300
+        this.left.bounds().x = 0
+        this.right.bounds().x = this.bounds().w - this.right.bounds().w - 20
+        this.left.bounds().y = this.bounds().h - this.left.bounds().h
+        this.right.bounds().y = this.bounds().h - this.right.bounds().h
+        this.hbar.bounds().x = this.left.bounds().w
+        this.hbar.bounds().y = this.bounds().h - this.hbar.bounds().h
+        this.hbar.bounds().w = this.bounds().w - this.right.bounds().w  - this.left.bounds().right() - 20
+
+        this.up.bounds().x = this.bounds().w - this.up.bounds().w
+        this.vbar.bounds().x = this.bounds().w - this.vbar.bounds().w
+        this.down.bounds().x = this.bounds().w - this.down.bounds().w
+        this.down.bounds().y = this.bounds().h - this.down.bounds().h - 20
+        this.vbar.bounds().y = this.up.bounds().h
+        this.vbar.bounds().h = this.bounds().h - this.up.bounds().h - this.down.bounds().h - 20
+        return new Size(this.bounds().w,this.bounds().h)
+    }
+
+    set_content(view: View) {
+        this.content = view
+        this.wrapper.add(view)
+    }
+}
