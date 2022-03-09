@@ -18,17 +18,20 @@ export class CanvasSurface {
     private scale: number;
     private _input_callback: Callback;
 
-    constructor(w: number, h: number) {
+    constructor(w: number, h: number, scale:number) {
+        this.log("making canvas ",w,h)
         this.w = w;
         this.h = h;
-        this.scale = 2.0;
+        this.scale = this.scale || 1
         this.canvas = document.createElement('canvas');
         this.canvas.width = w * window.devicePixelRatio * this.scale
         this.canvas.height = h * window.devicePixelRatio * this.scale
+        this.log("real canvas is",this.canvas.width,this.canvas.height)
         this.canvas.setAttribute('tabindex', '0');
         //turn this on for high-dpi support
         this.canvas.style.width = `${this.w * this.scale}px`
         this.canvas.style.height = `${this.h * this.scale}px`
+        this.log("canvas style = ", this.canvas.style)
         this.ctx = this.canvas.getContext('2d');
         this.debug = false;
         this.clear()
@@ -60,7 +63,7 @@ export class CanvasSurface {
             console.warn("root is null")
         } else {
             let available_size = new Size(this.w,this.h)
-            console.log("size",available_size)
+            this.log("layout_stack with size",available_size)
             let size = this.root.layout2(this, available_size)
             console.log("canvas, root requested",size)
         }
@@ -68,6 +71,7 @@ export class CanvasSurface {
     private draw_stack() {
         this.ctx.save();
         this.ctx.translate(0.5, 0.5);
+        this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
         this.ctx.scale(this.scale, this.scale)
         this.debug_draw_rect(new Rect(0, 0, this.w - 1, this.h - 1), 'canvas')
         if(this.root) this.draw_view(this.root)
@@ -169,6 +173,13 @@ export class CanvasSurface {
         this.ctx.fillRect(x,y,w,h)
     }
 
+    screen_to_local(evt:MouseEvent):Point {
+        let rect = this.canvas.getBoundingClientRect();
+        let pt = new Point(evt.x-rect.x,evt.y-rect.y);
+        pt.x /= this.scale
+        pt.y /= this.scale
+        return pt
+    }
     setup_mouse_input() {
         let down = false
         let button = -1
@@ -178,23 +189,17 @@ export class CanvasSurface {
         })
         this.canvas.addEventListener('mousedown',(evt)=>{
             down = true;
-            let rect = this.canvas.getBoundingClientRect();
-            let pt = new Point(evt.x-rect.x,evt.y-rect.y);
-            pt.x *= window.devicePixelRatio
-            pt.y *= window.devicePixelRatio
-            pt.x /= this.scale
-            pt.y /= this.scale
+            let pt = this.screen_to_local(evt)
             button = evt.button as any
             let e = new CommonEvent('mousedown', pt, this)
             e.button = evt.button
-            console.log("dispatching",e)
+            // console.log("dispatching",e)
             this.dispatch(this.root,e);
             if(this._input_callback) this._input_callback(e)
         })
         this.canvas.addEventListener('mousemove',(evt)=>{
             if(down) {
-                let rect = this.canvas.getBoundingClientRect();
-                let pt = new Point(evt.x - rect.x, evt.y - rect.y);
+                let pt = this.screen_to_local(evt)
                 let e = new CommonEvent('mousedrag', pt, this)
                 e.button = evt.button
                 this.dispatch(this.root,e)// {type:'mousedrag', pt:pt, button:button, ctx:this});
@@ -203,16 +208,14 @@ export class CanvasSurface {
         })
         this.canvas.addEventListener('mouseup',(evt)=>{
             down = false;
-            let rect = this.canvas.getBoundingClientRect();
-            let pt = new Point(evt.x-rect.x,evt.y-rect.y);
+            let pt = this.screen_to_local(evt)
             let e = new CommonEvent('mouseup', pt, this)
             e.button = evt.button
             this.dispatch(this.root,e)//{type:'mouseup',pt:pt, button:button, ctx:this});
             if(this._input_callback) this._input_callback(e)
         })
         this.canvas.addEventListener('wheel',(evt)=>{
-            let rect = this.canvas.getBoundingClientRect();
-            let pt = new Point(evt.x-rect.x,evt.y-rect.y);
+            let pt = this.screen_to_local(evt)
             let e = new CommonEvent('wheel',pt,this)
             e.details = {deltaX:evt.deltaX, deltaY:evt.deltaY}
             this.dispatch(this.root,e);
@@ -269,6 +272,10 @@ export class CanvasSurface {
         e.button = 0;
         console.log("dispatching",e)
         this.dispatch(this.root,e)
+    }
+
+    private log(...args) {
+        console.log("CANVAS: ", ...args)
     }
 }
 

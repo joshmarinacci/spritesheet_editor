@@ -113,7 +113,7 @@ class ScrollView extends SuperParentView {
 
 export function start() {
     console.log("guitest: starting")
-    let surface = new CanvasSurface(640,400);
+    let surface = new CanvasSurface(640,480, 1.0);
     surface.debug = false
 
     let main = new LayerView();
