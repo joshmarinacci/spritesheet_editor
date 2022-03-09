@@ -1,46 +1,12 @@
 import {Callback, Observable, Point, Rect, Size} from "./common";
 import {StandardTextColor, StandardTextStyle} from "../style";
+import {CommonEvent, ParentView, View} from "./core";
 
 export function log(...args) {
     console.log('SNAKE:', ...args);
 }
 
 const CLEAR_COLOR = '#f0f0f0'
-export interface View {
-    bounds():Rect
-    layout(g:CanvasSurface, parent:View):void
-    draw(g:CanvasSurface):void
-    visible():boolean
-    input(event:CommonEvent):void
-    on(type:string, cb:Callback):void
-    off(type:string, cb:Callback):void
-    name():string
-}
-export interface ParentView {
-    is_parent_view():boolean,
-    get_children():View[]
-    clip_children():boolean,
-}
-export class CommonEvent {
-    type:string
-    pt:Point
-    button:number
-    ctx:CanvasSurface
-    details?:any
-
-    constructor(type: string, pt: Point, ctx: CanvasSurface) {
-        this.type = type
-        this.pt = pt
-        this.ctx = ctx
-    }
-
-    translate(x: number, y: number):CommonEvent {
-        let ce = new CommonEvent(this.type,this.pt.translate(x,y),this.ctx)
-        ce.button = this.button
-        ce.details = this.details
-        return ce
-    }
-}
 
 export class CanvasSurface {
     w: number;
@@ -93,43 +59,11 @@ export class CanvasSurface {
         if(!this.root) {
             console.warn("root is null")
         } else {
-            // @ts-ignore
-            if(this.root.layout2) {
-                // @ts-ignore
-                let size =this.root.layout2(this, new Size(this.w,this.h))
-                console.log("canvas, root requested",size)
-                // if(size.maxw) {
-                //     this.root.bounds().w = this.w
-                // }
-                // if(size.maxh) {
-                //     this.root.bounds().h = this.h
-                // }
-            } else {
-                this.layout_view(this.root, null)
-            }
+            let available_size = new Size(this.w,this.h)
+            console.log("size",available_size)
+            let size = this.root.layout2(this, available_size)
+            console.log("canvas, root requested",size)
         }
-    }
-    private layout_view(view: View, parent:View) {
-        // if(!this.debug) { // @ts-ignore
-        //     log("laying out",view.id)
-        // }
-        let bds = view.bounds()
-        // @ts-ignore
-        if(view.layout2) {
-            // console.log("doing layout of view",view)
-            // @ts-ignore
-            let size = view.layout2(this, new Size(this.w,this.h))
-        } else {
-            view.layout(this, parent)
-        }
-        // @ts-ignore
-        if (view.is_parent_view && view.is_parent_view()) {
-            let parent = view as unknown as ParentView;
-            parent.get_children().forEach(ch => {
-                this.layout_view(ch,view)
-            })
-        }
-        // log("final bounds",view.get_bounds())
     }
     private draw_stack() {
         this.ctx.save();
@@ -144,6 +78,8 @@ export class CanvasSurface {
         this.ctx.save();
         let bds = view.bounds();
         this.ctx.translate(bds.x, bds.y)
+        // @ts-ignore
+        console.log("drawing",view.id,view.name())
         if(view.visible()) {
             view.draw(this);
         }

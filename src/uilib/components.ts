@@ -1,63 +1,35 @@
-import {CanvasSurface, CommonEvent, ParentView, View} from "./canvas";
+import {CanvasSurface} from "./canvas";
 import {
     ButtonBackgroundColor,
     ButtonBackgroundColor_active,
     ButtonBorderColor,
     StandardLeftPadding,
-    StandardPanelBackgroundColor,
     StandardSelectionColor,
     StandardTextColor,
     StandardTextHeight,
     StandardTextStyle,
     StandardVerticalMargin
 } from "../style";
-import {Callback, gen_id, Rect} from "./common";
+import {Callback, gen_id, Rect, Size} from "./common";
+import {CommonEvent, SuperChildView, SuperParentView, View} from "./core";
 
-export class BaseView implements View {
-    _bounds: Rect;
-    id:string
-    _name:string
-    private _listeners:Map<string,Callback[]>
-    constructor(bounds?:Rect) {
-        this._bounds = bounds || new Rect(0, 0, 100, 100)
-        this.id = gen_id('baseview')
-        this._name = 'BaseView'
-        this._listeners = new Map()
+export class Label extends SuperChildView {
+    protected caption: string
+
+    constructor(caption: string) {
+        super(gen_id("label"))
+        this._name = 'label'
+        this.caption = caption
+        this.hflex = false
+        this.vflex = false
     }
-    on(type:string, cb:Callback) {
-        if(!this._listeners.has(type)) this._listeners.set(type,[])
-        this._listeners.get(type).push(cb)
-    }
-    off(type:string, cb:Callback) {
-        if(!this._listeners.has(type)) this._listeners.set(type,[])
-        this._listeners.set(type,this._listeners.get(type).filter( c => c != cb))
-    }
-    name() {
-        return this._name
-    }
+
     draw(g: CanvasSurface): void {
+        g.fillStandardText(this.caption, StandardLeftPadding, StandardTextHeight);
     }
-    bounds(): Rect {
-        return this._bounds
-    }
-    input(event: CommonEvent): void {
-    }
-    layout(g: CanvasSurface, parent: View): void {
-    }
-    visible(): boolean {
-        return true
-    }
-}
-export class Label extends BaseView{
-    text: string;
-    constructor(text: string) {
-        super(new Rect(0, 0, 100, StandardTextHeight+StandardVerticalMargin))
-        this.text = text;
-    }
-    draw(ctx: CanvasSurface) {
-        ctx.ctx.fillStyle = StandardTextColor;
-        ctx.ctx.font = StandardTextStyle
-        ctx.ctx.fillText(this.text, 0, StandardTextHeight);
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        return g.measureText(this.caption).grow(StandardLeftPadding)
     }
 }
 
@@ -68,56 +40,45 @@ export class CustomLabel extends Label {
         this.cb = cb
     }
     override draw(ctx: CanvasSurface) {
-        this.text = this.cb({})
+        this.caption = this.cb({})
         super.draw(ctx);
     }
 }
-export class ActionButton extends BaseView{
-    private title: string
-    private cb: any
-    hover:boolean
+export class ActionButton extends SuperChildView {
+    private caption: string
 
-    constructor(title: string, cb?:any) {
-        super(new Rect(0, 0, 100, StandardTextHeight+StandardVerticalMargin))
-        this.title = title;
-        this.cb = cb;
-        this.hover = false
+    constructor(button1: string) {
+        super(gen_id("button2"))
+        this._name = 'button2'
+        this.caption = button1
+        this.hflex = false
+        this.vflex = false
     }
 
-    draw(ctx: CanvasSurface) {
-        ctx.fillBackground(this._bounds, this.hover?ButtonBackgroundColor_active:ButtonBackgroundColor)
-        ctx.strokeBackground(this._bounds,ButtonBorderColor)
-        ctx.ctx.fillStyle = StandardTextColor
-        ctx.ctx.font = StandardTextStyle
-        ctx.ctx.fillText(this.title, StandardLeftPadding, StandardTextHeight);
+    draw(g: CanvasSurface): void {
+        g.fillBackground(this._bounds, ButtonBackgroundColor)
+        g.strokeBackground(this._bounds, ButtonBorderColor)
+        g.fillStandardText(this.caption, StandardLeftPadding, StandardTextHeight);
     }
 
     input(event: CommonEvent): void {
-        if (event.type === 'mousedown') {
-            this.hover = true
-            this.cb(event)
-            event.ctx.repaint()
-        }
-        if (event.type === 'mouseup') {
-            this.hover = false
-            event.ctx.repaint()
+        if (event.type === "mousedown") {
+            this.fire('action', {})
         }
     }
 
-    layout(g: CanvasSurface, parent: View): void {
+    layout2(g: CanvasSurface, available: Size): Size {
+        return g.measureText(this.caption).grow(StandardLeftPadding)
     }
-
 }
-export class ToggleButton extends BaseView {
+
+export class ToggleButton extends SuperChildView {
     title: string
     selected:boolean
-    cb:any
-
-    constructor(title: string, cb) {
-        super(new Rect(0,0,100,30))
-        this.title = title;
+    constructor(title: string) {
+        super(gen_id("toggle-button"))
+        this.title = title
         this.selected = false;
-        this.cb = cb;
     }
 
     draw(ctx: CanvasSurface) {
@@ -127,42 +88,29 @@ export class ToggleButton extends BaseView {
         ctx.ctx.font = StandardTextStyle
         ctx.ctx.fillText(this.title, StandardLeftPadding, StandardTextHeight);
     }
-
-    input(event: CommonEvent): void {
-        if(event.type === 'mousedown') {
-            this.cb(event)
-        }
-    }
-
-    layout(g: CanvasSurface, parent: View): void {
+//
+//     input(event: CommonEvent): void {
+//         if(event.type === 'mousedown') {
+//             this.cb(event)
+//         }
+//     }
+//
+    layout2(g: CanvasSurface, available: Size): Size {
+        return g.measureText(this.title).grow(StandardLeftPadding)
     }
 }
 
-export class SelectList implements View {
+export class SelectList extends SuperChildView {
     private data: any[];
-    private id: string;
-    private _bounds: Rect;
     private renderer: any;
-    private _listeners:Map<string,Callback[]>
     private selected_index: number;
+
     constructor(data:any[], renderer) {
-        this.id = 'tree'
-        this._bounds = new Rect(0,0,10,10)
+        super('tree')
         this.data = data
         this.renderer = renderer
         this.selected_index = -1
-        this._listeners = new Map()
-    }
-    name(): string {
-        return "SelectList";
-    }
-    on(type:string, cb:Callback) {
-        if(!this._listeners.has(type)) this._listeners.set(type,[])
-        this._listeners.get(type).push(cb)
-    }
-    off(type:string, cb:Callback) {
-        if(!this._listeners.has(type)) this._listeners.set(type,[])
-        this._listeners.set(type,this._listeners.get(type).filter( c => c != cb))
+        this.vflex = true
     }
     draw(g: CanvasSurface): void {
         g.fillBackground(this._bounds,'#ddd')
@@ -176,11 +124,6 @@ export class SelectList implements View {
             g.ctx.fillText(str, StandardLeftPadding, i*30 + 20)
         })
     }
-
-    bounds(): Rect {
-        return this._bounds
-    }
-
     input(event: CommonEvent): void {
         if(event.type === 'mousedown') {
             let pt = event.pt;
@@ -192,119 +135,230 @@ export class SelectList implements View {
             event.ctx.repaint()
         }
     }
-
-    layout(g: CanvasSurface, parent: View): void {
-    }
-
-    visible(): boolean {
-        return true
-    }
-
     set_data(data: any[]) {
         this.data = data
     }
+    layout2(g: CanvasSurface, available: Size): Size {
+        return new Size(200,available.h)
+    }
 }
 
-export class BaseParentView implements View, ParentView {
-    id: string;
-    _bounds: Rect
-    children: View[];
-    private _visible: boolean;
-    private _listeners:Map<string,Callback[]>
-
-    constructor(id: string, bounds?: Rect) {
-        this.id = id
-        this._bounds = bounds || new Rect(0, 0, 100, 100)
-        this.children = []
-        this._visible = true;
-        this._listeners = new Map()
+export class LayerView extends SuperParentView {
+    constructor() {
+        super(gen_id('layer'))
     }
-
-    add(view: View) {
-        this.children.push(view);
+    draw(g: CanvasSurface): void {
     }
+    layout2(g:CanvasSurface, available:Size):Size {
+        this._children.forEach(ch => ch.layout2(g,available))
+        this._bounds.w = available.w
+        this._bounds.h = available.h
+        return available
+    }
+}
 
-    clip_children(): boolean {
-        return false;
+export class Header extends SuperChildView {
+    private caption: string
+
+    constructor(caption: string) {
+        super(gen_id("header"))
+        this._name = 'header'
+        this.caption = caption
+        this.hflex = true
+        this.vflex = false
     }
 
     draw(g: CanvasSurface): void {
-        // console.log('drawing base view',this.id, this.visible())
-        g.fillBackground(this._bounds,StandardPanelBackgroundColor)
+        let size = g.measureText(this.caption)
+        let x = (this.bounds().w - size.w) / 2
+        g.fillStandardText(this.caption, x, StandardTextHeight);
     }
 
-    bounds(): Rect {
-        return this._bounds
-    }
-
-    get_children(): View[] {
-        return this.children
-    }
-
-    is_parent_view(): boolean {
-        return true
-    }
-
-    layout(g: CanvasSurface, parent: View): void {
-    }
-
-    visible(): boolean {
-        return this._visible;
-    }
-    set_visible(vis:boolean) {
-        this._visible = vis
-    }
-
-    input(event: CommonEvent): void {
-    }
-
-    name(): string {
-        return "BaseParentView";
-    }
-
-    on(type:string, cb:Callback) {
-        if(!this._listeners.has(type)) this._listeners.set(type,[])
-        this._listeners.get(type).push(cb)
-    }
-    off(type:string, cb:Callback) {
-        if(!this._listeners.has(type)) this._listeners.set(type,[])
-        this._listeners.set(type,this._listeners.get(type).filter( c => c != cb))
+    layout2(g: CanvasSurface, available: Size): Size {
+        let text_size = g.measureText(this.caption).grow(StandardLeftPadding)
+        return new Size(available.w, text_size.h)
     }
 }
-export class HBox extends BaseParentView {
+
+export class HBox extends SuperParentView {
+    fill: string;
+
     constructor() {
-        super(gen_id('hbox'), new Rect(0,0,100,100))
+        super(gen_id('hbox'));
+        this.hflex = true
+        this.vflex = false
     }
-    layout(g:CanvasSurface, parent:View) {
-        let x = 0;
-        let y = 0;
-        let my = 0;
-        this.children.forEach(ch => {
-            ch.bounds().x = x;
-            ch.bounds().y = y;
-            x += ch.bounds().w + 5
-            my = Math.max(my,ch.bounds().h)
+
+    layout2(g: CanvasSurface, real_available: Size): Size {
+        this.log("start avail",real_available)
+        let pad = 3
+        let available = real_available.shrink(pad);
+        //split out flex and non-flex children
+        // @ts-ignore
+        let yes_flex = this._children.filter(ch => ch.hflex)
+        // @ts-ignore
+        let non_flex = this._children.filter(ch => !ch.hflex)
+        //call layout on the non-flex children first
+        let sizes: Map<View, Size> = new Map()
+        let total_w = 0
+        non_flex.map(ch => {
+            let ch2 = ch as unknown as View
+            let size = ch2.layout2(g, available)
+            total_w += size.w
+            sizes.set(ch2, size)
         })
-        this._bounds.w = x;
-        this._bounds.h = my;
+        if (yes_flex.length > 0) {
+            //allocate the rest of the space equally to the flex children
+            let flex_avail = new Size((available.w - total_w) / yes_flex.length, available.h)
+            //call layout on the flex children
+            yes_flex.map(ch => {
+                let ch2 = ch as unknown as View
+                let size = ch2.layout2(g, flex_avail)
+                total_w += size.w
+                sizes.set(ch2, size)
+            })
+        }
+        //place all children (they've already set their width and height)
+        let nx = pad
+        let ny = pad
+        let maxh = 0
+        this._children.forEach(ch => {
+            let size = sizes.get(ch as unknown as View)
+            ch.bounds().x = nx
+            ch.bounds().h = size.h
+            ch.bounds().w = size.w
+            nx += ch.bounds().w
+            ch.bounds().y = ny
+            maxh = Math.max(ch.bounds().h, maxh)
+        })
+        //return own size
+        this.bounds().w = nx + pad * 2
+        this.bounds().h = maxh + pad * 2
+        if (this.vflex) {
+            this.bounds().h = real_available.h
+        }
+        if (this.hflex) {
+            this.bounds().w = real_available.w
+        }
+        return new Size(this.bounds().w, this.bounds().h)
+    }
+
+    draw(g: CanvasSurface) {
+        if (this.fill) {
+            g.fillBackground(this.bounds(), this.fill)
+        }
     }
 }
-export class LayerView extends BaseParentView{
+
+export class VBox extends SuperParentView {
+    fill: string;
+
     constructor() {
-        super(gen_id('layer'),new Rect(0,0,100,100))
+        super(gen_id('vbox'));
+        this.fill = 'gray'
+        this.hflex = false
+        this.vflex = true
     }
-    draw(g: CanvasSurface): void {
 
-    }
+    layout2(g: CanvasSurface, real_available: Size): Size {
+        this.log("start avail",real_available)
+        let pad = 10
+        let available = real_available.shrink(pad);
 
-    layout(g: CanvasSurface, parent: View): void {
-        if(parent) {
-            this._bounds.w = parent.bounds().w
-            this._bounds.h = parent.bounds().h
-        } else {
-            this._bounds.w = g.canvas.width
-            this._bounds.h = g.canvas.height
+        // @ts-ignore
+        let yes_flex = this.get_children().filter(ch => ch.vflex)
+        // @ts-ignore
+        let non_flex = this.get_children().filter(ch => !ch.vflex)
+        //call layout on the non-flex children first
+        let sizes: Map<View, Size> = new Map()
+        let total_h = 0
+        non_flex.map(ch => {
+            let ch2 = ch as unknown as View
+            let size = ch2.layout2(g, available)
+            total_h += size.h
+            sizes.set(ch2, size)
+        })
+        if (yes_flex.length > 0) {
+            //allocate the rest of the space equally to the flex children
+            let flex_avail = new Size(available.w, (available.h - total_h) / yes_flex.length)
+            //call layout on the flex children
+            yes_flex.map(ch => {
+                let ch2 = ch as unknown as View
+                let size = ch2.layout2(g, flex_avail)
+                total_h += size.h
+                sizes.set(ch2, size)
+            })
         }
+        //place all children (they've already set their width and height)
+        let nx = pad
+        let ny = pad
+        let maxw = 0
+        this.get_children().forEach(ch => {
+            let size = sizes.get(ch as unknown as View)
+            ch.bounds().x = nx
+            ch.bounds().y = ny
+            ch.bounds().w = size.w
+            ch.bounds().h = size.h
+            ny += ch.bounds().h
+            maxw = Math.max(ch.bounds().w, maxw)
+        })
+        //return own size
+        this.bounds().w = maxw + pad * 2
+        this.bounds().h = ny + pad * 2
+        if(this.hflex) {
+            this.bounds().w = available.w
+        }
+        if(this.vflex) {
+            this.bounds().h = available.h
+        }
+        return new Size(this.bounds().w, this.bounds().h)
+    }
+
+    draw(g: CanvasSurface) {
+        if (this.fill) {
+            g.fillBackground(this.bounds(), this.fill)
+        }
+    }
+}
+
+export class HSpacer extends SuperChildView {
+    constructor() {
+        super("h-spacer");
+        this.hflex = true
+        this.vflex = false
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        return new Size(available.w, 0)
+    }
+
+    draw(g: CanvasSurface) {
+    }
+}
+
+export class GrowPanel extends SuperParentView {
+    private fill: string
+
+    constructor() {
+        super(gen_id('grow'));
+        this.fill = null
+        this.hflex = true
+        this.vflex = true
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        return available
+    }
+
+    draw(g: CanvasSurface) {
+        if (this.fill) {
+            g.fillBackground(this.bounds(), this.fill)
+        }
+    }
+
+    with_fill(fill: string) {
+        this.fill = fill
+        return this
     }
 }
 

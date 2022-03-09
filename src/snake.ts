@@ -2,17 +2,16 @@ import {on, randi} from "./util";
 // @ts-ignore
 import tileset_url from "./tileset@1.png";
 import {
-    CanvasSurface, CommonEvent,
-    EVENTS,
+    CanvasSurface, EVENTS,
     log,
     setup_keyboard_input,
     SpriteSheet,
-    SpriteSlice,
-    View
+    SpriteSlice
 } from "./uilib/canvas";
 import {GridModel} from "./models";
 import {LayerView} from "./uilib/components";
 import {Callback, Observable, Point, Rect, SuperArray} from "./uilib/common";
+import {CommonEvent, View} from "./uilib/core";
 
 class GridView implements View {
     private model: GridModel;

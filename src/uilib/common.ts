@@ -117,14 +117,10 @@ export class Rect {
 export class Size {
     w: number;
     h: number;
-    maxh: boolean;
-    maxw: boolean;
 
     constructor(w, h) {
         this.w = w
         this.h = h
-        this.maxh = false
-        this.maxw = false
     }
 
     shrink(pad: number) {
