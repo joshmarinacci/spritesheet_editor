@@ -27,7 +27,9 @@ class HBox extends BaseParentView implements LayoutView {
         let available = real_available.shrink(pad);
 
         //split out flex and non-flex children
+        // @ts-ignore
         let yes_flex = this.children.filter(ch => ch.hflex)
+        // @ts-ignore
         let non_flex = this.children.filter(ch => !ch.hflex)
         this.log("yes flex",yes_flex)
         this.log("non flex",non_flex)
@@ -111,7 +113,9 @@ class VBox extends BaseParentView implements LayoutView {
         let pad = 10
         available = available.shrink(pad);
 
+        // @ts-ignore
         let yes_flex = this.children.filter(ch => ch.vflex)
+        // @ts-ignore
         let non_flex = this.children.filter(ch => !ch.vflex)
         this.log("yes flex",yes_flex)
         this.log("non flex",non_flex)
@@ -172,7 +176,6 @@ class VBox extends BaseParentView implements LayoutView {
         console.log(this.id+": ",...args)
     }
 }
-
 class HSpacer extends BaseView implements LayoutView{
     constructor() {
         super();
@@ -187,7 +190,6 @@ class HSpacer extends BaseView implements LayoutView{
     hflex: boolean;
     vflex: boolean;
 }
-
 class GrowPanel extends BaseParentView implements LayoutView {
     private fill:string
     constructor() {
@@ -217,7 +219,6 @@ class GrowPanel extends BaseParentView implements LayoutView {
     hflex: boolean;
     vflex: boolean;
 }
-
 class Button2 implements View, LayoutView {
     private caption: string
     _bounds:Rect
@@ -282,7 +283,6 @@ class Button2 implements View, LayoutView {
         this._listeners.get(type).forEach(cb => cb(payload))
     }
 }
-
 class PopupContainer implements View, LayoutView, ParentView{
     hflex: boolean;
     vflex: boolean;
@@ -357,7 +357,6 @@ class PopupContainer implements View, LayoutView, ParentView{
         this._bounds.y = y
     }
 }
-
 class DialogContainer implements View, LayoutView, ParentView{
     hflex: boolean;
     vflex: boolean;
@@ -434,7 +433,6 @@ class DialogContainer implements View, LayoutView, ParentView{
         this._bounds.y = y
     }
 }
-
 class FixedGridPanel implements View, LayoutView {
     private sw: number;
     private sh: number;
@@ -494,7 +492,6 @@ class FixedGridPanel implements View, LayoutView {
     }
 
 }
-
 class ScrollView implements View, ParentView, LayoutView {
     hflex: boolean;
     vflex: boolean;
