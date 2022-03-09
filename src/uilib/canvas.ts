@@ -251,6 +251,7 @@ export class CanvasSurface {
             button = evt.button as any
             let e = new CommonEvent('mousedown', pt, this)
             e.button = evt.button
+            console.log("dispatching",e)
             this.dispatch(this.root,e);
             if(this._input_callback) this._input_callback(e)
         })
@@ -325,6 +326,13 @@ export class CanvasSurface {
         this.ctx.fillStyle = StandardTextColor
         this.ctx.font = StandardTextStyle
         this.ctx.fillText(caption,x, y)
+    }
+
+    dispatch_fake_mouse_event(type: string, pos: Point) {
+        let e = new CommonEvent('mousedown',pos,this)
+        e.button = 0;
+        console.log("dispatching",e)
+        this.dispatch(this.root,e)
     }
 }
 

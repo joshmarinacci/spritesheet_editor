@@ -1,10 +1,21 @@
 import {CanvasSurface, CommonEvent, log, ParentView, View} from "./uilib/canvas";
 import {LayerView} from "./uilib/components";
-import {Callback, gen_id, Rect, Size} from "./uilib/common";
+import {Callback, gen_id, Point, Rect, Size} from "./uilib/common";
 import {ButtonBackgroundColor, ButtonBorderColor, StandardLeftPadding, StandardTextHeight} from "./style";
 
 //Padding: a simple wrapper view that mirrors the hbox,vbox of the child?
 //Border: the same but w/ drawing a border
+/*
+- [ ] Unit test that button receives clicks correctly and repaints
+- [ ] Move all code back to canvas and components and common
+- [ ] Add tabbed panel layout. Unit tests.
+- [ ] Split bounds into size and position
+- [ ] Add drop down button. Requires tracking the current transform
+- [ ] Add text box stub. Insert only.
+- [ ] Always repaint after any input
+- [ ] Think about baseline alignment
+- [ ] Add resizable window container
+ */
 interface LayoutView {
     hflex:boolean
     vflex:boolean
@@ -472,7 +483,8 @@ export function start() {
     let toolbar = new HBox();
     toolbar.fill = '#f0ffc0'
     let dialog_button = new Button2("dialog")
-    toolbar.add(new Button2("button 1"))
+    let button1 = new Button2('button 1')
+    toolbar.add(button1)
     toolbar.add(dialog_button)
     toolbar.add(new HSpacer())
     toolbar.add(new Button2("Button 3"))
@@ -521,4 +533,37 @@ export function start() {
     surface.setup_mouse_input()
     surface.addToPage();
     surface.repaint()
+
+    // unit test 1
+    //click button1 with a fake mouse click through the canvas.
+    //add callback to button1 to confirm the test worked
+    function test1(value) {
+        console.log("starting test1")
+        return new Promise((res,rej)=>{
+            button1.on('action',() => {
+                console.log("test complete")
+                res(value)
+            })
+            surface.dispatch_fake_mouse_event('mousedown', new Point(60,60))
+        })
+    }
+
+    function wait(number: number) {
+        return new Promise((res,rej)=>{
+            setTimeout(()=>{
+                res(0)
+            },number)
+        })
+    }
+    async function run_all_tests() {
+        console.log("starting tests")
+        // await wait(500)
+        // console.log('continuing')
+        let val = await test1(99)
+        console.assert(val === 99,'test1 failed')
+        // console.log("test1 passed")
+        console.log("end of tests")
+    }
+    wait(1000).then(run_all_tests)
 }
+
