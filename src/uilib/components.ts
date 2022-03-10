@@ -365,16 +365,32 @@ class ScrollWrapper extends SuperParentView {
         super("scroll-wrapper");
         this.xoff = 0
         this.yoff = 0
+        this._name = 'scroll-wrapper'
     }
     clip_children(): boolean {
         return true
     }
     layout2(g: CanvasSurface, available: Size): Size {
+        if(this.yoff > 0) this.yoff = 0
+        if(this.xoff > 0) this.xoff = 0
+        this.set_size(available)
+
         this.get_children().forEach(ch => {
-            ch.layout2(g,available)
+            let size = ch.layout2(g,available)
+            if(size.w+this.xoff < available.w) {
+                this.xoff = available.w - size.w
+            }
+            if(size.h+this.yoff < available.h) {
+                this.yoff = available.h - size.h
+            }
+            if(size.w < available.w) {
+                this.xoff = (available.w - size.w)/2
+            }
+            if(size.h < available.h) {
+                this.yoff = (available.h - size.h)/2
+            }
             ch.set_position(new Point(this.xoff,this.yoff))
         })
-        this.set_size(available)
         return available
     }
 
