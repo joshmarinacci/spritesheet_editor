@@ -409,19 +409,22 @@ class ScrollBar extends SuperChildView {
         }
     }
     draw(g: CanvasSurface): void {
-        g.fillBackgroundSize(this.size(),'#444')
+        //draw the gutter
+        g.fillBackgroundSize(this.size(),'yellow')
+        //draw the bar
         if(this.wrapper.get_children().length == 1) {
             let wsize = this.wrapper.size()
             let content = this.wrapper.get_children()[0].size()
-            this.log("content",content,'vs',wsize)
+            // this.log("content",content,'vs',wsize)
             if(this.vert) {
                 let fract = wsize.h / content.h
-                this.log("v fract",fract, 'yoff')
-                let h = this.size().h - 40
+                // this.log("v fract",fract, 'yoff')
+                let h = this.size().h - 20
                 h = h * fract
                 g.fill(new Rect(0,20,20,h), 'red');
             }
         }
+        //draw the thumbs
         if(this.vert) {
             g.fill(new Rect(0,0,20,20),'#999')
             g.fill(new Rect(0,this.size().h-20,20,20),'#999')
@@ -481,7 +484,7 @@ export class ScrollView extends SuperParentView {
 
 
     draw(g: CanvasSurface): void {
-        g.fillBackgroundSize(this.size(), 'blue')
+        g.fillBackgroundSize(this.size(), '#aaa')
     }
 
     layout2(g: CanvasSurface, available: Size): Size {

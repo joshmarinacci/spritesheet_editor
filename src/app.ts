@@ -434,7 +434,7 @@ export function start() {
     log("starting")
     let All = new Observable();
 
-    let surface = new CanvasSurface(800,500);
+    let surface = new CanvasSurface(1200,700);
     surface.debug = false
     let KeyboardInput = setup_keyboard_input()
     on(KeyboardInput,EVENTS.KEYDOWN,(e)=>{
