@@ -203,10 +203,12 @@ export class HBox extends SuperParentView {
         //call layout on the non-flex children first
         let sizes: Map<View, Size> = new Map()
         let total_w = 0
+        let leftover_w = available.w
         non_flex.map(ch => {
             let ch2 = ch as unknown as View
-            let size = ch2.layout2(g, available)
+            let size = ch2.layout2(g, new Size(leftover_w,available.h))
             total_w += size.w
+            leftover_w -= size.w
             sizes.set(ch2, size)
         })
         if (yes_flex.length > 0) {
@@ -268,10 +270,12 @@ export class VBox extends SuperParentView {
         //call layout on the non-flex children first
         let sizes: Map<View, Size> = new Map()
         let total_h = 0
+        let leftover_h = available.h
         non_flex.map(ch => {
             let ch2 = ch as unknown as View
-            let size = ch2.layout2(g, available)
+            let size = ch2.layout2(g, new Size(available.w,leftover_h))
             total_h += size.h
+            leftover_h -= size.h
             sizes.set(ch2, size)
         })
         if (yes_flex.length > 0) {
@@ -451,7 +455,14 @@ export class ScrollView extends SuperParentView {
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        let ws = new Size(280,280)
+        this.set_size(new Size(300,300))
+        if(this.hflex) {
+            this.size().w = available.w
+        }
+        if(this.vflex) {
+            this.size().h = available.h
+        }
+        let ws = this.size().shrink(10)
         this.get_children().forEach(ch => {
             if(ch == this.wrapper) {
                 ch.layout2(g,ws)
@@ -459,7 +470,6 @@ export class ScrollView extends SuperParentView {
                 ch.layout2(g, available)
             }
         })
-        this.set_size(new Size(300,300))
         this.hbar.set_size(new Size(this.size().w-20,20))
         this.hbar.set_position(new Point(0,this.size().h-this.hbar.size().h))
         this.vbar.set_size(new Size(20,this.size().h-20))

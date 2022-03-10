@@ -390,6 +390,7 @@ function make_map_view(doc: Doc) {
     let map_editor = new MapEditor(doc);
 
     let selector = new TileSelector()
+    selector.hflex = false
     selector.doc = doc;
 
     let toolbar = new HBox()
@@ -420,6 +421,8 @@ function make_map_view(doc: Doc) {
     map_view.add(toolbar)
     let hb = new HBox()
     let scroll = new ScrollView()
+    scroll.hflex = true
+    scroll.vflex = true
     scroll.set_content(map_editor)
     hb.add(scroll)
     hb.add(selector)
@@ -508,6 +511,7 @@ export function start() {
     hb.add(itemlist)
 
     let panel_view = new SinglePanel(doc);
+    panel_view._name = 'single panel'
     hb.add(panel_view)
 
     let sheet_editor = make_sheet_editor_view(doc);
