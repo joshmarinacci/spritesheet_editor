@@ -393,7 +393,7 @@ function make_map_view(doc: Doc) {
     selector.doc = doc;
 
     let toolbar = new HBox()
-    toolbar.fill = 'green'
+    toolbar.fill = '#ccc'
     toolbar.hflex = true
     let grid_toggle = new ToggleButton("grid")
     grid_toggle.on('action',()=>{
