@@ -4,7 +4,6 @@
 - [ ] Unit test that button receives clicks correctly and repaints
 - [ ] Move all code back to canvas and components and common
 - [ ] Add tabbed panel layout. Unit tests.
-- [ ] Split bounds into size and position
 - [ ] Add drop down button. Requires tracking the current transform
 - [ ] Add text box stub. Insert only.
 - [ ] Always repaint after any input
@@ -38,20 +37,16 @@ export class CommonEvent {
 export interface View {
     hflex: boolean
     vflex: boolean
-    bounds(): Rect
-
+    size():Size
+    set_size(size:Size)
+    position():Point
+    set_position(point:Point)
     layout2(g: CanvasSurface, available: Size): Size
-
     draw(g: CanvasSurface): void
-
     visible(): boolean
-
     input(event: CommonEvent): void
-
     on(type: string, cb: Callback): void
-
     off(type: string, cb: Callback): void
-
     name(): string
 }
 
@@ -68,14 +63,16 @@ export abstract class SuperParentView implements View, ParentView {
     vflex: boolean
     id: string
     protected _visible: boolean
-    protected _bounds: Rect;
     protected _children: View[]
     private _listeners: Map<string, Callback[]>
     _name: string
+    private _size: Size;
+    private _position: Point;
 
     constructor(id: string) {
         this.id = id
-        this._bounds = new Rect(0, 0, 100, 100)
+        this._size = new Size(100,100)
+        this._position = new Point(0,0)
         this._children = []
         this._name = 'unnamed'
         this._listeners = new Map<string, Callback[]>()
@@ -86,8 +83,17 @@ export abstract class SuperParentView implements View, ParentView {
         console.log(this.name(), ...args)
     }
 
-    bounds(): Rect {
-        return this._bounds
+    size():Size {
+        return this._size
+    }
+    set_size(size: Size) {
+        this._size = size
+    }
+    position(): Point {
+        return this._position
+    }
+    set_position(point: Point) {
+        this._position = point
     }
 
     clip_children(): boolean {
@@ -141,17 +147,19 @@ export abstract class SuperParentView implements View, ParentView {
 }
 
 export abstract class SuperChildView implements View {
-    protected _bounds: Rect;
     hflex: boolean;
     vflex: boolean;
     protected _visible: boolean
     _name: string
     private _listeners: Map<string, Callback[]>
     private id: string;
+    private _size: Size;
+    private _position: Point;
 
     constructor(id: string) {
         this.id = id
-        this._bounds = new Rect(0, 0, 100, 100)
+        this._size = new Size(100,100)
+        this._position = new Point(0,0)
         this._visible = true
         this._name = 'unnamed'
         this._listeners = new Map<string, Callback[]>()
@@ -178,14 +186,20 @@ export abstract class SuperChildView implements View {
         this._get_listeners(type).forEach(cb => cb(payload))
     }
 
-    bounds(): Rect {
-        return this._bounds
+    size():Size {
+        return this._size
+    }
+    set_size(size: Size) {
+        this._size = size
+    }
+    position(): Point {
+        return this._position
+    }
+    set_position(point: Point) {
+        this._position = point
     }
 
     input(event: CommonEvent): void {
-    }
-
-    layout(g: CanvasSurface, parent: View): void {
     }
 
     name(): string {

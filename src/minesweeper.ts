@@ -1,8 +1,8 @@
 import {CanvasSurface, EVENTS} from "./uilib/canvas";
 import {GridModel} from "./models";
 import {LayerView} from "./uilib/components";
-import {Callback, Rect} from "./uilib/common";
-import {CommonEvent, View} from "./uilib/core";
+import {Callback, Rect, Size} from "./uilib/common";
+import {CommonEvent, SuperChildView, View} from "./uilib/core";
 
 /*
 
@@ -84,24 +84,17 @@ class MinesweeperModel {
     }
 }
 
-class MinesweeperView implements View {
+class MinesweeperView extends SuperChildView {
     private model: MinesweeperModel;
-    private _bounds: Rect;
     private scale: number;
-    private id: string;
     constructor(model:MinesweeperModel) {
-        this.id = 'minesweepr-view'
+        super('minesweepr-view')
         this.model = model
         this.scale = 32
-        this._bounds = new Rect(0,0,this.model.grid.w*this.scale,this.model.grid.h*this.scale);
-    }
-    layout(g: CanvasSurface, parent: View): void {
-    }
-    visible(): boolean {
-        return true
+        this.set_size(new Size(this.model.grid.w*this.scale,this.model.grid.h*this.scale))
     }
     draw(g: CanvasSurface): void {
-        g.fillBackground(this._bounds,'black')
+        g.fillBackgroundSize(this.size(),'black')
         this.model.grid.forEach((w,x,y)=>{
             let color = '#ccc'
             if(w.mine) {
@@ -116,10 +109,7 @@ class MinesweeperView implements View {
                 g.ctx.fillText(`${w.adjacent}`, x * this.scale+8, y * this.scale+16)
             }
         })
-        g.strokeBackground(this._bounds,'black')
-    }
-    bounds(): Rect {
-        return this._bounds
+        g.strokeBackgroundSize(this.size(),'black')
     }
     input(e: CommonEvent): void {
         if(e.type === 'mousedown') {
@@ -133,14 +123,8 @@ class MinesweeperView implements View {
         }
     }
 
-    name(): string {
-        return "";
-    }
-
-    off(type: string, cb: Callback): void {
-    }
-
-    on(type: string, cb: Callback): void {
+    layout2(g: CanvasSurface, available: Size): Size {
+        return this.size()
     }
 }
 
@@ -151,11 +135,7 @@ export function start() {
 
     let surface = new CanvasSurface(500,500);
     let root = new LayerView()
-    root._bounds.w = 500
-    root._bounds.h = 500
     let board_layer = new LayerView();
-    board_layer._bounds.w = 500;
-    board_layer._bounds.h = 500;
     board_layer.id = 'board'
     board_layer.add(new MinesweeperView(model))
     root.add(board_layer)

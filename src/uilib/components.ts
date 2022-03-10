@@ -9,7 +9,7 @@ import {
     StandardTextHeight,
     StandardTextStyle
 } from "../style";
-import {Callback, gen_id, Size} from "./common";
+import {Callback, gen_id, Point, Size} from "./common";
 import {CommonEvent, SuperChildView, SuperParentView, View} from "./core";
 
 export class Label extends SuperChildView {
@@ -28,7 +28,8 @@ export class Label extends SuperChildView {
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        return g.measureText(this.caption).grow(StandardLeftPadding)
+        this.set_size(g.measureText(this.caption).grow(StandardLeftPadding))
+        return this.size()
     }
 }
 
@@ -45,7 +46,6 @@ export class CustomLabel extends Label {
 }
 export class ActionButton extends SuperChildView {
     private caption: string
-
     constructor(button1: string) {
         super(gen_id("button2"))
         this._name = 'button2'
@@ -53,24 +53,19 @@ export class ActionButton extends SuperChildView {
         this.hflex = false
         this.vflex = false
     }
-
     draw(g: CanvasSurface): void {
-        g.fillBackground(this._bounds, ButtonBackgroundColor)
-        g.strokeBackground(this._bounds, ButtonBorderColor)
+        g.fillBackgroundSize(this.size(), ButtonBackgroundColor)
+        g.strokeBackgroundSize(this.size(), ButtonBorderColor)
         g.fillStandardText(this.caption, StandardLeftPadding, StandardTextHeight);
     }
-
     input(event: CommonEvent): void {
         if (event.type === "mousedown") {
             this.fire('action', {})
         }
     }
-
     layout2(g: CanvasSurface, available: Size): Size {
-        let size = g.measureText(this.caption).grow(StandardLeftPadding)
-        this.bounds().w = size.w
-        this.bounds().h = size.h
-        return size
+        this.set_size(g.measureText(this.caption).grow(StandardLeftPadding))
+        return this.size()
     }
 }
 
@@ -84,8 +79,8 @@ export class ToggleButton extends SuperChildView {
     }
 
     draw(ctx: CanvasSurface) {
-        ctx.fillBackground(this._bounds, this.selected?ButtonBackgroundColor_active:ButtonBackgroundColor)
-        ctx.strokeBackground(this._bounds,ButtonBorderColor)
+        ctx.fillBackgroundSize(this.size(), this.selected?ButtonBackgroundColor_active:ButtonBackgroundColor)
+        ctx.strokeBackgroundSize(this.size(),ButtonBorderColor)
         ctx.ctx.fillStyle = StandardTextColor
         ctx.ctx.font = StandardTextStyle
         ctx.ctx.fillText(this.title, StandardLeftPadding, StandardTextHeight);
@@ -99,8 +94,7 @@ export class ToggleButton extends SuperChildView {
 
     layout2(g: CanvasSurface, available: Size): Size {
         let size = g.measureText(this.title).grow(StandardLeftPadding)
-        this.bounds().w = size.w
-        this.bounds().h = size.h
+        this.set_size(size)
         return size
     }
 }
@@ -118,10 +112,10 @@ export class SelectList extends SuperChildView {
         this.vflex = true
     }
     draw(g: CanvasSurface): void {
-        g.fillBackground(this._bounds,'#ddd')
+        g.fillBackgroundSize(this.size(),'#ddd')
         this.data.forEach((item,i) => {
             if (i === this.selected_index) {
-                g.fillRect(0,30*i,this.bounds().w,25, StandardSelectionColor)
+                g.fillRect(0,30*i,this.size().w,25, StandardSelectionColor)
             }
             g.ctx.fillStyle = StandardTextColor
             g.ctx.font = StandardTextStyle
@@ -144,7 +138,8 @@ export class SelectList extends SuperChildView {
         this.data = data
     }
     layout2(g: CanvasSurface, available: Size): Size {
-        return new Size(200,available.h)
+        this.set_size(new Size(200,available.h))
+        return this.size()
     }
 }
 
@@ -156,8 +151,7 @@ export class LayerView extends SuperParentView {
     }
     layout2(g:CanvasSurface, available:Size):Size {
         this._children.forEach(ch => ch.layout2(g,available))
-        this._bounds.w = available.w
-        this._bounds.h = available.h
+        this.set_size(available)
         return available
     }
 }
@@ -174,17 +168,16 @@ export class Header extends SuperChildView {
         this.hflex = true
         this.vflex = false
     }
-
     draw(g: CanvasSurface): void {
-        g.fillBackground(this.bounds(),this.fill)
+        g.fillBackgroundSize(this.size(),this.fill)
         let size = g.measureText(this.caption)
-        let x = (this.bounds().w - size.w) / 2
+        let x = (this.size().w - size.w) / 2
         g.fillStandardText(this.caption, x, StandardTextHeight);
     }
-
     layout2(g: CanvasSurface, available: Size): Size {
         let text_size = g.measureText(this.caption).grow(StandardLeftPadding)
-        return new Size(available.w, text_size.h)
+        this.set_size(new Size(available.w, text_size.h))
+        return this.size()
     }
 }
 
@@ -234,29 +227,23 @@ export class HBox extends SuperParentView {
         let maxh = 0
         this._children.forEach(ch => {
             let size = sizes.get(ch as unknown as View)
-            ch.bounds().x = nx
-            ch.bounds().h = size.h
-            ch.bounds().w = size.w
-            nx += ch.bounds().w
-            ch.bounds().y = ny
-            maxh = Math.max(ch.bounds().h, maxh)
+            ch.set_position(new Point(nx,ny))
+            nx += ch.size().w
+            maxh = Math.max(ch.size().h, maxh)
         })
         //return own size
-        this.bounds().w = nx + this.pad * 2
-        this.bounds().h = maxh + this.pad * 2
+        this.set_size(new Size(nx+this.pad*2, maxh+this.pad*2))
         if (this.vflex) {
-            this.bounds().h = real_available.h
+            this.size().h = real_available.h
         }
         if (this.hflex) {
-            this.bounds().w = real_available.w
+            this.size().w = real_available.w
         }
-        return new Size(this.bounds().w, this.bounds().h)
+        return this.size()
     }
 
     draw(g: CanvasSurface) {
-        if (this.fill) {
-            g.fillBackground(this.bounds(), this.fill)
-        }
+        if (this.fill) g.fillBackgroundSize(this.size(), this.fill)
     }
 }
 
@@ -306,29 +293,25 @@ export class VBox extends SuperParentView {
         let maxw = 0
         this.get_children().forEach(ch => {
             let size = sizes.get(ch as unknown as View)
-            ch.bounds().x = nx
-            ch.bounds().y = ny
-            ch.bounds().w = size.w
-            ch.bounds().h = size.h
-            ny += ch.bounds().h
-            maxw = Math.max(ch.bounds().w, maxw)
+            ch.set_position(new Point(nx,ny))
+            ch.set_size(size)
+            ny += ch.size().h
+            maxw = Math.max(ch.size().w, maxw)
         })
         //return own size
-        this.bounds().w = maxw + this.pad * 2
-        this.bounds().h = ny + this.pad * 2
+        this.size().w = maxw + this.pad * 2
+        this.size().h = ny + this.pad * 2
         if(this.hflex) {
-            this.bounds().w = available.w
+            this.size().w = available.w
         }
         if(this.vflex) {
-            this.bounds().h = available.h
+            this.size().h = available.h
         }
-        return new Size(this.bounds().w, this.bounds().h)
+        return this.size()
     }
 
     draw(g: CanvasSurface) {
-        if (this.fill) {
-            g.fillBackground(this.bounds(), this.fill)
-        }
+        if (this.fill) g.fillBackgroundSize(this.size(), this.fill)
     }
 }
 
@@ -340,7 +323,8 @@ export class HSpacer extends SuperChildView {
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        return new Size(available.w, 0)
+        this.set_size(new Size(available.w, 0))
+        return this.size()
     }
 
     draw(g: CanvasSurface) {
@@ -358,13 +342,12 @@ export class GrowPanel extends SuperParentView {
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        return available
+        this.set_size(available)
+        return this.size()
     }
 
     draw(g: CanvasSurface) {
-        if (this.fill) {
-            g.fillBackground(this.bounds(), this.fill)
-        }
+        if (this.fill) g.fillBackgroundSize(this.size(), this.fill)
     }
 
     with_fill(fill: string) {
@@ -387,11 +370,9 @@ class ScrollWrapper extends SuperParentView {
     layout2(g: CanvasSurface, available: Size): Size {
         this.get_children().forEach(ch => {
             ch.layout2(g,available)
-            ch.bounds().x = this.xoff
-            ch.bounds().y = this.yoff
+            ch.set_position(new Point(this.xoff,this.yoff))
         })
-        this.bounds().w = available.w
-        this.bounds().h = available.h
+        this.set_size(available)
         return available
     }
 
@@ -443,7 +424,7 @@ export class ScrollView extends SuperParentView {
 
 
     draw(g: CanvasSurface): void {
-        g.fillBackground(this.bounds(), 'blue')
+        g.fillBackgroundSize(this.size(), 'blue')
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
@@ -455,23 +436,26 @@ export class ScrollView extends SuperParentView {
                 ch.layout2(g, available)
             }
         })
-        this.bounds().w = 300
-        this.bounds().h = 300
-        this.left.bounds().x = 0
-        this.right.bounds().x = this.bounds().w - this.right.bounds().w - 20
-        this.left.bounds().y = this.bounds().h - this.left.bounds().h
-        this.right.bounds().y = this.bounds().h - this.right.bounds().h
-        this.hbar.bounds().x = this.left.bounds().w
-        this.hbar.bounds().y = this.bounds().h - this.hbar.bounds().h
-        this.hbar.bounds().w = this.bounds().w - this.right.bounds().w  - this.left.bounds().right() - 20
+        this.set_size(new Size(300,300))
 
-        this.up.bounds().x = this.bounds().w - this.up.bounds().w
-        this.vbar.bounds().x = this.bounds().w - this.vbar.bounds().w
-        this.down.bounds().x = this.bounds().w - this.down.bounds().w
-        this.down.bounds().y = this.bounds().h - this.down.bounds().h - 20
-        this.vbar.bounds().y = this.up.bounds().h
-        this.vbar.bounds().h = this.bounds().h - this.up.bounds().h - this.down.bounds().h - 20
-        return new Size(this.bounds().w,this.bounds().h)
+        this.left.set_position(new Point(0,this.size().h-this.left.size().h))
+        this.right.set_position(new Point(this.size().w - this.right.size().w -20,
+            this.size().h - this.right.size().h - 0))
+
+        this.hbar.set_position(new Point(this.left.size().w, this.size().h-this.hbar.size().h))
+        this.hbar.set_size(new Size(
+            this.size().w - this.right.size().w - this.left.size().w - 20,
+            this.hbar.size().h ))
+        this.up.set_position(new Point(this.size().w-this.up.size().w,0))
+        this.down.set_position(new Point(this.size().w - this.down.size().w,
+            this.size().h - this.down.size().h - 20))
+        this.vbar.set_position(new Point(this.size().w - this.vbar.size().w,
+            this.up.size().h ))
+        this.vbar.set_size(new Size(
+            this.vbar.size().w,
+            this.size().h - this.up.size().h - this.down.size().h - 20
+        ))
+        return this.size()
     }
 
     set_content(view: View) {

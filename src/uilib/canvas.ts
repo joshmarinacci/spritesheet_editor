@@ -8,6 +8,15 @@ export function log(...args) {
 
 const CLEAR_COLOR = '#f0f0f0'
 
+function rect_from_pos_size(point: Point, size: Size) {
+    return new Rect(
+        point.x,
+        point.y,
+        size.w,
+        size.h
+    )
+}
+
 export class CanvasSurface {
     w: number;
     h: number;
@@ -80,8 +89,8 @@ export class CanvasSurface {
 
     private draw_view(view: View) {
         this.ctx.save();
-        let bds = view.bounds();
-        this.ctx.translate(bds.x, bds.y)
+        let pos = view.position()
+        this.ctx.translate(pos.x, pos.y)
         // @ts-ignore
         // console.log("drawing",view.id,view.name())
         if(view.visible()) {
@@ -92,13 +101,13 @@ export class CanvasSurface {
             let parent = view as unknown as ParentView;
             if(parent.clip_children()) {
                 this.ctx.beginPath()
-                this.ctx.rect(0,0,view.bounds().w,view.bounds().h);
+                let size = view.size()
+                this.ctx.rect(0,0,size.w,size.h);
                 this.ctx.clip()
             }
             parent.get_children().forEach(ch => {
                 if (this.debug) {
                     this.ctx.save();
-                    // this.ctx.translate(20, 20)
                 }
                 this.draw_view(ch);
                 if (this.debug) {
@@ -106,28 +115,28 @@ export class CanvasSurface {
                 }
             })
         }
+        let bds = rect_from_pos_size(view.position(),view.size())
         // @ts-ignore
         this.debug_draw_rect(bds, (view.id) ? (view.id) : "view");
         this.ctx.restore()
     }
 
-    fill(bounds: Rect, color: string) {
+    fill(rect: Rect, color: string) {
         this.ctx.fillStyle = color
-        this.ctx.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+        this.ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
     }
 
-    stroke(bounds: Rect, color: string) {
+    stroke(rect: Rect, color: string) {
         this.ctx.strokeStyle = color
-        this.ctx.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+        this.ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
     }
-    fillBackground(bounds: Rect, color: string) {
+    fillBackgroundSize(size:Size, color: string) {
         this.ctx.fillStyle = color
-        this.ctx.fillRect(0, 0, bounds.w, bounds.h);
+        this.ctx.fillRect(0, 0, size.w, size.h);
     }
-
-    strokeBackground(bounds: Rect, color: string) {
+    strokeBackgroundSize(size: Size, color: string) {
         this.ctx.strokeStyle = color
-        this.ctx.strokeRect(0,0, bounds.w, bounds.h);
+        this.ctx.strokeRect(0,0, size.w, size.h);
     }
 
     private debug_draw_rect(bds: Rect, title: string) {
@@ -226,20 +235,21 @@ export class CanvasSurface {
     }
 
     private dispatch(view: View, e:CommonEvent): View | null {
-        if(this.debug) log("dispatching",view,view.bounds());
+        if(this.debug) log("dispatching",view,view.position(),view.size());
         if (!view.visible()) return null
-        if (view.bounds().contains(e.pt)) {
+        let bounds = rect_from_pos_size(view.position(),view.size())
+        if (bounds.contains(e.pt)) {
             // @ts-ignore
             if (view.is_parent_view && view.is_parent_view()) {
                 let parent = view as unknown as ParentView;
                 for (let i = 0; i < parent.get_children().length; i++) {
                     let ch = parent.get_children()[i]
-                    let e2 = e.translate(view.bounds().x,view.bounds().y);
+                    let e2 = e.translate(view.position().x,view.position().y);
                     let picked = this.dispatch(ch, e2)
                     if (picked) return picked;
                 }
             }
-            let e2 = e.translate(view.bounds().x,view.bounds().y)
+            let e2 = e.translate(view.position().x,view.position().y)
             view.input(e2);
             return view;
         }

@@ -29,11 +29,8 @@ class GridView extends SuperParentView {
         this.tail = spritesheet.get_slice(3)
         this.food = spritesheet.get_slice(4);
     }
-    bounds(): Rect {
-        return this._bounds
-    }
     draw(g: CanvasSurface): void {
-        g.fill(this.bounds(),'white')
+        g.fillBackgroundSize(this.size(),'white')
         this.model.forEach((w,x,y)=>{
             let color = 'white'
             if (w === EMPTY) color = 'white'
@@ -52,7 +49,8 @@ class GridView extends SuperParentView {
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        return new Size(this.model.w*16,this.model.h*16)
+        this.set_size(new Size(this.model.w*16,this.model.h*16))
+        return this.size()
     }
 }
 class SnakeView extends SuperChildView {
@@ -64,22 +62,21 @@ class SnakeView extends SuperChildView {
         this.model = model;
         this.spritesheet = spritesheet
         this.sprite_slice = spritesheet.get_slice(2)
+        this.set_size(new Size(16,16))
     }
     draw(g: CanvasSurface): void {
         g.fill(new Rect(0,0,16,16),'yellow')
         g.draw_slice(0,0,this.sprite_slice,2)
     }
-    bounds(): Rect {
-        let pos = this.model.position;
-        return new Rect(pos.x*16,pos.y*16,16,16)
-    }
-    input(event: CommonEvent): void {
-    }
-    layout(g: CanvasSurface, parent: View): void {
+    position(): Point {
+        return new Point(
+            this.model.position.x*16,
+            this.model.position.y*16
+        )
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        return new Size(16,16)
+        return this.size()
     }
 }
 
@@ -114,11 +111,11 @@ class ScoreView extends SuperChildView{
     constructor(score: ScoreModel, spritesheet:SpriteSheet) {
         super('score-view')
         this.score = score;
-        // this._bounds = new Rect(8*9,0,32,16)
         this.slices = []
         for(let i=0; i<=9; i++) {
             this.slices[i] = spritesheet.get_slice(4+i)
         }
+        this.set_size(new Size(32,16))
     }
     draw(g: CanvasSurface): void {
         let ones = 0;
@@ -130,14 +127,11 @@ class ScoreView extends SuperChildView{
             ones = this.score.level%10;
             tens = Math.floor(this.score.level/10)
         }
-        g.draw_slice(this._bounds.x, 0, this.slices[tens], 2)
-        g.draw_slice(this._bounds.x+16, 0, this.slices[ones], 2)
+        g.draw_slice(this.position().x, 0, this.slices[tens], 2)
+        g.draw_slice(this.position().x+16, 0, this.slices[ones], 2)
     }
-    input(event: CommonEvent): void {
-    }
-
     layout2(g: CanvasSurface, available: Size): Size {
-        return new Size(32,16)
+        return this.size()
     }
 }
 

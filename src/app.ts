@@ -31,16 +31,14 @@ export const EMPTY_COLOR = '#62fcdc'
 class TileEditor extends SuperChildView {
     doc: Doc;
     scale: number
-
     constructor() {
-        super('tile editor')//new Rect(0, 0, 32 * 8 + 1, 32 * 8 + 1))
-        // this.id = 'tile editor'
+        super('tile editor')
         this.scale = 32;
     }
 
     draw(g: CanvasSurface) {
         //clear the background
-        g.fillBackground(this._bounds, 'white');
+        g.fillBackgroundSize(this.size(), 'white');
         //draw each pixel in the tile as a rect
         let sprite = this.doc.get_selected_tile()
         let palette = this.doc.palette;
@@ -51,7 +49,7 @@ class TileEditor extends SuperChildView {
             });
         }
 
-        draw_grid(g, this._bounds, this.scale)
+        draw_grid(g, this.size(), this.scale)
     }
 
     input(e: CommonEvent): void {
@@ -73,7 +71,8 @@ class TileEditor extends SuperChildView {
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        return new Size(32*8+1,32*8+1)
+        this.set_size(new Size(32*8+1,32*8+1))
+        return this.size()
     }
 
 }
@@ -81,15 +80,13 @@ class TileEditor extends SuperChildView {
 class TileSelector extends SuperChildView {
     doc: Doc;
     scale: number;
-
     constructor() {
         super('tile-selector')
         this.scale = 32;
         this._name = 'tile-selector'
     }
-
     draw(g: CanvasSurface) {
-        g.fillBackground(this._bounds,EMPTY_COLOR);
+        g.fillBackgroundSize(this.size(),EMPTY_COLOR);
         let sheet = this.doc.get_selected_sheet()
         if(sheet) {
             sheet.sprites.forEach((sprite, s) => {
@@ -97,7 +94,7 @@ class TileSelector extends SuperChildView {
                 draw_sprite(sprite, g, pt.x * this.scale, pt.y * this.scale, 4, this.doc)
             })
         }
-        draw_grid(g,this._bounds,this.scale);
+        draw_grid(g,this.size(),this.scale);
         let pt = wrap_number(this.doc.selected_tile,8);
         draw_selection_rect(g,new Rect(pt.x*this.scale,pt.y*this.scale,this.scale,this.scale));
     }
@@ -111,7 +108,8 @@ class TileSelector extends SuperChildView {
         }
     }
     layout2(g: CanvasSurface, available: Size): Size {
-        return new Size(8*this.scale,8*this.scale)
+        this.set_size(new Size(8*this.scale,8*this.scale))
+        return this.size()
     }
 }
 
@@ -138,12 +136,10 @@ class MapEditor extends SuperChildView {
     }
     set_scale(scale) {
         this._scale = scale
-        // this._bounds.w = this._scale*8
-        // this._bounds.h = this._scale*8
     }
 
     draw(ctx: CanvasSurface) {
-        ctx.fillBackground(this._bounds,EMPTY_COLOR)
+        ctx.fillBackgroundSize(this.size(),EMPTY_COLOR)
         let map = this.doc.get_selected_map()
         if (!map) return;
         map.forEachPixel((val,i,j) => {
@@ -152,7 +148,7 @@ class MapEditor extends SuperChildView {
             let tile = sheet.sprites.find((t:Sprite) => t.id ===val);
             draw_sprite(tile,ctx,i*this._scale,j*this._scale,this._scale/8,this.doc)
         })
-        if(this.doc.map_grid_visible) draw_grid(ctx,this._bounds,this._scale)
+        if(this.doc.map_grid_visible) draw_grid(ctx,this.size(),this._scale)
     }
 
     input(e: CommonEvent): void {
@@ -173,13 +169,11 @@ class MapEditor extends SuperChildView {
     layout2(g: CanvasSurface, available: Size): Size {
         let map = this.doc.get_selected_map()
         if(!map) {
-            this._bounds.w = 100
-            this._bounds.h = 100
+            this.set_size(new Size(100,100))
         } else {
-            this._bounds.w = this._scale * map.w
-            this._bounds.h = this._scale * map.h
+            this.set_size(new Size(this.scale()*map.w,this.scale()*map.h))
         }
-        return new Size(this._bounds.w,this._bounds.h)
+        return this.size()
     }
 }
 
@@ -190,17 +184,16 @@ class PaletteChooser extends SuperChildView{
     constructor() {
         super('palette chooser')
         this.scale = 32;
-        // this._bounds = new Rect(0,0,this.scale*8,this.scale);
         this._name = 'palette-chooser'
     }
 
     draw(ctx: CanvasSurface) {
         if (this.palette) {
-            ctx.fillBackground(this._bounds,EMPTY_COLOR)
+            ctx.fillBackgroundSize(this.size(),EMPTY_COLOR)
             for (let i=0; i<5; i++) {
                 ctx.fillRect(i*this.scale+0.5,0+0.5,this.scale,this.scale,this.palette[i]);
             }
-            draw_grid(ctx,this.bounds(),this.scale)
+            draw_grid(ctx,this.size(),this.scale)
             let i = this.doc.selected_color;
             let rect = new Rect(i*this.scale+1,1,this.scale-2,this.scale-2);
             draw_selection_rect(ctx,rect)
@@ -218,8 +211,7 @@ class PaletteChooser extends SuperChildView{
 
     layout2(g: CanvasSurface, available: Size): Size {
         let size = new Size(this.scale*8,this.scale)
-        this._bounds.w = size.w
-        this._bounds.h = size.h
+        this.set_size(size)
         return size
     }
 }
@@ -230,7 +222,7 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface):HBox {
     toolbar.fill = '#ccc'
 
     let new_button = new ActionButton('new')
-        new_button.on('action',()=>{
+    new_button.on('action',()=>{
         let sprite = new Sprite('spritex',8,8)
         let sheet = new Sheet("sheetx", "the sheet")
         sheet.add(new Sprite('spritex',8,8))
@@ -248,14 +240,12 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface):HBox {
         }
         doc.reset_from_json(empty)
     })
-    // new_button._bounds.w = 50
     toolbar.add(new_button)
     let save_button = new ActionButton("save")
     save_button.on('action',()=>{
         let blob = jsonObjToBlob(doc.toJsonObj())
         forceDownloadBlob('project.json',blob)
     });
-    // save_button._bounds.w = 60
     toolbar.add(save_button);
 
     let load_button = new ActionButton("load")
@@ -323,15 +313,14 @@ class SinglePanel extends SuperParentView {
         this.pad = 0
     }
     override draw(g: CanvasSurface) {
-        g.fillBackground(this.bounds(),StandardPanelBackgroundColor)
+        g.fillBackgroundSize(this.size(),StandardPanelBackgroundColor)
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
         let av = available.shrink(this.pad)
         this._children.forEach(ch => {
             ch.layout2(g,av)
-            ch.bounds().x = this.pad;
-            ch.bounds().y = this.pad;
+            ch.set_position(new Point(this.pad,this.pad))
         })
         let item = this.doc.selected_tree_item
         if(item) {
@@ -355,8 +344,7 @@ class SinglePanel extends SuperParentView {
                 }
             })
         }
-        this.bounds().w = available.w
-        this.bounds().h = available.h
+        this.set_size(available)
         return available
     }
 }
@@ -554,16 +542,16 @@ function draw_selection_rect(g: CanvasSurface, rect: Rect) {
         g.ctx.strokeRect(rect.x + i + 0.5, rect.y + i + 0.5, rect.w - i * 2, rect.h - i * 2);
     })
 }
-function draw_grid(g: CanvasSurface, bounds: Rect, step: number) {
+function draw_grid(g: CanvasSurface, size: Size, step: number) {
     //draw the grid
     g.ctx.beginPath();
-    for (let i = 0; i <= bounds.w; i += step) {
+    for (let i = 0; i <= size.w; i += step) {
         g.ctx.moveTo(i + 0.5, 0);
-        g.ctx.lineTo(i + 0.5, bounds.h);
+        g.ctx.lineTo(i + 0.5, size.h);
     }
-    for (let i = 0; i <= bounds.h; i += step) {
+    for (let i = 0; i <= size.h; i += step) {
         g.ctx.moveTo(0, i + 0.5);
-        g.ctx.lineTo(bounds.w, i + 0.5);
+        g.ctx.lineTo(size.w, i + 0.5);
     }
     g.ctx.strokeStyle = 'black';
     g.ctx.lineWidth = 1;

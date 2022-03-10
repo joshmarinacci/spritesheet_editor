@@ -9,22 +9,16 @@ class PopupContainer extends SuperParentView {
         this._name ="popup_container"
     }
     draw(g: CanvasSurface): void {
-        g.fillBackground(this._bounds,'gray')
+        g.fillBackgroundSize(this.size(),'gray')
     }
     layout2(g: CanvasSurface, available: Size): Size {
-        // this.log('laying out the child')
         let box = this._children[0]
-        // this.log("vbox child is",box)
-        // @ts-ignore
         let size = box.layout2(g, new Size(100,100))
-        // this.log("child size is",size)
-        box.bounds().w = size.w
-        box.bounds().h = size.h
+        this.set_size(size)
         return new Size(size.w,size.h)
     }
     open_at(x: number, y: number) {
-        this._bounds.x = x
-        this._bounds.y = y
+        this.set_position(new Point(x,y))
     }
 }
 class DialogContainer extends SuperParentView {
@@ -32,32 +26,21 @@ class DialogContainer extends SuperParentView {
         super("dialog-container")
         this._name = 'dialog-container'
     }
-    is_parent_view(): boolean {
-        return true
-    }
-    clip_children(): boolean {
-        return false
-    }
     draw(g: CanvasSurface): void {
-        g.fillBackground(this.bounds(),'gray')
-        // this.log("drawing")
+        g.fillBackgroundSize(this.size(),'gray')
     }
     layout2(g: CanvasSurface, available: Size): Size {
-        // this.log('dialog laying out')
         let box = this._children[0]
-        // this.log("vbox child is",box)
-        // @ts-ignore
         let size = box.layout2(g, new Size(100,100))
-        // this.log("child size is",size)
-        box.bounds().w = size.w
-        box.bounds().h = size.h
-        this._bounds.x = (g.w/2-size.w)/2
-        this._bounds.y = (g.h/2-size.h)/2
+        this.set_size(size)
+        this.set_position(new Point(
+            (g.w-size.w)/2,
+            (g.h-size.h)/2
+        ))
         return new Size(size.w,size.h)
     }
     open_at(x: number, y: number) {
-        this._bounds.x = x
-        this._bounds.y = y
+        this.set_position(new Point(x,y))
     }
 }
 class FixedGridPanel extends SuperChildView {
@@ -69,10 +52,9 @@ class FixedGridPanel extends SuperChildView {
         this.vflex = false
         this.sw = w
         this.sh = h
-        this._bounds = new Rect(0,0,w,h)
     }
     draw(g: CanvasSurface): void {
-        g.fillBackground(this.bounds(),'#ccccff')
+        g.fillBackgroundSize(this.size(),'#ccccff')
         g.ctx.strokeStyle = 'black'
         g.ctx.beginPath()
         for(let i=0; i<this.sw; i+=25) {
@@ -86,7 +68,8 @@ class FixedGridPanel extends SuperChildView {
         g.ctx.stroke()
     }
     layout2(g: CanvasSurface, available: Size): Size {
-        return new Size(this.sw,this.sh)
+        this.set_size(new Size(this.sw,this.sh))
+        return this.size()
     }
 }
 
