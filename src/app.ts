@@ -146,7 +146,10 @@ class MapEditor extends SuperChildView {
             if (!val || val === 0) return;
             let sheet = this.doc.get_selected_sheet()
             let tile = sheet.sprites.find((t:Sprite) => t.id ===val);
-            draw_sprite(tile,ctx,i*this._scale,j*this._scale,this._scale/8,this.doc)
+            ctx.ctx.imageSmoothingEnabled = false
+            if(tile) {
+                ctx.ctx.drawImage(tile._img,i*this._scale,j*this._scale, this._scale, this._scale)
+            }
         })
         if(this.doc.map_grid_visible) draw_grid(ctx,this.size(),this._scale)
     }

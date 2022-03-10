@@ -5,6 +5,7 @@ export class Sprite {
     w: number;
     h: number;
     data: number[];
+    _img: HTMLCanvasElement;
 
     constructor(id, w, h) {
         this.id = id;
@@ -14,6 +15,9 @@ export class Sprite {
         for (let i = 0; i < this.w * this.h; i++) {
             this.data[i] = 0;
         }
+        this._img = document.createElement('canvas')
+        this._img.width = this.w
+        this._img.height = this.h
     }
 
     forEachPixel(cb: (val: any, i: number, j: number) => void) {
@@ -29,6 +33,28 @@ export class Sprite {
     set_pixel(x: number, y: number, color: any) {
         let n = y * this.w + x;
         this.data[n] = color;
+        this.sync()
+    }
+    sync() {
+        let c = this._img.getContext('2d')
+        this.forEachPixel((v,i,j)=>{
+            if(v === 1) {
+                c.fillStyle = '#f0f0f0'
+                c.fillRect(i, j, 1, 1)
+            }
+            if(v === 2) {
+                c.fillStyle = '#d0d0d0'
+                c.fillRect(i, j, 1, 1)
+            }
+            if(v === 3) {
+                c.fillStyle = '#909090'
+                c.fillRect(i, j, 1, 1)
+            }
+            if(v === 4) {
+                c.fillStyle = '#404040'
+                c.fillRect(i, j, 1, 1)
+            }
+        })
     }
 
     get_pixel(x: number, y: number):any {
@@ -103,6 +129,7 @@ function obj_to_class(sh) {
     if(sh.clazz === 'Sprite') {
         let sprite = new Sprite(sh.id, sh.w, sh.h)
         sprite.data = sh.data
+        sprite.sync()
         return sprite
     }
     if(sh.clazz === 'Sheet') {
