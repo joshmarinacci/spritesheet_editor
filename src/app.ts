@@ -326,21 +326,17 @@ class SinglePanel extends SuperParentView {
         if(item) {
             this._children.forEach(ch => {
                 // @ts-ignore
-                this.log("child item is",ch.name(),item)
-                // @ts-ignore
                 ch._visible = false
                 // @ts-ignore
 
                 if (item instanceof Sheet && ch.name() === 'sheet-editor-view') {
                     // @ts-ignore
                     ch._visible = true
-                    this.log("showing sheet")
                 }
                 // @ts-ignore
                 if(item instanceof Sprite && ch.name() === 'map-editor-view') {
                     // @ts-ignore
                     ch._visible = true
-                    this.log("showing map")
                 }
             })
         }

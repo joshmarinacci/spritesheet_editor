@@ -9,7 +9,7 @@ import {
     StandardTextHeight,
     StandardTextStyle
 } from "../style";
-import {Callback, gen_id, Point, Size} from "./common";
+import {Callback, gen_id, Point, Rect, Size} from "./common";
 import {CommonEvent, SuperChildView, SuperParentView, View} from "./core";
 
 export class Label extends SuperChildView {
@@ -194,7 +194,6 @@ export class HBox extends SuperParentView {
     }
 
     layout2(g: CanvasSurface, real_available: Size): Size {
-        // this.log("start avail",real_available)
         let available = real_available.shrink(this.pad);
         //split out flex and non-flex children
         // @ts-ignore
@@ -260,7 +259,6 @@ export class VBox extends SuperParentView {
     }
 
     layout2(g: CanvasSurface, real_available: Size): Size {
-        // this.log("start avail",real_available)
         let available = real_available.shrink(this.pad);
 
         // @ts-ignore
@@ -377,49 +375,74 @@ class ScrollWrapper extends SuperParentView {
     }
 
 }
+class ScrollBar extends SuperChildView {
+    private vert: boolean;
+    private wrapper: ScrollWrapper;
+    constructor(vert:boolean, wrapper:ScrollWrapper) {
+        super(gen_id("scroll-bar"));
+        this.wrapper = wrapper
+        this.vert = vert
+        if(this.vert) {
+            this.set_size(new Size(20,100))
+        } else {
+            this.set_size(new Size(100,20))
+        }
+    }
+    draw(g: CanvasSurface): void {
+        g.fillBackgroundSize(this.size(),'#444')
+        if(this.vert) {
+            g.fill(new Rect(0,0,20,20),'#999')
+            g.fill(new Rect(0,this.size().h-20,20,20),'#999')
+        } else {
+            g.fill(new Rect(0,0,20,20),'#999')
+            g.fill(new Rect(this.size().w-20,0,20,20),'#999')
+        }
+    }
+    override input(event: CommonEvent) {
+        if(event.type === 'mousedown') {
+            this.log("clicked on scrollbar")
+            if(this.vert) {
+                if(event.pt.y < 20) {
+                    this.wrapper.yoff += 20
+                }
+                if(event.pt.y > this.size().h-20) {
+                    this.wrapper.yoff -= 20
+                }
+            } else {
+                if(event.pt.x < 20) {
+                    this.wrapper.xoff += 20
+                }
+                if(event.pt.x > this.size().w - 20) {
+                    this.wrapper.xoff -= 20
+                }
+            }
+        }
+    }
+    layout2(g: CanvasSurface, available: Size): Size {
+        return this.size()
+    }
+}
 export class ScrollView extends SuperParentView {
-    private left: ActionButton
-    private right: ActionButton
-    private hbar: ActionButton
+    private hbar: ScrollBar;
+    private vbar: ScrollBar
     private content: View
     private wrapper: ScrollWrapper;
     private up: ActionButton;
     private down: ActionButton;
-    private vbar: ActionButton;
     constructor() {
         super(gen_id("scroll-view"))
         this._name = 'scroll-view'
         this.hflex = false
         this.vflex = false
 
-        this.left = new ActionButton('left')
-        this.add(this.left)
-        this.right = new ActionButton('right')
-        this.add(this.right)
-        this.hbar = new ActionButton('hhh')
-        this.add(this.hbar)
+        this.wrapper = new ScrollWrapper()
+        this.add(this.wrapper)
 
-        this.up = new ActionButton('u')
-        this.down = new ActionButton('d')
-        this.vbar = new ActionButton('v')
-        this.add(this.up)
-        this.add(this.down)
+        this.hbar = new ScrollBar(false,this.wrapper)
+        this.add(this.hbar)
+        this.vbar = new ScrollBar(true,this.wrapper)
         this.add(this.vbar)
 
-        this.wrapper = new ScrollWrapper()
-        this.left.on('action',() => {
-            this.wrapper.xoff += 20
-        })
-        this.right.on('action',() => {
-            this.wrapper.xoff -= 20
-        })
-        this.up.on('action',() => {
-            this.wrapper.yoff += 20
-        })
-        this.down.on('action',() => {
-            this.wrapper.yoff -= 20
-        })
-        this.add(this.wrapper)
     }
 
 
@@ -437,24 +460,10 @@ export class ScrollView extends SuperParentView {
             }
         })
         this.set_size(new Size(300,300))
-
-        this.left.set_position(new Point(0,this.size().h-this.left.size().h))
-        this.right.set_position(new Point(this.size().w - this.right.size().w -20,
-            this.size().h - this.right.size().h - 0))
-
-        this.hbar.set_position(new Point(this.left.size().w, this.size().h-this.hbar.size().h))
-        this.hbar.set_size(new Size(
-            this.size().w - this.right.size().w - this.left.size().w - 20,
-            this.hbar.size().h ))
-        this.up.set_position(new Point(this.size().w-this.up.size().w,0))
-        this.down.set_position(new Point(this.size().w - this.down.size().w,
-            this.size().h - this.down.size().h - 20))
-        this.vbar.set_position(new Point(this.size().w - this.vbar.size().w,
-            this.up.size().h ))
-        this.vbar.set_size(new Size(
-            this.vbar.size().w,
-            this.size().h - this.up.size().h - this.down.size().h - 20
-        ))
+        this.hbar.set_size(new Size(this.size().w-20,20))
+        this.hbar.set_position(new Point(0,this.size().h-this.hbar.size().h))
+        this.vbar.set_size(new Size(20,this.size().h-20))
+        this.vbar.set_position(new Point(this.size().w-this.vbar.size().w,0))
         return this.size()
     }
 
