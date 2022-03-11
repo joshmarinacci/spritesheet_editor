@@ -73,6 +73,54 @@ export class Sprite {
     }
 }
 
+export class Tilemap {
+    id: string;
+    w: number;
+    h: number;
+    data: number[];
+
+    constructor(id, w, h) {
+        this.id = id;
+        this.w = w;
+        this.h = h;
+        this.data = []
+        for (let i = 0; i < this.w * this.h; i++) {
+            this.data[i] = 0;
+        }
+    }
+
+    forEachPixel(cb: (val: any, i: number, j: number) => void) {
+        for (let j = 0; j < this.h; j++) {
+            for (let i = 0; i < this.w; i++) {
+                let n = j * this.w + i;
+                let v = this.data[n];
+                cb(v, i, j);
+            }
+        }
+    }
+
+    set_pixel(x: number, y: number, color: any) {
+        let n = y * this.w + x;
+        this.data[n] = color;
+    }
+    get_pixel(x: number, y: number):any {
+        let n = y * this.w + x;
+        return this.data[n]
+    }
+
+    toJsonObj() {
+        return {
+            clazz:'Tilemap',
+            id:this.id,
+            w:this.w,
+            h:this.h,
+            data:this.data,
+        }
+    }
+
+
+}
+
 export type CB = (any) => void;
 export type Etype = "change"|"reload"
 
@@ -132,6 +180,11 @@ function obj_to_class(sh) {
         sprite.sync()
         return sprite
     }
+    if(sh.clazz === 'Tilemap') {
+        let tilemap = new Tilemap(sh.id, sh.w, sh.h)
+        tilemap.data = sh.data
+        return tilemap
+    }
     if(sh.clazz === 'Sheet') {
         let sheet = new Sheet(sh.id,sh.name)
         sheet.sprites = sh.sprites.map(sp => obj_to_class(sp))
@@ -143,7 +196,7 @@ function obj_to_class(sh) {
 export class Doc extends Observable {
     sheets: Sheet[]
     fonts: SpriteFont[]
-    maps:Sprite[]
+    maps:Tilemap[]
 
     selected_color: number
     palette: string[]
@@ -171,7 +224,7 @@ export class Doc extends Observable {
         this.sheets = [sheet]
         this.selected_sheet = 0
         this.selected_tile = 0;
-        let tilemap = new Sprite('main-map', 16, 16);
+        let tilemap = new Tilemap('main-map', 16, 16);
         tilemap.set_pixel(0, 0, 'sprite1');
         this.maps = [tilemap]
         this.map_grid_visible = true;
@@ -185,7 +238,7 @@ export class Doc extends Observable {
         return this.sheets[this.selected_sheet]
     }
 
-    get_selected_map():Sprite {
+    get_selected_map():Tilemap {
         return this.maps[this.selected_map]
     }
 
@@ -193,7 +246,7 @@ export class Doc extends Observable {
         this.selected_sheet = this.sheets.indexOf(target)
     }
 
-    set_selected_map(target: Sprite) {
+    set_selected_map(target: Tilemap) {
         this.selected_map = this.maps.indexOf(target)
     }
 

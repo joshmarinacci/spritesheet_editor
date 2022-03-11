@@ -15,14 +15,19 @@ import {
     jsonObjToBlob,
     on
 } from "./util";
-import {Doc, draw_sprite, Sheet, Sprite} from "./app-model";
+import {Doc, draw_sprite, Sheet, Sprite, Tilemap} from "./app-model";
 import {
     CanvasSurface,
     EVENTS,
     log,
-    setup_keyboard_input
 } from "./uilib/canvas";
-import {StandardPanelBackgroundColor, StandardSelectionColor} from "./style";
+import {
+    StandardLeftPadding,
+    StandardPanelBackgroundColor,
+    StandardSelectionColor,
+    StandardTextColor,
+    StandardTextHeight, StandardTextStyle
+} from "./style";
 import {gen_id, Observable, Point, Rect, Size} from "./uilib/common";
 import {CommonEvent, SuperChildView, SuperParentView} from "./uilib/core";
 
@@ -226,10 +231,9 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface):HBox {
 
     let new_button = new ActionButton('new')
     new_button.on('action',()=>{
-        let sprite = new Sprite('spritex',8,8)
         let sheet = new Sheet("sheetx", "the sheet")
         sheet.add(new Sprite('spritex',8,8))
-        let tilemap = new Sprite('mapx', 16, 16);
+        let tilemap = new Tilemap('mapx', 16, 16);
         tilemap.set_pixel(0, 0, 'spritex');
         let empty = {
             version:1,
@@ -337,7 +341,7 @@ class SinglePanel extends SuperParentView {
                     ch._visible = true
                 }
                 // @ts-ignore
-                if(item instanceof Sprite && ch.name() === 'map-editor-view') {
+                if(item instanceof Tilemap && ch.name() === 'map-editor-view') {
                     // @ts-ignore
                     ch._visible = true
                 }
@@ -345,6 +349,96 @@ class SinglePanel extends SuperParentView {
         }
         this.set_size(available)
         return available
+    }
+}
+
+class TextLine extends SuperChildView {
+    private text: string;
+    private cursor: number;
+    constructor() {
+        super(gen_id("text-line"));
+        this._name = '@text-line'
+        this.text = "abc"
+        this.cursor = this.text.length
+    }
+    draw(g: CanvasSurface): void {
+        let bg = '#ddd'
+        if(g.is_keyboard_focus(this)) bg = 'white'
+        g.fillBackgroundSize(this.size(),bg)
+        g.strokeBackgroundSize(this.size(),'black')
+        if(g.is_keyboard_focus(this)) {
+            g.ctx.fillStyle = StandardTextColor
+            g.ctx.font = StandardTextStyle
+            let parts = this._parts()
+            let bx = 5
+            let ax = bx + g.measureText(parts.before).w
+            g.ctx.fillText(parts.before, bx,15)
+            g.ctx.fillText(parts.after, ax,15)
+            g.ctx.fillRect(ax, 2, 1, 16)
+        } else {
+            g.fillStandardText(this.text, 5, 15);
+        }
+    }
+    override input(event: CommonEvent) {
+        if(event.type === 'mousedown') {
+            event.ctx.set_keyboard_focus(this)
+        }
+        if(event.type === 'keydown') {
+            let code = event.details.code
+            let key = event.details.key
+            // this.log("got a keypress",event.details)
+            if(code === 'KeyD' && event.details.ctrl) return this.delete_right()
+            if(code === 'Backspace') return this.delete_left()
+            if(code === 'ArrowLeft') return this.cursor_left()
+            if(code === 'ArrowRight') return this.cursor_right()
+            if(code === 'Enter') {
+                event.ctx.release_keyboard_focus(this)
+                this.fire('action',this.text)
+                return
+            }
+            if(key && key.length === 1) this.insert(key)
+        }
+    }
+    layout2(g: CanvasSurface, available: Size): Size {
+        this.set_size(new Size(100,20))
+        return this.size()
+    }
+
+    private insert(key:string) {
+        let parts = this._parts()
+        this.text = `${parts.before}${key}${parts.after}`
+        this.cursor_right()
+    }
+
+    private delete_left() {
+        let parts = this._parts()
+        this.text = `${parts.before.slice(0,parts.before.length-1)}${parts.after}`
+        this.cursor_left()
+    }
+    private delete_right() {
+        let parts = this._parts()
+        this.text = `${parts.before}${parts.after.slice(1)}`
+    }
+
+    private cursor_left() {
+        this.cursor -= 1
+        if(this.cursor < 0) this.cursor = 0
+    }
+    private cursor_right() {
+        this.cursor += 1
+        if(this.cursor > this.text.length) this.cursor = this.text.length
+    }
+
+    private _parts() {
+        return {
+            before :this.text.slice(0,this.cursor),
+            after : this.text.slice(this.cursor),
+        }
+    }
+
+    set_text(name: string) {
+        this.text = name
+        this.cursor = this.text.length
     }
 }
 
@@ -372,7 +466,20 @@ function make_sheet_editor_view(doc: Doc) {
         doc.mark_dirty()
         doc.fire('change', "added a tile");
     });
-    vb2.add(add_tile_button);
+
+
+    let tb = new HBox()
+    tb.add(add_tile_button)
+    tb.add(new Label("   "))
+    tb.add(new Label("id"))
+    let tl = new TextLine()
+    tl.set_text(doc.get_selected_sheet().name)
+    tb.add(tl)
+    tl.on("action",(name) => {
+        console.log("sheet name changed to",name)
+        doc.get_selected_sheet().name = name
+    })
+    vb2.add(tb);
 
 
     // lets you see all N tiles and choose one to edit
@@ -438,15 +545,6 @@ export function start() {
     let All = new Observable();
 
     let surface = new CanvasSurface(1200,700);
-    surface.debug = false
-    let KeyboardInput = setup_keyboard_input()
-    on(KeyboardInput,EVENTS.KEYDOWN,(e)=>{
-        if(e.type === 'keydown' && e.key == 'D' && e.shiftKey) {
-            surface.debug = !surface.debug
-            surface.repaint()
-        }
-    })
-
     let doc = new Doc();
     doc.check_backup();
     let timeout_id = 0
@@ -498,6 +596,9 @@ export function start() {
         if (item instanceof Sprite) {
             return (item as Sprite).id
         }
+        if (item instanceof Tilemap) {
+            return (item as Tilemap).id
+        }
         return "???"
     })
     // @ts-ignore
@@ -537,6 +638,7 @@ export function start() {
     surface.set_root(main_view)
     surface.addToPage();
     surface.setup_mouse_input()
+    surface.setup_keyboard_input()
     surface.repaint()
 }
 function draw_selection_rect(g: CanvasSurface, rect: Rect) {

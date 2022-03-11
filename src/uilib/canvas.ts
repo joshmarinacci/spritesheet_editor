@@ -26,6 +26,7 @@ export class CanvasSurface {
     debug: boolean;
     private scale: number;
     private _input_callback: Callback;
+    private _keyboard_focus: View;
 
     constructor(w: number, h: number, scale?:number) {
         this.log("making canvas ",w,h)
@@ -189,6 +190,29 @@ export class CanvasSurface {
         pt.y /= this.scale
         return pt
     }
+    setup_keyboard_input() {
+        // let KBD = new Observable()
+        document.addEventListener('keydown', (e) => {
+            e.preventDefault()
+            let evt = new CommonEvent('keydown',new Point(0,0,),this)
+            evt.details = {
+                key:e.key,
+                code:e.code,
+                shift:e.shiftKey,
+                alt:e.altKey,
+                ctrl:e.ctrlKey,
+            }
+            this.dispatch_keyboard_event(evt)
+            this.repaint()
+            // if (e.key === 'ArrowLeft') KBD.fire(EVENTS.LEFT, {});
+            // if (e.key === 'ArrowRight') KBD.fire(EVENTS.RIGHT, {});
+            // if (e.key === 'ArrowDown') KBD.fire(EVENTS.DOWN, {});
+            // if (e.key === 'ArrowUp') KBD.fire(EVENTS.UP, {});
+            // KBD.fire(EVENTS.KEYDOWN,e)
+            // e.preventDefault()
+        })
+        // return KBD
+    }
     setup_mouse_input() {
         let down = false
         let button = -1
@@ -202,8 +226,7 @@ export class CanvasSurface {
             button = evt.button as any
             let e = new CommonEvent('mousedown', pt, this)
             e.button = evt.button
-            // console.log("dispatching",e)
-            this.dispatch(this.root,e);
+            this.dispatch_pointer_event(this.root,e);
             if(this._input_callback) this._input_callback(e)
             this.repaint()
         })
@@ -212,7 +235,7 @@ export class CanvasSurface {
                 let pt = this.screen_to_local(evt)
                 let e = new CommonEvent('mousedrag', pt, this)
                 e.button = evt.button
-                this.dispatch(this.root,e)// {type:'mousedrag', pt:pt, button:button, ctx:this});
+                this.dispatch_pointer_event(this.root,e)// {type:'mousedrag', pt:pt, button:button, ctx:this});
                 if(this._input_callback) this._input_callback(e)
             }
         })
@@ -221,20 +244,38 @@ export class CanvasSurface {
             let pt = this.screen_to_local(evt)
             let e = new CommonEvent('mouseup', pt, this)
             e.button = evt.button
-            this.dispatch(this.root,e)//{type:'mouseup',pt:pt, button:button, ctx:this});
+            this.dispatch_pointer_event(this.root,e)//{type:'mouseup',pt:pt, button:button, ctx:this});
             if(this._input_callback) this._input_callback(e)
         })
         this.canvas.addEventListener('wheel',(evt)=>{
             let pt = this.screen_to_local(evt)
             let e = new CommonEvent('wheel',pt,this)
             e.details = {deltaX:evt.deltaX, deltaY:evt.deltaY}
-            this.dispatch(this.root,e);
+            this.dispatch_pointer_event(this.root,e);
             // evt.stopPropagation();
             evt.preventDefault()
         });
     }
 
-    private dispatch(view: View, e:CommonEvent): View | null {
+    private dispatch_keyboard_event(evt: CommonEvent) {
+        // this.log("dispatching keyboard event",evt.details)
+        // this.log('target is',this._keyboard_focus)
+        if(this._keyboard_focus) this._keyboard_focus.input(evt)
+    }
+
+    set_keyboard_focus(view:View) {
+        this._keyboard_focus = view
+        // this.log("set keyboard focus to",this._keyboard_focus)
+    }
+    is_keyboard_focus(view:View) {
+        return view === this._keyboard_focus
+    }
+
+    release_keyboard_focus(view:View) {
+        this._keyboard_focus = null
+    }
+
+    private dispatch_pointer_event(view: View, e:CommonEvent): View | null {
         if(this.debug) log("dispatching",view,view.position(),view.size());
         if (!view.visible()) return null
         let bounds = rect_from_pos_size(view.position(),view.size())
@@ -245,7 +286,7 @@ export class CanvasSurface {
                 for (let i = 0; i < parent.get_children().length; i++) {
                     let ch = parent.get_children()[i]
                     let e2 = e.translate(view.position().x,view.position().y);
-                    let picked = this.dispatch(ch, e2)
+                    let picked = this.dispatch_pointer_event(ch, e2)
                     if (picked) return picked;
                 }
             }
@@ -278,8 +319,7 @@ export class CanvasSurface {
     dispatch_fake_mouse_event(type: string, pos: Point) {
         let e = new CommonEvent('mousedown',pos,this)
         e.button = 0;
-        console.log("dispatching",e)
-        this.dispatch(this.root,e)
+        this.dispatch_pointer_event(this.root,e)
     }
 
     private log(...args) {
@@ -341,17 +381,3 @@ export const EVENTS = {
     KEYDOWN:'keydown'
 }
 
-export function setup_keyboard_input() {
-    let KBD = new Observable()
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowLeft') KBD.fire(EVENTS.LEFT, {});
-        if (e.key === 'ArrowRight') KBD.fire(EVENTS.RIGHT, {});
-        if (e.key === 'ArrowDown') KBD.fire(EVENTS.DOWN, {});
-        if (e.key === 'ArrowUp') KBD.fire(EVENTS.UP, {});
-        KBD.fire(EVENTS.KEYDOWN,e)
-        console.log(e)
-        // e.preventDefault()
-    })
-
-    return KBD
-}
