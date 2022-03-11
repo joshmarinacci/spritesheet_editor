@@ -182,6 +182,20 @@ export class SpriteGlyph extends Sprite {
             codepoint:65
         }
     }
+    override sync() {
+        let c = this._img.getContext('2d')
+        this.forEachPixel((v,i,j)=>{
+            if(v %2 === 0) {
+                c.fillStyle = 'white'
+                c.fillRect(i, j, 1, 1)
+            }
+            if(v%2 === 1) {
+                c.fillStyle = 'black'
+                c.fillRect(i, j, 1, 1)
+            }
+        })
+    }
+
     toJsonObj():object {
         let obj = super.toJsonObj()
         // @ts-ignore
@@ -241,6 +255,7 @@ function obj_to_class(sh) {
         let glyph = new SpriteGlyph(sh.id,sh.name,sh.w,sh.h)
         glyph.data = sh.data
         glyph.meta = sh.meta
+        glyph.sync()
         return glyph
     }
     throw new Error(`don't know how to deserialize ${sh.clazz}`)

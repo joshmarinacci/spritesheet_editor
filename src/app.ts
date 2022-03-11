@@ -130,7 +130,7 @@ class TileSelector extends SuperChildView {
 function wrap_number(num:number,width:number):Point {
     return new Point(
         num % width,
-        Math.floor(num/8)
+        Math.floor(num/width)
     )
 }
 
@@ -416,6 +416,9 @@ class TextLine extends SuperChildView {
     }
     layout2(g: CanvasSurface, available: Size): Size {
         this.set_size(new Size(100,20))
+        if(this.hflex) {
+            this.size().w = available.w
+        }
         return this.size()
     }
 
@@ -571,7 +574,7 @@ class GlyphChooser extends SuperChildView {
         super('glyph-chooser')
         this.doc = doc
         this.scale = 32;
-        this.wrap = 16
+        this.wrap = 20
         this._name = 'glyph-chooser'
     }
     draw(g: CanvasSurface) {
@@ -597,9 +600,51 @@ class GlyphChooser extends SuperChildView {
         }
     }
     layout2(g: CanvasSurface, available: Size): Size {
-        this.set_size(new Size(this.wrap*this.scale,8*this.scale))
+        this.set_size(new Size(this.wrap*this.scale,6*this.scale))
         return this.size()
     }
+}
+
+class FontPreview extends SuperChildView {
+    private text: string;
+    private doc: any;
+    constructor(doc) {
+        super(gen_id('font-preview'))
+        this.text = 'ABsdfasdf'
+        this.doc = doc
+    }
+
+    set_text(text: string) {
+        this.text = text
+    }
+
+    draw(g: CanvasSurface) {
+        g.fillBackgroundSize(this.size(),'white')
+        g.strokeBackgroundSize(this.size(),'black')
+        let font = this.doc.get_selected_font()
+        if(!font) return
+        let x = 20
+        let y = 20
+        let s = 8*2
+        g.ctx.imageSmoothingEnabled = false
+        for(let i=0; i<this.text.length; i++) {
+            let cp = this.text.codePointAt(i)
+            let glyph = font.glyphs.find(g => g.meta.codepoint == cp)
+            if(glyph) {
+                g.ctx.drawImage(glyph._img, x, y, s,s)
+            } else {
+                g.ctx.fillStyle = 'black'
+                g.ctx.strokeRect(x, y, s,s)
+            }
+            x += (s+2)
+        }
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        this.set_size(new Size(500,100))
+        return this.size()
+    }
+
 }
 
 function make_font_view(doc: Doc) {
@@ -670,13 +715,31 @@ function make_font_view(doc: Doc) {
     col2.vflex = true
     col2.hflex = false
 
+    let toolbar = new HBox()
+    toolbar.hflex = false
     let add_glyph_button = new ActionButton("add glyph")
     add_glyph_button.on('action',()=>{
         let font = doc.get_selected_font()
-        font.add(new SpriteGlyph(gen_id('glyph'),'glyphname',8,8))
+        let glyph = new SpriteGlyph(gen_id('glyph'),'glyphname',8,8)
+        glyph.meta.codepoint = 400
+        font.add(glyph)
+        doc.set_selected_glyph(glyph)
         doc.mark_dirty()
         doc.fire('change', "added a glyph");
     })
+    toolbar.add(add_glyph_button)
+
+    let sort_glyphs = new ActionButton('sort')
+    sort_glyphs.on('action',()=>{
+        let font = doc.get_selected_font()
+        font.glyphs.sort((a,b)=>{
+            return a.meta.codepoint - b.meta.codepoint
+        })
+        doc.mark_dirty()
+        doc.fire('change', "added a glyph");
+    })
+    toolbar.add(sort_glyphs)
+    col2.add(toolbar)
 
     doc.addEventListener('change',() => {
         let glyph = doc.get_selected_glyph()
@@ -686,8 +749,19 @@ function make_font_view(doc: Doc) {
             codepoint_label.set_text(glyph.meta.codepoint+"")
         }
     })
-    col2.add(add_glyph_button)
     col2.add(new GlyphChooser(doc))
+
+    let preview_box = new TextLine()
+    preview_box.set_text('The Lazy Fox')
+    preview_box.hflex = true
+    col2.add(preview_box)
+    let preview_canvas = new FontPreview(doc)
+    preview_canvas.set_text('abc123')
+    col2.add(preview_canvas)
+    preview_box.on("action",(text)=>{
+        preview_canvas.set_text(text)
+    })
+
     panel.add(col2)
     return panel
 }
