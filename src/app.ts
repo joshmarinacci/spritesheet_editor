@@ -249,7 +249,6 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface):HBox {
         tilemap.set_pixel(0, 0, sprite.id);
         let font = new SpriteFont(gen_id('font'),'somefont')
         let glyph = new SpriteGlyph(gen_id('glyph'),'a',8,8)
-        glyph.meta.codepoint = 65
         font.glyphs.push(glyph)
         let empty = {
             version:2,
@@ -610,7 +609,7 @@ class FontPreview extends SuperChildView {
     private doc: any;
     constructor(doc) {
         super(gen_id('font-preview'))
-        this.text = 'ABsdfasdf'
+        this.text = 'abc123'
         this.doc = doc
     }
 
@@ -631,12 +630,21 @@ class FontPreview extends SuperChildView {
             let cp = this.text.codePointAt(i)
             let glyph = font.glyphs.find(g => g.meta.codepoint == cp)
             if(glyph) {
-                g.ctx.drawImage(glyph._img, x, y, s,s)
+                let left = glyph.meta.left
+                let right = glyph.meta.right
+                let baseline = glyph.meta.baseline
+                let w = glyph.w
+                let h = glyph.h
+                g.ctx.drawImage(glyph._img,
+                    left,0,w-left-right,h,
+                    x-left, y+baseline*2,
+                    (w-left-right)*2,h*2)
+                x += (w-left-right)*2 + 2
             } else {
                 g.ctx.fillStyle = 'black'
                 g.ctx.strokeRect(x, y, s,s)
+                x += (s+2)
             }
-            x += (s+2)
         }
     }
 
@@ -701,14 +709,53 @@ function make_font_view(doc: Doc) {
     row3.hflex = false
     //edit codepoint of the glyph
     row3.add(new Label("codepoint"))
-    let codepoint_label = new TextLine()
-    codepoint_label.on('action',(text)=>{
+    let codepoint_edit = new TextLine()
+    codepoint_edit.on('action',(text)=>{
         let glyph = doc.get_selected_glyph()
         if(glyph && parseInt(text)) glyph.meta.codepoint = parseInt(text)
+        doc.mark_dirty()
+        doc.fire('change', "added a glyph");
     })
-    row3.add(codepoint_label)
+    row3.add(codepoint_edit)
     col1.add(row3)
 
+    let row4 = new HBox()
+    row4.hflex = false
+    row4.add(new Label("left"))
+    let left_edit = new TextLine()
+    left_edit.on('action',(text)=>{
+        let glyph = doc.get_selected_glyph()
+        let parsed = parseInt(text)
+        if(glyph && !isNaN(parsed)) glyph.meta.left = parsed
+        doc.mark_dirty()
+        doc.fire('change', "added a glyph");
+    })
+    row4.add(left_edit)
+    row4.add(new Label("right"))
+    let right_edit = new TextLine()
+    right_edit.on('action',(text)=>{
+        let glyph = doc.get_selected_glyph()
+        let parsed = parseInt(text)
+        if(glyph && !isNaN(parsed)) glyph.meta.right = parsed
+        doc.mark_dirty()
+        doc.fire('change', "added a glyph");
+    })
+    row4.add(right_edit)
+    col1.add(row4)
+
+    let row5 = new HBox()
+    row5.hflex = false
+    row5.add(new Label('baseline'))
+    let baseline_text = new TextLine()
+    baseline_text.on('action',(text)=>{
+        let glyph = doc.get_selected_glyph()
+        let parsed = parseInt(text)
+        if(glyph && !isNaN(parsed)) glyph.meta.baseline = parsed
+        doc.mark_dirty()
+        doc.fire('change', "added a glyph");
+    })
+    row5.add(baseline_text)
+    col1.add(row5)
     panel.add(col1)
 
     let col2 = new VBox()
@@ -746,13 +793,16 @@ function make_font_view(doc: Doc) {
         if(glyph) {
             editor.set_sprite(glyph)
             name_box.set_text(glyph.name)
-            codepoint_label.set_text(glyph.meta.codepoint+"")
+            codepoint_edit.set_text(glyph.meta.codepoint+"")
+            left_edit.set_text(glyph.meta.left+"")
+            right_edit.set_text(glyph.meta.right+"")
+            baseline_text.set_text(glyph.meta.baseline+"")
         }
     })
     col2.add(new GlyphChooser(doc))
 
     let preview_box = new TextLine()
-    preview_box.set_text('The Lazy Fox')
+    preview_box.set_text('abc123')
     preview_box.hflex = true
     col2.add(preview_box)
     let preview_canvas = new FontPreview(doc)

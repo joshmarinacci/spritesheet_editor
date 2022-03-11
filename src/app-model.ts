@@ -173,13 +173,19 @@ export class Sheet {
 }
 type GlyphMeta = {
     codepoint:number
+    left:number,
+    right:number,
+    baseline:number,
 }
 export class SpriteGlyph extends Sprite {
     meta: GlyphMeta;
     constructor(id,name,w,h) {
         super(id,name,w,h)
         this.meta = {
-            codepoint:65
+            codepoint:300,
+            left:0,
+            right:0,
+            baseline:0
         }
     }
     override sync() {
@@ -202,6 +208,8 @@ export class SpriteGlyph extends Sprite {
         obj.clazz = 'Glyph'
         // @ts-ignore
         obj.meta = this.meta
+        // @ts-ignore
+        // console.log("saving out",obj.meta)
         return obj
     }
 }
@@ -255,6 +263,9 @@ function obj_to_class(sh) {
         let glyph = new SpriteGlyph(sh.id,sh.name,sh.w,sh.h)
         glyph.data = sh.data
         glyph.meta = sh.meta
+        if(!glyph.meta.left) glyph.meta.left = 0
+        if(!glyph.meta.right) glyph.meta.right = 0
+        if(!glyph.meta.baseline) glyph.meta.baseline = 0
         glyph.sync()
         return glyph
     }
@@ -305,7 +316,6 @@ export class Doc extends Observable {
         this.map_grid_visible = true;
         let font = new SpriteFont(gen_id('font'),'somefont')
         let glyph = new SpriteGlyph(gen_id('glyph'),'a',8,8)
-        glyph.meta.codepoint = 65
         font.glyphs.push(glyph)
         this.fonts = [font]
         this.selected_tree_item_index = -1
