@@ -399,10 +399,12 @@ class SinglePanel extends SuperParentView {
 class TextLine extends SuperChildView {
     private text: string;
     private cursor: number;
+    private pref_width: number;
     constructor() {
         super(gen_id("text-line"));
         this._name = '@text-line'
         this.text = "abc"
+        this.pref_width = 100
         this.cursor = this.text.length
     }
     draw(g: CanvasSurface): void {
@@ -444,7 +446,7 @@ class TextLine extends SuperChildView {
         }
     }
     layout2(g: CanvasSurface, available: Size): Size {
-        this.set_size(new Size(100,20))
+        this.set_size(new Size(this.pref_width,20))
         if(this.hflex) {
             this.size().w = available.w
         }
@@ -487,6 +489,10 @@ class TextLine extends SuperChildView {
         this.text = name
         this.cursor = this.text.length
     }
+
+    set_pref_width(w: number) {
+        this.pref_width = w
+    }
 }
 
 function make_sheet_editor_view(doc: Doc) {
@@ -518,11 +524,12 @@ function make_sheet_editor_view(doc: Doc) {
     let tb = new HBox()
     tb.add(add_tile_button)
     tb.add(new Label("   "))
-    tb.add(new Label("id"))
-    let tl = new TextLine()
-    tl.set_text(doc.get_selected_sheet().name)
-    tb.add(tl)
-    tl.on("action",(name) => {
+    tb.add(new Label("name"))
+    let sheet_name_edit = new TextLine()
+    sheet_name_edit.set_pref_width(200)
+    sheet_name_edit.set_text(doc.get_selected_sheet().name)
+    tb.add(sheet_name_edit)
+    sheet_name_edit.on("action",(name) => {
         doc.get_selected_sheet().name = name
     })
     vb2.add(tb);
@@ -532,6 +539,12 @@ function make_sheet_editor_view(doc: Doc) {
     let sprite_selector = new TileSelector(doc)
     vb2.add(sprite_selector);
     sheet_editor.add(vb2)
+
+    doc.addEventListener('main-selection',() => {
+        let sheet = doc.get_selected_sheet()
+        if(sheet) sheet_name_edit.set_text(sheet.name)
+    })
+
     return sheet_editor
 }
 
@@ -573,14 +586,16 @@ function make_map_view(doc: Doc) {
     toolbar.add(zoom_out)
 
 
-    let tl = new TextLine()
+    toolbar.add(new Label("name"))
+    let map_name_edit = new TextLine()
+    map_name_edit.set_pref_width(200)
     if(doc.get_selected_map()) {
-        tl.set_text(doc.get_selected_map().name)
+        map_name_edit.set_text(doc.get_selected_map().name)
     }
-    toolbar.add(tl)
-    tl.on("action",(name) => {
+    map_name_edit.on("action",(name) => {
         if(doc.get_selected_map()) doc.get_selected_map().name = name
     })
+    toolbar.add(map_name_edit)
 
 
     map_view.add(toolbar)
@@ -592,6 +607,12 @@ function make_map_view(doc: Doc) {
     hb.add(scroll)
     hb.add(selector)
     map_view.add(hb)
+
+    doc.addEventListener('main-selection',() => {
+        let map = doc.get_selected_map()
+        if(map) map_name_edit.set_text(map.name)
+    })
+
     return map_view
 }
 
@@ -816,6 +837,19 @@ function make_font_view(doc: Doc) {
         doc.fire('change', "added a glyph");
     })
     toolbar.add(sort_glyphs)
+
+
+    toolbar.add(new Label("name"))
+    let font_name_edit = new TextLine()
+    font_name_edit.set_pref_width(200)
+    if(doc.get_selected_font()) {
+        font_name_edit.set_text(doc.get_selected_font().name)
+    }
+    font_name_edit.on("action",(name) => {
+        if(doc.get_selected_font()) doc.get_selected_font().name = name
+    })
+    toolbar.add(font_name_edit)
+
     col2.add(toolbar)
 
     doc.addEventListener('change',() => {
@@ -843,6 +877,12 @@ function make_font_view(doc: Doc) {
     })
 
     panel.add(col2)
+
+    doc.addEventListener('main-selection',() => {
+        let font = doc.get_selected_font()
+        if(font) font_name_edit.set_text(font.name)
+    })
+
     return panel
 }
 
@@ -953,6 +993,9 @@ export function start() {
         let data = rebuild_data(doc)
         itemlist.set_data(data)
         surface.repaint()
+    })
+    doc.addEventListener('main-selection',() => {
+        console.log("main selection changed. refresh the view")
     })
 
     surface.set_root(main_view)

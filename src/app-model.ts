@@ -129,7 +129,7 @@ export class Tilemap {
 }
 
 export type CB = (any) => void;
-export type Etype = "change"|"reload"|"structure"
+export type Etype = "change"|"reload"|"structure"|'main-selection'
 
 export class Observable {
     listeners: Map<Etype, Array<CB>>
@@ -345,12 +345,15 @@ export class Doc extends Observable {
 
     set_selected_sheet(target: Sheet) {
         this.selected_sheet = this.sheets.indexOf(target)
+        this.fire('main-selection',this.selected_sheet)
     }
     set_selected_map(target: Tilemap) {
         this.selected_map = this.maps.indexOf(target)
+        this.fire('main-selection',this.selected_map)
     }
     set_selected_font(target: SpriteFont) {
         this.selected_font = this.fonts.indexOf(target)
+        this.fire('main-selection',this.selected_font)
     }
     set_selected_glyph(target: SpriteGlyph) {
         let font = this.get_selected_font()
