@@ -232,9 +232,10 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface):HBox {
     let new_button = new ActionButton('new')
     new_button.on('action',()=>{
         let sheet = new Sheet("sheetx", "the sheet")
-        sheet.add(new Sprite('spritex',8,8))
-        let tilemap = new Tilemap('mapx', 16, 16);
-        tilemap.set_pixel(0, 0, 'spritex');
+        let sprite = new Sprite(gen_id('sprite'),'spritex',8,8)
+        sheet.add(sprite)
+        let tilemap = new Tilemap(gen_id('tilemap'),'mapx', 16, 16);
+        tilemap.set_pixel(0, 0, sprite.id);
         let empty = {
             version:1,
             sheets:[
@@ -462,7 +463,7 @@ function make_sheet_editor_view(doc: Doc) {
     let add_tile_button = new ActionButton("add tile")
     add_tile_button.on('action',()=>{
         let sheet = doc.get_selected_sheet()
-        sheet.add(new Sprite(gen_id("tile"), 8, 8));
+        sheet.add(new Sprite(gen_id("tile"), 'tilename',8, 8));
         doc.mark_dirty()
         doc.fire('change', "added a tile");
     });
@@ -527,6 +528,15 @@ function make_map_view(doc: Doc) {
         map_editor.set_scale(Math.pow(2,zoom))
     })
     toolbar.add(zoom_out)
+
+
+    let tl = new TextLine()
+    tl.set_text(doc.get_selected_map().name)
+    toolbar.add(tl)
+    tl.on("action",(name) => {
+        doc.get_selected_map().name = name
+    })
+
 
     map_view.add(toolbar)
     let hb = new HBox()
@@ -597,7 +607,7 @@ export function start() {
             return (item as Sprite).id
         }
         if (item instanceof Tilemap) {
-            return (item as Tilemap).id
+            return (item as Tilemap).name
         }
         return "???"
     })
@@ -608,8 +618,8 @@ export function start() {
         if (item instanceof Sheet) {
             doc.set_selected_sheet(item as Sheet)
         }
-        if (item instanceof Sprite) {
-            doc.set_selected_map(item as Sprite)
+        if (item instanceof Tilemap) {
+            doc.set_selected_map(item as Tilemap)
         }
     })
     hb.add(itemlist)

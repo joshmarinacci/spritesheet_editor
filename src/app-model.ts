@@ -1,14 +1,17 @@
 import {CanvasSurface} from "./uilib/canvas";
+import {gen_id} from "./uilib/common";
 
 export class Sprite {
-    id: string;
-    w: number;
-    h: number;
-    data: number[];
-    _img: HTMLCanvasElement;
+    id: string
+    name:string
+    w: number
+    h: number
+    data: number[]
+    _img: HTMLCanvasElement
 
-    constructor(id, w, h) {
-        this.id = id;
+    constructor(id:string, name:string, w:number, h:number) {
+        this.id = id || gen_id('unknown');
+        this.name = name || 'unknown'
         this.w = w;
         this.h = h;
         this.data = []
@@ -66,6 +69,7 @@ export class Sprite {
         return {
             clazz:'Sprite',
             id:this.id,
+            name:this.name,
             w:this.w,
             h:this.h,
             data:this.data,
@@ -74,13 +78,15 @@ export class Sprite {
 }
 
 export class Tilemap {
-    id: string;
-    w: number;
-    h: number;
+    id:string
+    name: string
+    w: number
+    h: number
     data: number[];
 
-    constructor(id, w, h) {
-        this.id = id;
+    constructor(id, name, w, h) {
+        this.id = id || gen_id('unknown');
+        this.name = name || 'unknown'
         this.w = w;
         this.h = h;
         this.data = []
@@ -112,6 +118,7 @@ export class Tilemap {
         return {
             clazz:'Tilemap',
             id:this.id,
+            name:this.name,
             w:this.w,
             h:this.h,
             data:this.data,
@@ -147,8 +154,8 @@ export class Sheet {
     private id: string;
     name: string;
     constructor(id:string, name:string) {
-        this.id = id
-        this.name = name
+        this.id = id || gen_id('unknown');
+        this.name = name || 'unknown'
         this.sprites = []
     }
     add(sprite: Sprite) {
@@ -175,13 +182,13 @@ export class SpriteFont {
 
 function obj_to_class(sh) {
     if(sh.clazz === 'Sprite') {
-        let sprite = new Sprite(sh.id, sh.w, sh.h)
+        let sprite = new Sprite(sh.id, sh.name, sh.w, sh.h)
         sprite.data = sh.data
         sprite.sync()
         return sprite
     }
     if(sh.clazz === 'Tilemap') {
-        let tilemap = new Tilemap(sh.id, sh.w, sh.h)
+        let tilemap = new Tilemap(sh.id, sh.name, sh.w, sh.h)
         tilemap.data = sh.data
         return tilemap
     }
@@ -219,12 +226,12 @@ export class Doc extends Observable {
             '#404040',
         ];
         let sheet = new Sheet("sheet1", "first sheet")
-        sheet.add(new Sprite('sprite1',8,8))
-        sheet.add(new Sprite('sprite2',8,8))
+        sheet.add(new Sprite(gen_id('sprite'),'sprite1',8,8))
+        sheet.add(new Sprite(gen_id('sprite'),'sprite2',8,8))
         this.sheets = [sheet]
         this.selected_sheet = 0
         this.selected_tile = 0;
-        let tilemap = new Tilemap('main-map', 16, 16);
+        let tilemap = new Tilemap(gen_id('tilemap'),'main-map', 16, 16);
         tilemap.set_pixel(0, 0, 'sprite1');
         this.maps = [tilemap]
         this.map_grid_visible = true;

@@ -4,7 +4,6 @@ import tileset_url from "./tileset@1.png";
 import {
     CanvasSurface, EVENTS,
     log,
-    setup_keyboard_input,
     SpriteSheet,
     SpriteSlice
 } from "./uilib/canvas";
@@ -139,7 +138,6 @@ export async function start() {
     log("starting")
     let All = new Observable();
 
-    let KeyboardInput = setup_keyboard_input()
     let surface = new CanvasSurface(400,300);
     let spritesheet = await surface.load_spritesheet(tileset_url);
 
@@ -171,10 +169,10 @@ export async function start() {
     surface.set_root(root);
     surface.repaint();
 
-    on(KeyboardInput,EVENTS.LEFT,  () => move_by(new Point(-1,0)));
-    on(KeyboardInput,EVENTS.RIGHT, () => move_by(new Point(+1,0)));
-    on(KeyboardInput,EVENTS.DOWN,  () => move_by(new Point(0,1)));
-    on(KeyboardInput,EVENTS.UP,    () => move_by(new Point(0,-1)));
+    // on(KeyboardInput,EVENTS.LEFT,  () => move_by(new Point(-1,0)));
+    // on(KeyboardInput,EVENTS.RIGHT, () => move_by(new Point(+1,0)));
+    // on(KeyboardInput,EVENTS.DOWN,  () => move_by(new Point(0,1)));
+    // on(KeyboardInput,EVENTS.UP,    () => move_by(new Point(0,-1)));
 
     function restart() {
         score.level = 0
