@@ -311,6 +311,36 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface):HBox {
     })
     toolbar.add(export_button);
 
+    let add_font_button = new ActionButton('+ font')
+    add_font_button.on('action',()=>{
+        let font = new SpriteFont(gen_id('font'),'somefont')
+        let glyph = new SpriteGlyph(gen_id('glyph'),'a glyph',8,8)
+        glyph.meta.codepoint = 300
+        font.glyphs.push(glyph)
+        doc.fonts.push(font)
+        doc.mark_dirty()
+        doc.fire('structure',font)
+    })
+    toolbar.add(add_font_button)
+    let add_sheet_button = new ActionButton('+ sheet')
+    add_sheet_button.on('action',()=>{
+        let sheet = new Sheet("sheetx", "the sheet")
+        let sprite = new Sprite(gen_id('sprite'),'spritex',8,8)
+        sheet.add(sprite)
+        doc.sheets.push(sheet)
+        doc.mark_dirty()
+        doc.fire('structure',sheet)
+    })
+    toolbar.add(add_sheet_button)
+
+    let add_tilemap_button = new ActionButton('+ tilemap')
+    add_tilemap_button.on('action',()=>{
+        let tilemap = new Tilemap(gen_id('tilemap'),'mapx', 16, 16);
+        doc.maps.push(tilemap)
+        doc.mark_dirty()
+        doc.fire('structure',tilemap)
+    })
+    toolbar.add(add_tilemap_button)
     let dirty_label = new CustomLabel("initial-text",()=>{
         return doc.dirty()?"dirty":"clean"
     });
@@ -915,6 +945,11 @@ export function start() {
         surface.repaint();
     });
     doc.addEventListener('reload',() => {
+        let data = rebuild_data(doc)
+        itemlist.set_data(data)
+        surface.repaint()
+    })
+    doc.addEventListener('structure',() => {
         let data = rebuild_data(doc)
         itemlist.set_data(data)
         surface.repaint()

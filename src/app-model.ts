@@ -129,7 +129,7 @@ export class Tilemap {
 }
 
 export type CB = (any) => void;
-export type Etype = "change"|"reload"
+export type Etype = "change"|"reload"|"structure"
 
 export class Observable {
     listeners: Map<Etype, Array<CB>>
