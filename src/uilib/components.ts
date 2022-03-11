@@ -395,6 +395,13 @@ class ScrollWrapper extends SuperParentView {
     }
 
 }
+/*
+scroll bar math
+
+viewport size / content size = thumb length / gutter length
+(vs/cs) * gl = tl
+
+ */
 class ScrollBar extends SuperChildView {
     private vert: boolean;
     private wrapper: ScrollWrapper;
@@ -413,15 +420,19 @@ class ScrollBar extends SuperChildView {
         g.fillBackgroundSize(this.size(),'yellow')
         //draw the bar
         if(this.wrapper.get_children().length == 1) {
-            let wsize = this.wrapper.size()
-            let content = this.wrapper.get_children()[0].size()
+            let viewport_size = this.wrapper.size()
+            let content_size = this.wrapper.get_children()[0].size()
             // this.log("content",content,'vs',wsize)
             if(this.vert) {
-                let fract = wsize.h / content.h
-                // this.log("v fract",fract, 'yoff')
-                let h = this.size().h - 20
-                h = h * fract
-                g.fill(new Rect(0,20,20,h), 'red');
+                let gutter_length = this.size().h - 20
+                let fract = viewport_size.h / content_size.h
+                let s = gutter_length * fract
+                g.fill(new Rect(0,20,20,s), 'red');
+            } else {
+                let gutter_length = this.size().w - 20
+                let fract = viewport_size.w / content_size.w
+                let s = gutter_length * fract
+                g.fill(new Rect(0,0,s,20), 'red');
             }
         }
         //draw the thumbs
