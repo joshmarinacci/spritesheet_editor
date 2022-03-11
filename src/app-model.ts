@@ -65,7 +65,7 @@ export class Sprite {
         return this.data[n]
     }
 
-    toJsonObj() {
+    toJsonObj():object {
         return {
             clazz:'Sprite',
             id:this.id,
@@ -171,12 +171,47 @@ export class Sheet {
         }
     }
 }
-export class SpriteFont {
+type GlyphMeta = {
+    codepoint:number
+}
+export class SpriteGlyph extends Sprite {
+    meta: GlyphMeta;
+    constructor(id,name,w,h) {
+        super(id,name,w,h)
+        this.meta = {
+            codepoint:65
+        }
+    }
+    toJsonObj():object {
+        let obj = super.toJsonObj()
+        // @ts-ignore
+        obj.clazz = 'Glyph'
+        // @ts-ignore
+        obj.meta = this.meta
+        return obj
+    }
+}
 
+export class SpriteFont {
+    glyphs:SpriteGlyph[]
+    private id: string;
+    name: string;
+    constructor(id,name) {
+        this.id = id || gen_id('unknown');
+        this.name = name || 'unknown'
+        this.glyphs = []
+    }
     toJsonObj() {
         return {
-            clazz:'SpriteFont',
+            clazz:'Font',
+            id:this.id,
+            name:this.name,
+            glyphs: this.glyphs.map(sp => sp.toJsonObj())
         }
+    }
+
+    add(spriteGlyph: SpriteGlyph) {
+        this.glyphs.push(spriteGlyph)
     }
 }
 
@@ -197,6 +232,17 @@ function obj_to_class(sh) {
         sheet.sprites = sh.sprites.map(sp => obj_to_class(sp))
         return sheet
     }
+    if(sh.clazz === 'Font') {
+        let font = new SpriteFont(sh.id,sh.name)
+        font.glyphs = sh.glyphs.map(g => obj_to_class(g))
+        return font
+    }
+    if(sh.clazz === 'Glyph') {
+        let glyph = new SpriteGlyph(sh.id,sh.name,sh.w,sh.h)
+        glyph.data = sh.data
+        glyph.meta = sh.meta
+        return glyph
+    }
     throw new Error(`don't know how to deserialize ${sh.clazz}`)
 }
 
@@ -207,8 +253,11 @@ export class Doc extends Observable {
 
     selected_color: number
     palette: string[]
+    font_palette: string[]
     selected_tile: number
     selected_map: number
+    selected_font: number
+    selected_glyph: number
     map_grid_visible: boolean;
     selected_tree_item_index:number
     selected_tree_item:any
@@ -225,6 +274,10 @@ export class Doc extends Observable {
             '#909090',
             '#404040',
         ];
+        this.font_palette = [
+            '#ffffff',
+            '#404040',
+        ];
         let sheet = new Sheet("sheet1", "first sheet")
         sheet.add(new Sprite(gen_id('sprite'),'sprite1',8,8))
         sheet.add(new Sprite(gen_id('sprite'),'sprite2',8,8))
@@ -235,7 +288,11 @@ export class Doc extends Observable {
         tilemap.set_pixel(0, 0, 'sprite1');
         this.maps = [tilemap]
         this.map_grid_visible = true;
-        this.fonts = []
+        let font = new SpriteFont(gen_id('font'),'somefont')
+        let glyph = new SpriteGlyph(gen_id('glyph'),'a',8,8)
+        glyph.meta.codepoint = 65
+        font.glyphs.push(glyph)
+        this.fonts = [font]
         this.selected_tree_item_index = -1
         this.selected_tree_item = null
         this._dirty = false
@@ -244,29 +301,42 @@ export class Doc extends Observable {
     get_selected_sheet():Sheet {
         return this.sheets[this.selected_sheet]
     }
-
+    get_selected_tile() {
+        let sheet = this.get_selected_sheet();
+        if (!sheet) return null
+        return sheet.sprites[this.selected_tile]
+    }
     get_selected_map():Tilemap {
         return this.maps[this.selected_map]
+    }
+    get_selected_font():SpriteFont {
+        return this.fonts[this.selected_font]
+    }
+    get_selected_glyph():SpriteGlyph {
+        let font = this.get_selected_font()
+        if(!font) return  null
+        return font.glyphs[this.selected_glyph]
     }
 
     set_selected_sheet(target: Sheet) {
         this.selected_sheet = this.sheets.indexOf(target)
     }
-
     set_selected_map(target: Tilemap) {
         this.selected_map = this.maps.indexOf(target)
     }
-
-    get_selected_tile() {
-        let sheet = this.get_selected_sheet();
-        if (!sheet) return null
-        let tile = sheet.sprites[this.selected_tile];
-        return tile
+    set_selected_font(target: SpriteFont) {
+        this.selected_font = this.fonts.indexOf(target)
     }
+    set_selected_glyph(target: SpriteGlyph) {
+        let font = this.get_selected_font()
+        if(!font) return
+        this.selected_glyph = font.glyphs.indexOf(target)
+    }
+
 
     toJsonObj() {
         return {
-            version:1,
+            version:2,
             sheets: this.sheets.map(sh => sh.toJsonObj()),
             fonts:  this.fonts.map(fnt => fnt.toJsonObj()),
             maps:   this.maps.map(mp => mp.toJsonObj()),
@@ -275,7 +345,23 @@ export class Doc extends Observable {
 
     reset_from_json(data) {
         console.log('data is',data)
-        if(data.version !== 1) throw new Error("we can only parse version 1 json")
+        if(data.version === 1) {
+            if(data.fonts && data.fonts.length > 0) {
+                console.log("pretending to upgrade the document")
+                data.version = 2
+            } else {
+                console.log("really upgrade")
+                data.maps.forEach(mp => {
+                    console.log("converting",mp)
+                    mp.clazz = 'Tilemap'
+                    if(!mp.id) mp.id = gen_id("tilemap")
+                    if(!mp.name) mp.name = gen_id("unknown")
+                    return mp
+                })
+                data.version = 2
+            }
+        }
+        if(data.version !== 2) throw new Error("we can only parse version 2 json")
         console.log("processing",data);
 
         this.sheets = data.sheets.map(sh => {
@@ -297,6 +383,8 @@ export class Doc extends Observable {
         this.selected_color = 0
         this.selected_tile = 0
         this.selected_map = 0
+        this.selected_font = 0
+        this.selected_glyph = 0
         this.map_grid_visible = true
         this.selected_tree_item_index = -1
         this.selected_tree_item = null
@@ -306,6 +394,8 @@ export class Doc extends Observable {
         console.log("selected sheet is",this.get_selected_sheet())
         console.log('selected tile is',this.get_selected_tile())
         console.log("selected map is",this.get_selected_map())
+        console.log("selected font is",this.get_selected_font())
+        console.log("selected gly0h is",this.get_selected_glyph())
         this.fire('reload',this)
     }
 
@@ -334,8 +424,8 @@ export class Doc extends Observable {
     }
 }
 
-export function draw_sprite(sprite: Sprite, ctx: CanvasSurface, x: number, y: number, scale: number, doc: Doc) {
+export function draw_sprite(sprite: Sprite, ctx: CanvasSurface, x: number, y: number, scale: number, palette:string[]) {
     sprite.forEachPixel((val: number, i: number, j: number) => {
-        ctx.fillRect(x + i * scale, y + j * scale, scale, scale, doc.palette[val]);
+        ctx.fillRect(x + i * scale, y + j * scale, scale, scale, palette[val]);
     });
 }

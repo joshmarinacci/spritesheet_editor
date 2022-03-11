@@ -15,7 +15,7 @@ import {
     jsonObjToBlob,
     on
 } from "./util";
-import {Doc, draw_sprite, Sheet, Sprite, Tilemap} from "./app-model";
+import {Doc, draw_sprite, Sheet, Sprite, SpriteFont, SpriteGlyph, Tilemap} from "./app-model";
 import {
     CanvasSurface,
     EVENTS,
@@ -36,19 +36,23 @@ export const EMPTY_COLOR = '#62fcdc'
 class TileEditor extends SuperChildView {
     doc: Doc;
     scale: number
-    constructor() {
+    sprite: Sprite
+    private palette: string[];
+    constructor(doc, palette) {
         super('tile editor')
+        this.doc = doc
+        this.palette = palette
         this.scale = 32;
+        this.sprite = null
     }
 
     draw(g: CanvasSurface) {
         //clear the background
         g.fillBackgroundSize(this.size(), 'white');
         //draw each pixel in the tile as a rect
-        let sprite = this.doc.get_selected_tile()
-        let palette = this.doc.palette;
-        if (sprite) {
-            sprite.forEachPixel((val: number, i: number, j: number) => {
+        let palette = this.palette
+        if (this.sprite) {
+            this.sprite.forEachPixel((val: number, i: number, j: number) => {
                 g.ctx.fillStyle = palette[val]
                 g.ctx.fillRect(i * this.scale, j * this.scale, this.scale, this.scale)
             });
@@ -59,7 +63,8 @@ class TileEditor extends SuperChildView {
 
     input(e: CommonEvent): void {
         let pt = e.pt.divide_floor(this.scale);
-        let tile = this.doc.get_selected_tile()
+        if(!this.sprite) return
+        let tile = this.sprite
         if (e.button == 2) {
             if (e.type === "mousedown") {
                 let value = tile.get_pixel(pt.x, pt.y);
@@ -80,13 +85,17 @@ class TileEditor extends SuperChildView {
         return this.size()
     }
 
+    set_sprite(sprite: Sprite) {
+        this.sprite = sprite
+    }
 }
 
 class TileSelector extends SuperChildView {
     doc: Doc;
     scale: number;
-    constructor() {
+    constructor(doc) {
         super('tile-selector')
+        this.doc = doc
         this.scale = 32;
         this._name = 'tile-selector'
     }
@@ -96,7 +105,7 @@ class TileSelector extends SuperChildView {
         if(sheet) {
             sheet.sprites.forEach((sprite, s) => {
                 let pt = wrap_number(s, 8);
-                draw_sprite(sprite, g, pt.x * this.scale, pt.y * this.scale, 4, this.doc)
+                draw_sprite(sprite, g, pt.x * this.scale, pt.y * this.scale, 4, this.doc.palette)
             })
         }
         draw_grid(g,this.size(),this.scale);
@@ -189,16 +198,18 @@ class PaletteChooser extends SuperChildView{
     palette: any;
     doc: Doc;
     scale:number;
-    constructor() {
+    constructor(doc, palette) {
         super('palette chooser')
+        this.doc = doc
         this.scale = 32;
+        this.palette = palette
         this._name = 'palette-chooser'
     }
 
     draw(ctx: CanvasSurface) {
         if (this.palette) {
             ctx.fillBackgroundSize(this.size(),EMPTY_COLOR)
-            for (let i=0; i<5; i++) {
+            for (let i=0; i<this.palette.length; i++) {
                 ctx.fillRect(i*this.scale+0.5,0+0.5,this.scale,this.scale,this.palette[i]);
             }
             draw_grid(ctx,this.size(),this.scale)
@@ -210,7 +221,7 @@ class PaletteChooser extends SuperChildView{
 
     input(e: CommonEvent): void {
         let val = e.pt.divide_floor(this.scale).x
-        if (val >= 0 && val < this.doc.palette.length) {
+        if (val >= 0 && val < this.palette.length) {
             this.doc.selected_color = val;
             this.doc.fire('change',this.doc.selected_color)
             e.ctx.repaint()
@@ -218,7 +229,7 @@ class PaletteChooser extends SuperChildView{
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        let size = new Size(this.scale*8,this.scale)
+        let size = new Size(this.scale*this.palette.length,this.scale)
         this.set_size(size)
         return size
     }
@@ -236,15 +247,15 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface):HBox {
         sheet.add(sprite)
         let tilemap = new Tilemap(gen_id('tilemap'),'mapx', 16, 16);
         tilemap.set_pixel(0, 0, sprite.id);
+        let font = new SpriteFont(gen_id('font'),'somefont')
+        let glyph = new SpriteGlyph(gen_id('glyph'),'a',8,8)
+        glyph.meta.codepoint = 65
+        font.glyphs.push(glyph)
         let empty = {
-            version:1,
-            sheets:[
-                sheet.toJsonObj(),
-            ],
-            maps:[
-                tilemap.toJsonObj()
-            ],
-            fonts:[]
+            version:2,
+            sheets:[sheet.toJsonObj()],
+            maps:[tilemap.toJsonObj()],
+            fonts:[font.toJsonObj()]
         }
         doc.reset_from_json(empty)
     })
@@ -336,13 +347,16 @@ class SinglePanel extends SuperParentView {
                 // @ts-ignore
                 ch._visible = false
                 // @ts-ignore
-
                 if (item instanceof Sheet && ch.name() === 'sheet-editor-view') {
                     // @ts-ignore
                     ch._visible = true
                 }
                 // @ts-ignore
                 if(item instanceof Tilemap && ch.name() === 'map-editor-view') {
+                    // @ts-ignore
+                    ch._visible = true
+                }
+                if(item instanceof SpriteFont && ch.name() === 'font-editor-view') {
                     // @ts-ignore
                     ch._visible = true
                 }
@@ -448,15 +462,15 @@ function make_sheet_editor_view(doc: Doc) {
     sheet_editor._name = 'sheet-editor-view'
 
     let vb1 = new VBox()
-    let palette_chooser = new PaletteChooser();
-    palette_chooser.doc = doc;
-    palette_chooser.palette = doc.palette;
+    let palette_chooser = new PaletteChooser(doc,doc.palette);
     vb1.add(palette_chooser);
 
     // tile editor, edits the current tile
-    let tile_editor = new TileEditor();
-    tile_editor.doc = doc;
+    let tile_editor = new TileEditor(doc, doc.palette);
     vb1.add(tile_editor)
+    doc.addEventListener('change',() => {
+        tile_editor.set_sprite(doc.get_selected_tile())
+    })
     sheet_editor.add(vb1)
 
     let vb2 = new VBox()
@@ -477,15 +491,13 @@ function make_sheet_editor_view(doc: Doc) {
     tl.set_text(doc.get_selected_sheet().name)
     tb.add(tl)
     tl.on("action",(name) => {
-        console.log("sheet name changed to",name)
         doc.get_selected_sheet().name = name
     })
     vb2.add(tb);
 
 
     // lets you see all N tiles and choose one to edit
-    let sprite_selector = new TileSelector()
-    sprite_selector.doc = doc;
+    let sprite_selector = new TileSelector(doc)
     vb2.add(sprite_selector);
     sheet_editor.add(vb2)
     return sheet_editor
@@ -500,9 +512,8 @@ function make_map_view(doc: Doc) {
     // lets you edit an entire tile map, using the currently selected tile
     let map_editor = new MapEditor(doc);
 
-    let selector = new TileSelector()
+    let selector = new TileSelector(doc)
     selector.hflex = false
-    selector.doc = doc;
 
     let toolbar = new HBox()
     toolbar.fill = '#ccc'
@@ -531,10 +542,12 @@ function make_map_view(doc: Doc) {
 
 
     let tl = new TextLine()
-    tl.set_text(doc.get_selected_map().name)
+    if(doc.get_selected_map()) {
+        tl.set_text(doc.get_selected_map().name)
+    }
     toolbar.add(tl)
     tl.on("action",(name) => {
-        doc.get_selected_map().name = name
+        if(doc.get_selected_map()) doc.get_selected_map().name = name
     })
 
 
@@ -549,6 +562,136 @@ function make_map_view(doc: Doc) {
     map_view.add(hb)
     return map_view
 }
+
+class GlyphChooser extends SuperChildView {
+    private doc: Doc;
+    private scale: number;
+    private wrap: number;
+    constructor(doc: Doc) {
+        super('glyph-chooser')
+        this.doc = doc
+        this.scale = 32;
+        this.wrap = 16
+        this._name = 'glyph-chooser'
+    }
+    draw(g: CanvasSurface) {
+        g.fillBackgroundSize(this.size(), EMPTY_COLOR);
+        let font = this.doc.get_selected_font()
+        if(font) {
+            font.glyphs.forEach((glyph,s)=>{
+                let pt = wrap_number(s, this.wrap);
+                draw_sprite(glyph, g, pt.x * this.scale, pt.y * this.scale, 4, this.doc.font_palette)
+            })
+        }
+        draw_grid(g,this.size(),this.scale);
+        let pt = wrap_number(this.doc.selected_glyph,this.wrap);
+        draw_selection_rect(g,new Rect(pt.x*this.scale,pt.y*this.scale,this.scale,this.scale));
+    }
+    input(e: CommonEvent): void {
+        let pt = e.pt.divide_floor(this.scale);
+        let val = pt.x + pt.y * this.wrap;
+        let font = this.doc.get_selected_font()
+        if(val >= 0 && val < font.glyphs.length) {
+            this.doc.selected_glyph = val;
+            this.doc.fire('change', this.doc.selected_glyph)
+        }
+    }
+    layout2(g: CanvasSurface, available: Size): Size {
+        this.set_size(new Size(this.wrap*this.scale,8*this.scale))
+        return this.size()
+    }
+}
+
+function make_font_view(doc: Doc) {
+    let panel = new HBox()
+    panel._name = 'font-editor-view'
+    panel.fill = StandardPanelBackgroundColor
+    panel.hflex = true
+    panel.vflex = true
+
+    let col1 = new VBox()
+    col1.vflex = true
+    col1.hflex = false
+    //show number of glyphs
+    let glyph_count_label = new CustomLabel("",()=>{
+        let font = doc.get_selected_font()
+        if(font) return font.glyphs.length+""
+        return "?"
+    })
+    col1.add(glyph_count_label)
+
+
+    let palette_chooser = new PaletteChooser(doc,doc.font_palette);
+    col1.add(palette_chooser);
+
+    let editor = new TileEditor(doc,doc.font_palette)
+    col1.add(editor)
+
+
+    let row1 = new HBox()
+    row1.hflex = false
+    //show id of the glyph
+    row1.add(new Label("id"))
+    let id_label = new CustomLabel("id",()=>{
+        let glyph = doc.get_selected_glyph()
+        if(glyph) return glyph.id
+        return "???"
+    })
+    row1.add(id_label)
+    col1.add(row1)
+
+    let row2 = new HBox()
+    row2.hflex = false
+    row2.add(new Label("name"))
+    //edit name of the glyph
+    let name_box = new TextLine()
+    name_box.on('action',(text) => {
+        let glyph = doc.get_selected_glyph()
+        if(glyph) glyph.name = text
+    })
+    row2.add(name_box)
+    col1.add(row2)
+
+    let row3 = new HBox()
+    row3.hflex = false
+    //edit codepoint of the glyph
+    row3.add(new Label("codepoint"))
+    let codepoint_label = new TextLine()
+    codepoint_label.on('action',(text)=>{
+        let glyph = doc.get_selected_glyph()
+        if(glyph && parseInt(text)) glyph.meta.codepoint = parseInt(text)
+    })
+    row3.add(codepoint_label)
+    col1.add(row3)
+
+    panel.add(col1)
+
+    let col2 = new VBox()
+    col2.vflex = true
+    col2.hflex = false
+
+    let add_glyph_button = new ActionButton("add glyph")
+    add_glyph_button.on('action',()=>{
+        let font = doc.get_selected_font()
+        font.add(new SpriteGlyph(gen_id('glyph'),'glyphname',8,8))
+        doc.mark_dirty()
+        doc.fire('change', "added a glyph");
+    })
+
+    doc.addEventListener('change',() => {
+        let glyph = doc.get_selected_glyph()
+        if(glyph) {
+            editor.set_sprite(glyph)
+            name_box.set_text(glyph.name)
+            codepoint_label.set_text(glyph.meta.codepoint+"")
+        }
+    })
+    col2.add(add_glyph_button)
+    col2.add(new GlyphChooser(doc))
+    panel.add(col2)
+    return panel
+}
+
 
 export function start() {
     log("starting")
@@ -609,6 +752,9 @@ export function start() {
         if (item instanceof Tilemap) {
             return (item as Tilemap).name
         }
+        if (item instanceof SpriteFont) {
+            return(item as SpriteFont).name
+        }
         return "???"
     })
     // @ts-ignore
@@ -620,6 +766,9 @@ export function start() {
         }
         if (item instanceof Tilemap) {
             doc.set_selected_map(item as Tilemap)
+        }
+        if (item instanceof SpriteFont) {
+            doc.set_selected_font(item as SpriteFont)
         }
     })
     hb.add(itemlist)
@@ -634,6 +783,8 @@ export function start() {
 
     let map_view = make_map_view(doc)
     panel_view.add(map_view)
+
+    panel_view.add(make_font_view(doc))
 
 
     doc.addEventListener('change',() => {
