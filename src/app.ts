@@ -30,6 +30,8 @@ import {
 } from "./style";
 import {gen_id, Observable, Point, Rect, Size} from "./uilib/common";
 import {CommonEvent, SuperChildView, SuperParentView} from "./uilib/core";
+// @ts-ignore
+import basefont_data from "./base_font.json";
 
 export const EMPTY_COLOR = '#62fcdc'
 
@@ -417,12 +419,13 @@ class TextLine extends SuperChildView {
             g.ctx.font = StandardTextStyle
             let parts = this._parts()
             let bx = 5
-            let ax = bx + g.measureText(parts.before).w
-            g.ctx.fillText(parts.before, bx,15)
-            g.ctx.fillText(parts.after, ax,15)
-            g.ctx.fillRect(ax, 2, 1, 16)
+            let ax = bx + g.measureText(parts.before,'base').w
+            g.fillStandardText(parts.before,bx,20,'base')
+            g.fillStandardText(parts.after,ax,20,'base')
+            g.ctx.fillStyle = 'black'
+            g.ctx.fillRect(ax, 2, 2, 20)
         } else {
-            g.fillStandardText(this.text, 5, 15);
+            g.fillStandardText(this.text, 5, 20,'base');
         }
     }
     override input(event: CommonEvent) {
@@ -446,7 +449,7 @@ class TextLine extends SuperChildView {
         }
     }
     layout2(g: CanvasSurface, available: Size): Size {
-        this.set_size(new Size(this.pref_width,20))
+        this.set_size(new Size(this.pref_width,26))
         if(this.hflex) {
             this.size().w = available.w
         }
@@ -468,7 +471,6 @@ class TextLine extends SuperChildView {
         let parts = this._parts()
         this.text = `${parts.before}${parts.after.slice(1)}`
     }
-
     private cursor_left() {
         this.cursor -= 1
         if(this.cursor < 0) this.cursor = 0
@@ -477,19 +479,16 @@ class TextLine extends SuperChildView {
         this.cursor += 1
         if(this.cursor > this.text.length) this.cursor = this.text.length
     }
-
     private _parts() {
         return {
             before :this.text.slice(0,this.cursor),
             after : this.text.slice(this.cursor),
         }
     }
-
     set_text(name: string) {
         this.text = name
         this.cursor = this.text.length
     }
-
     set_pref_width(w: number) {
         this.pref_width = w
     }
@@ -867,7 +866,8 @@ function make_font_view(doc: Doc) {
 
     let preview_box = new TextLine()
     preview_box.set_text('abc123')
-    preview_box.hflex = true
+    preview_box.hflex = false
+    preview_box.set_pref_width(400)
     col2.add(preview_box)
     let preview_canvas = new FontPreview(doc)
     preview_canvas.set_text('abc123')
@@ -999,6 +999,7 @@ export function start() {
     })
 
     surface.set_root(main_view)
+    surface.load_jsonfont(basefont_data,'somefont','base')
     surface.addToPage();
     surface.setup_mouse_input()
     surface.setup_keyboard_input()

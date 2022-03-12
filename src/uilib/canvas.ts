@@ -1,6 +1,7 @@
 import {Callback, Observable, Point, Rect, Size} from "./common";
-import {StandardTextColor, StandardTextStyle} from "../style";
+import {StandardTextColor, StandardTextHeight, StandardTextStyle} from "../style";
 import {CommonEvent, ParentView, View} from "./core";
+import {SpriteGlyph} from "../app-model";
 
 export function log(...args) {
     console.log('SNAKE:', ...args);
@@ -27,6 +28,7 @@ export class CanvasSurface {
     private scale: number;
     private _input_callback: Callback;
     private _keyboard_focus: View;
+    private fonts:Map<string,CanvasFont>
 
     constructor(w: number, h: number, scale?:number) {
         this.log("making canvas ",w,h)
@@ -45,6 +47,7 @@ export class CanvasSurface {
         this.ctx = this.canvas.getContext('2d');
         this.debug = false;
         this.clear()
+        this.fonts = new Map()
     }
 
     addToPage() {
@@ -301,7 +304,13 @@ export class CanvasSurface {
         this._input_callback = cb
     }
 
-    measureText(caption: string):Size {
+    measureText(caption: string, font_name?:string):Size {
+        if(font_name && this.fonts.has(font_name)) {
+            let font = this.fonts.get(font_name)
+            if(font) {
+                return font.measureText(caption)
+            }
+        }
         this.ctx.font = StandardTextStyle
         let metrics = this.ctx.measureText(caption)
         if('fontBoundingBoxAscent' in metrics) {
@@ -310,7 +319,14 @@ export class CanvasSurface {
         return new Size(metrics.width, 16);
     }
 
-    fillStandardText(caption: string, x: number, y: number) {
+    fillStandardText(caption: string, x: number, y: number, font_name?:string) {
+        if(font_name && this.fonts.has(font_name)) {
+            let font = this.fonts.get(font_name)
+            if(font) {
+                font.fillText(this.ctx,caption,x,y-StandardTextHeight)
+                return
+            }
+        }
         this.ctx.fillStyle = StandardTextColor
         this.ctx.font = StandardTextStyle
         this.ctx.fillText(caption,x, y)
@@ -324,6 +340,11 @@ export class CanvasSurface {
 
     private log(...args) {
         console.log("CANVAS: ", ...args)
+    }
+
+    load_jsonfont(basefont_data: any, name:string, ref_name: string) {
+        let fnt = basefont_data.fonts.find(ft => ft.name === name)
+        this.fonts.set(ref_name,new CanvasFont(fnt))
     }
 }
 
@@ -381,3 +402,82 @@ export const EVENTS = {
     KEYDOWN:'keydown'
 }
 
+
+class CanvasFont {
+    private data: any;
+    private metas:Map<number,SpriteGlyph>
+    private scale = 2;
+    constructor(data) {
+        this.data = data
+        this.metas = new Map()
+        this.data.glyphs.forEach(gl => {
+            this.generate_image(gl)
+            this.metas.set(gl.meta.codepoint,gl)
+        })
+    }
+    measureText(text) {
+        let xoff = 0
+        let h = 0
+        for(let i=0; i<text.length; i++) {
+            let cp = text.codePointAt(i)
+            if(this.metas.has(cp)) {
+                let glyph = this.metas.get(cp)
+                let sw = glyph.w - glyph.meta.left - glyph.meta.right
+                xoff += sw + 1
+                h = Math.max(h,glyph.h)
+            }
+        }
+        return new Size(xoff*this.scale,h*this.scale)
+    }
+
+    fillText(ctx:CanvasRenderingContext2D, text:string,x:number,y:number) {
+        ctx.fillStyle = 'red'
+        let size = this.measureText(text)
+        let xoff = 0
+        let yoff = 2
+        // ctx.fillRect(x+xoff, y+yoff, size.w, size.h)
+        for (let i = 0; i < text.length; i++) {
+            let cp = text.codePointAt(i)
+            if (this.metas.has(cp)) {
+                let glyph = this.metas.get(cp)
+                ctx.imageSmoothingEnabled = false
+                //@ts-ignore
+                let img = glyph.img
+                let sx = glyph.meta.left
+                let sy = 0
+                let sw = glyph.w - glyph.meta.left - glyph.meta.right
+                let sh = glyph.h //- glyph.meta.baseline
+                let dx = x + xoff*this.scale
+                let dy = y + (yoff+glyph.meta.baseline-1)*this.scale
+                let dw = sw*this.scale
+                let dh = sh*this.scale
+                ctx.drawImage(img, sx,sy,sw,sh, dx,dy, dw,dh)
+                xoff += sw + 1
+            }
+        }
+    }
+
+    private generate_image(gl) {
+        gl.img = document.createElement('canvas')
+        gl.img.width = gl.w
+        gl.img.height = gl.h
+        let c = gl.img.getContext('2d')
+        c.fillStyle = 'green'
+        c.fillRect(0,0,gl.img.width,gl.img.height)
+        for (let j = 0; j < gl.h; j++) {
+            for (let i = 0; i < gl.w; i++) {
+                let n = j * gl.w + i;
+                let v = gl.data[n];
+                if(v %2 === 0) {
+                    c.fillStyle = 'white'
+                    // c.fillRect(i, j, 1, 1)
+                    c.clearRect(i,j,1,1)
+                }
+                if(v%2 === 1) {
+                    c.fillStyle = 'black'
+                    c.fillRect(i, j, 1, 1)
+                }
+            }
+        }
+    }
+}

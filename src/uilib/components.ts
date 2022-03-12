@@ -24,11 +24,11 @@ export class Label extends SuperChildView {
     }
 
     draw(g: CanvasSurface): void {
-        g.fillStandardText(this.caption, StandardLeftPadding, StandardTextHeight);
+        g.fillStandardText(this.caption, StandardLeftPadding, StandardTextHeight,'base');
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        this.set_size(g.measureText(this.caption).grow(StandardLeftPadding))
+        this.set_size(g.measureText(this.caption,'base').grow(StandardLeftPadding))
         return this.size()
     }
 }
@@ -56,7 +56,7 @@ export class ActionButton extends SuperChildView {
     draw(g: CanvasSurface): void {
         g.fillBackgroundSize(this.size(), ButtonBackgroundColor)
         g.strokeBackgroundSize(this.size(), ButtonBorderColor)
-        g.fillStandardText(this.caption, StandardLeftPadding, StandardTextHeight);
+        g.fillStandardText(this.caption, StandardLeftPadding, StandardTextHeight, 'base');
     }
     input(event: CommonEvent): void {
         if (event.type === "mousedown") {
@@ -64,11 +64,10 @@ export class ActionButton extends SuperChildView {
         }
     }
     layout2(g: CanvasSurface, available: Size): Size {
-        this.set_size(g.measureText(this.caption).grow(StandardLeftPadding))
+        this.set_size(g.measureText(this.caption,'base').grow(StandardLeftPadding))
         return this.size()
     }
 }
-
 export class ToggleButton extends SuperChildView {
     title: string
     selected:boolean
@@ -81,9 +80,7 @@ export class ToggleButton extends SuperChildView {
     draw(ctx: CanvasSurface) {
         ctx.fillBackgroundSize(this.size(), this.selected?ButtonBackgroundColor_active:ButtonBackgroundColor)
         ctx.strokeBackgroundSize(this.size(),ButtonBorderColor)
-        ctx.ctx.fillStyle = StandardTextColor
-        ctx.ctx.font = StandardTextStyle
-        ctx.ctx.fillText(this.title, StandardLeftPadding, StandardTextHeight);
+        ctx.fillStandardText(this.title, StandardLeftPadding, StandardTextHeight, 'base')
     }
 
     input(event: CommonEvent): void {
@@ -93,7 +90,7 @@ export class ToggleButton extends SuperChildView {
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        let size = g.measureText(this.title).grow(StandardLeftPadding)
+        let size = g.measureText(this.title,'base').grow(StandardLeftPadding)
         this.set_size(size)
         return size
     }
@@ -117,10 +114,8 @@ export class SelectList extends SuperChildView {
             if (i === this.selected_index) {
                 g.fillRect(0,30*i,this.size().w,25, StandardSelectionColor)
             }
-            g.ctx.fillStyle = StandardTextColor
-            g.ctx.font = StandardTextStyle
             let str = this.renderer(item)
-            g.ctx.fillText(str, StandardLeftPadding, i*30 + 20)
+            g.fillStandardText(str,StandardLeftPadding,i*30 + 20, 'base')
         })
     }
     input(event: CommonEvent): void {
@@ -170,12 +165,12 @@ export class Header extends SuperChildView {
     }
     draw(g: CanvasSurface): void {
         g.fillBackgroundSize(this.size(),this.fill)
-        let size = g.measureText(this.caption)
+        let size = g.measureText(this.caption,'base')
         let x = (this.size().w - size.w) / 2
-        g.fillStandardText(this.caption, x, StandardTextHeight);
+        g.fillStandardText(this.caption, x, StandardTextHeight,'base');
     }
     layout2(g: CanvasSurface, available: Size): Size {
-        let text_size = g.measureText(this.caption).grow(StandardLeftPadding)
+        let text_size = g.measureText(this.caption,'base').grow(StandardLeftPadding)
         this.set_size(new Size(available.w, text_size.h))
         return this.size()
     }
