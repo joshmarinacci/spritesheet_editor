@@ -1,6 +1,13 @@
 import {CanvasSurface} from "./uilib/canvas";
 import {gen_id} from "./uilib/common";
 
+const GRADE = []
+GRADE[0] = null
+GRADE[1] = '#eeeeee'
+GRADE[2] = '#cccccc'
+GRADE[3] = '#999999'
+GRADE[4] = '#666666'
+
 export class Sprite {
     id: string
     name:string
@@ -41,20 +48,8 @@ export class Sprite {
     sync() {
         let c = this._img.getContext('2d')
         this.forEachPixel((v,i,j)=>{
-            if(v === 1) {
-                c.fillStyle = '#f0f0f0'
-                c.fillRect(i, j, 1, 1)
-            }
-            if(v === 2) {
-                c.fillStyle = '#d0d0d0'
-                c.fillRect(i, j, 1, 1)
-            }
-            if(v === 3) {
-                c.fillStyle = '#909090'
-                c.fillRect(i, j, 1, 1)
-            }
-            if(v === 4) {
-                c.fillStyle = '#404040'
+            if(GRADE[v]) {
+                c.fillStyle = GRADE[v]
                 c.fillRect(i, j, 1, 1)
             }
         })
