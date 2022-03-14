@@ -139,12 +139,14 @@ function wrap_number(num:number,width:number):Point {
 class MapEditor extends SuperChildView {
     doc: Doc;
     _scale:number;
+    private tilemap: Tilemap | null;
 
-    constructor(doc:Doc) {
+    constructor(doc:Doc, scale:number) {
         super("map-editor")
         this._name = 'map-editor'
-        this._scale = 16;
+        this._scale = scale;
         this.doc = doc
+        this.tilemap = null
     }
 
     scale() {
@@ -156,9 +158,8 @@ class MapEditor extends SuperChildView {
 
     draw(ctx: CanvasSurface) {
         ctx.fillBackgroundSize(this.size(),EMPTY_COLOR)
-        let map = this.doc.get_selected_map()
-        if (!map) return;
-        map.forEachPixel((val,i,j) => {
+        if(!this.tilemap) return
+        this.tilemap.forEachPixel((val,i,j) => {
             if (!val || val === 0) return;
             let sheet = this.doc.get_selected_sheet()
             let tile = sheet.sprites.find((t:Sprite) => t.id ===val);
@@ -173,12 +174,11 @@ class MapEditor extends SuperChildView {
     input(e: CommonEvent): void {
         if(e.type === "mousedown" || e.type === "mousedrag") {
             let pt = e.pt.divide_floor(this._scale);
-            let map = this.doc.get_selected_map()
-            if(!map) return
+            if(!this.tilemap) return
             let sheet = this.doc.get_selected_sheet()
             let tile = this.doc.get_selected_tile();
             if(tile) {
-                map.set_pixel(pt.x,pt.y,tile.id)
+                this.tilemap.set_pixel(pt.x,pt.y,tile.id)
                 this.doc.mark_dirty()
                 this.doc.fire('change', tile)
             }
@@ -186,13 +186,16 @@ class MapEditor extends SuperChildView {
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        let map = this.doc.get_selected_map()
-        if(!map) {
+        if(!this.tilemap) {
             this.set_size(new Size(100,100))
         } else {
-            this.set_size(new Size(this.scale()*map.w,this.scale()*map.h))
+            this.set_size(new Size(this.scale()*this.tilemap.w,this.scale()*this.tilemap.h))
         }
         return this.size()
+    }
+
+    set_tilemap(selectedMap: Tilemap) {
+        this.tilemap = selectedMap
     }
 }
 
@@ -521,6 +524,7 @@ function make_sheet_editor_view(doc: Doc) {
 
 
     let tb = new HBox()
+    tb.hflex = false
     tb.add(add_tile_button)
     tb.add(new Label("   "))
     tb.add(new Label("name"))
@@ -539,6 +543,13 @@ function make_sheet_editor_view(doc: Doc) {
     vb2.add(sprite_selector);
     sheet_editor.add(vb2)
 
+    let vb3 = new VBox()
+    let scratch_map = new MapEditor(doc, 32)
+    let tm = new Tilemap(gen_id('scratch-tilemap'),'scratch',5,5)
+    scratch_map.set_tilemap(tm)
+    vb3.add(scratch_map)
+    sheet_editor.add(vb3)
+
     doc.addEventListener('main-selection',() => {
         let sheet = doc.get_selected_sheet()
         if(sheet) sheet_name_edit.set_text(sheet.name)
@@ -554,7 +565,8 @@ function make_map_view(doc: Doc) {
     map_view.vflex = true
 
     // lets you edit an entire tile map, using the currently selected tile
-    let map_editor = new MapEditor(doc);
+    let map_editor = new MapEditor(doc, 16);
+    map_editor.set_tilemap(doc.get_selected_map())
 
     let selector = new TileSelector(doc)
     selector.hflex = false
@@ -609,7 +621,10 @@ function make_map_view(doc: Doc) {
 
     doc.addEventListener('main-selection',() => {
         let map = doc.get_selected_map()
-        if(map) map_name_edit.set_text(map.name)
+        if(map) {
+            map_name_edit.set_text(map.name)
+            map_editor.set_tilemap(map)
+        }
     })
 
     return map_view
