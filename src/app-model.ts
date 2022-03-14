@@ -1,12 +1,6 @@
 import {CanvasSurface} from "./uilib/canvas";
 import {gen_id} from "./uilib/common";
 
-const GRADE = []
-GRADE[0] = null
-GRADE[1] = '#eeeeee'
-GRADE[2] = '#cccccc'
-GRADE[3] = '#999999'
-GRADE[4] = '#666666'
 
 export class Sprite {
     id: string
@@ -15,9 +9,11 @@ export class Sprite {
     h: number
     data: number[]
     _img: HTMLCanvasElement
+    private doc: Doc;
 
-    constructor(id:string, name:string, w:number, h:number) {
+    constructor(id:string, name:string, w:number, h:number, doc:Doc) {
         this.id = id || gen_id('unknown');
+        this.doc = doc
         this.name = name || 'unknown'
         this.w = w;
         this.h = h;
@@ -47,11 +43,10 @@ export class Sprite {
     }
     sync() {
         let c = this._img.getContext('2d')
+        let pal = this.doc.palette()
         this.forEachPixel((v,i,j)=>{
-            if(GRADE[v]) {
-                c.fillStyle = GRADE[v]
-                c.fillRect(i, j, 1, 1)
-            }
+            c.fillStyle = pal[v]
+            c.fillRect(i, j, 1, 1)
         })
     }
 
@@ -174,8 +169,8 @@ type GlyphMeta = {
 }
 export class SpriteGlyph extends Sprite {
     meta: GlyphMeta;
-    constructor(id,name,w,h) {
-        super(id,name,w,h)
+    constructor(id,name,w,h, doc:Doc) {
+        super(id,name,w,h,doc)
         this.meta = {
             codepoint:300,
             left:0,
@@ -213,7 +208,7 @@ export class SpriteFont {
     glyphs:SpriteGlyph[]
     private id: string;
     name: string;
-    constructor(id,name) {
+    constructor(id,name, doc:Doc) {
         this.id = id || gen_id('unknown');
         this.name = name || 'unknown'
         this.glyphs = []
@@ -232,9 +227,9 @@ export class SpriteFont {
     }
 }
 
-function obj_to_class(sh) {
+function obj_to_class(sh, doc:Doc) {
     if(sh.clazz === 'Sprite') {
-        let sprite = new Sprite(sh.id, sh.name, sh.w, sh.h)
+        let sprite = new Sprite(sh.id, sh.name, sh.w, sh.h, doc)
         sprite.data = sh.data
         sprite.sync()
         return sprite
@@ -246,16 +241,16 @@ function obj_to_class(sh) {
     }
     if(sh.clazz === 'Sheet') {
         let sheet = new Sheet(sh.id,sh.name)
-        sheet.sprites = sh.sprites.map(sp => obj_to_class(sp))
+        sheet.sprites = sh.sprites.map(sp => obj_to_class(sp, doc))
         return sheet
     }
     if(sh.clazz === 'Font') {
-        let font = new SpriteFont(sh.id,sh.name)
-        font.glyphs = sh.glyphs.map(g => obj_to_class(g))
+        let font = new SpriteFont(sh.id,sh.name, doc)
+        font.glyphs = sh.glyphs.map(g => obj_to_class(g, doc))
         return font
     }
     if(sh.clazz === 'Glyph') {
-        let glyph = new SpriteGlyph(sh.id,sh.name,sh.w,sh.h)
+        let glyph = new SpriteGlyph(sh.id,sh.name,sh.w,sh.h, doc)
         glyph.data = sh.data
         glyph.meta = sh.meta
         if(!glyph.meta.left) glyph.meta.left = 0
@@ -273,7 +268,7 @@ export class Doc extends Observable {
     maps:Tilemap[]
 
     selected_color: number
-    palette: string[]
+    private _palette: string[]
     font_palette: string[]
     selected_tile: number
     selected_map: number
@@ -288,7 +283,7 @@ export class Doc extends Observable {
     constructor() {
         super();
         this.selected_color = 1;
-        this.palette = [
+        this._palette = [
             '#ff00ff',
             '#f0f0f0',
             '#d0d0d0',
@@ -300,8 +295,8 @@ export class Doc extends Observable {
             '#404040',
         ];
         let sheet = new Sheet("sheet1", "first sheet")
-        sheet.add(new Sprite(gen_id('sprite'),'sprite1',8,8))
-        sheet.add(new Sprite(gen_id('sprite'),'sprite2',8,8))
+        sheet.add(new Sprite(gen_id('sprite'),'sprite1',8,8,this))
+        sheet.add(new Sprite(gen_id('sprite'),'sprite2',8,8,this))
         this.sheets = [sheet]
         this.selected_sheet = 0
         this.selected_tile = 0;
@@ -309,8 +304,8 @@ export class Doc extends Observable {
         tilemap.set_pixel(0, 0, 'sprite1');
         this.maps = [tilemap]
         this.map_grid_visible = true;
-        let font = new SpriteFont(gen_id('font'),'somefont')
-        let glyph = new SpriteGlyph(gen_id('glyph'),'a',8,8)
+        let font = new SpriteFont(gen_id('font'),'somefont',this)
+        let glyph = new SpriteGlyph(gen_id('glyph'),'a',8,8,this)
         font.glyphs.push(glyph)
         this.fonts = [font]
         this.selected_tree_item_index = -1
@@ -318,6 +313,9 @@ export class Doc extends Observable {
         this._dirty = false
     }
 
+    palette(): string[] {
+        return this._palette
+    }
     get_selected_sheet():Sheet {
         return this.sheets[this.selected_sheet]
     }
@@ -389,15 +387,15 @@ export class Doc extends Observable {
 
         this.sheets = data.sheets.map(sh => {
             console.log("sheet",sh)
-            return obj_to_class(sh)
+            return obj_to_class(sh,this)
         })
         this.fonts = data.fonts.map(fnt => {
             console.log("font",fnt)
-            return obj_to_class(fnt)
+            return obj_to_class(fnt, this)
         })
         this.maps = data.maps.map(mp => {
             console.log("map is",mp)
-            let mp2 = obj_to_class(mp)
+            let mp2 = obj_to_class(mp, this)
             console.log("restored map is",mp2)
             return mp2
         })

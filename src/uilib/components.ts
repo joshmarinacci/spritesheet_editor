@@ -5,9 +5,7 @@ import {
     ButtonBorderColor,
     StandardLeftPadding,
     StandardSelectionColor,
-    StandardTextColor,
-    StandardTextHeight,
-    StandardTextStyle
+    StandardTextHeight
 } from "../style";
 import {Callback, gen_id, Point, Rect, Size} from "./common";
 import {CommonEvent, SuperChildView, SuperParentView, View} from "./core";
@@ -519,5 +517,32 @@ export class ScrollView extends SuperParentView {
     set_content(view: View) {
         this.content = view
         this.wrapper.add(view)
+    }
+}
+
+export class PopupContainer extends SuperParentView {
+    constructor() {
+        super(gen_id("popupcontainer"))
+        this._name = "popup_container"
+    }
+
+    draw(g: CanvasSurface): void {
+        g.fillBackgroundSize(this.size(), 'gray')
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        let box = this._children[0]
+        let size = box.layout2(g, new Size(100, 100))
+        this.set_size(size)
+        return new Size(size.w, size.h)
+    }
+
+    open_at(x: number, y: number) {
+        this.set_position(new Point(x, y))
+    }
+
+    hide() {
+        this._visible = false
+        console.log("hiding",this._visible)
     }
 }

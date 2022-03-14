@@ -1,26 +1,19 @@
 import {CanvasSurface} from "./uilib/canvas";
-import {ActionButton, GrowPanel, HBox, Header, HSpacer, Label, LayerView, ScrollView, VBox} from "./uilib/components";
-import {gen_id, Point, Rect, Size} from "./uilib/common";
+import {
+    ActionButton,
+    GrowPanel,
+    HBox,
+    Header,
+    HSpacer,
+    Label,
+    LayerView,
+    PopupContainer,
+    ScrollView,
+    VBox
+} from "./uilib/components";
+import {gen_id, Point, Size} from "./uilib/common";
 import {SuperChildView, SuperParentView} from "./uilib/core";
 
-class PopupContainer extends SuperParentView {
-    constructor() {
-        super(gen_id("popupcontainer"))
-        this._name ="popup_container"
-    }
-    draw(g: CanvasSurface): void {
-        g.fillBackgroundSize(this.size(),'gray')
-    }
-    layout2(g: CanvasSurface, available: Size): Size {
-        let box = this._children[0]
-        let size = box.layout2(g, new Size(100,100))
-        this.set_size(size)
-        return new Size(size.w,size.h)
-    }
-    open_at(x: number, y: number) {
-        this.set_position(new Point(x,y))
-    }
-}
 class DialogContainer extends SuperParentView {
     constructor() {
         super("dialog-container")

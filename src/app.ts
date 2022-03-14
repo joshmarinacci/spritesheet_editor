@@ -7,7 +7,7 @@ import {
     CustomLabel,
     VBox,
     Header,
-    ScrollView
+    ScrollView, LayerView, PopupContainer
 } from "./uilib/components";
 import {
     canvasToPNGBlob, fileToJSON,
@@ -107,7 +107,7 @@ class TileSelector extends SuperChildView {
         if(sheet) {
             sheet.sprites.forEach((sprite, s) => {
                 let pt = wrap_number(s, 8);
-                draw_sprite(sprite, g, pt.x * this.scale, pt.y * this.scale, 4, this.doc.palette)
+                draw_sprite(sprite, g, pt.x * this.scale, pt.y * this.scale, 4, this.doc.palette())
             })
         }
         draw_grid(g,this.size(),this.scale);
@@ -240,7 +240,7 @@ class PaletteChooser extends SuperChildView{
     }
 }
 
-function setup_toolbar(doc: Doc, surface: CanvasSurface):HBox {
+function setup_toolbar(doc: Doc, surface: CanvasSurface, popup_layer:LayerView):HBox {
     let toolbar = new HBox();
     toolbar.pad = 0
     toolbar.fill = '#ccc'
@@ -248,12 +248,12 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface):HBox {
     let new_button = new ActionButton('new')
     new_button.on('action',()=>{
         let sheet = new Sheet("sheetx", "the sheet")
-        let sprite = new Sprite(gen_id('sprite'),'spritex',8,8)
+        let sprite = new Sprite(gen_id('sprite'),'spritex',8,8, doc)
         sheet.add(sprite)
         let tilemap = new Tilemap(gen_id('tilemap'),'mapx', 16, 16);
         tilemap.set_pixel(0, 0, sprite.id);
-        let font = new SpriteFont(gen_id('font'),'somefont')
-        let glyph = new SpriteGlyph(gen_id('glyph'),'a',8,8)
+        let font = new SpriteFont(gen_id('font'),'somefont',doc)
+        let glyph = new SpriteGlyph(gen_id('glyph'),'a',8,8,doc)
         font.glyphs.push(glyph)
         let empty = {
             version:2,
@@ -308,7 +308,7 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface):HBox {
             let x = i*64
             let y = j*64
             tile.forEachPixel((val: number, i: number, j: number) => {
-                ctx.fillStyle = doc.palette[val]
+                ctx.fillStyle = doc.palette()[val]
                 ctx.fillRect(x+i*8, y+j*8, 8,8);
             });
         })
@@ -318,8 +318,8 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface):HBox {
 
     let add_font_button = new ActionButton('+ font')
     add_font_button.on('action',()=>{
-        let font = new SpriteFont(gen_id('font'),'somefont')
-        let glyph = new SpriteGlyph(gen_id('glyph'),'a glyph',8,8)
+        let font = new SpriteFont(gen_id('font'),'somefont',doc)
+        let glyph = new SpriteGlyph(gen_id('glyph'),'a glyph',8,8,doc)
         glyph.meta.codepoint = 300
         font.glyphs.push(glyph)
         doc.fonts.push(font)
@@ -330,7 +330,7 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface):HBox {
     let add_sheet_button = new ActionButton('+ sheet')
     add_sheet_button.on('action',()=>{
         let sheet = new Sheet("sheetx", "the sheet")
-        let sprite = new Sprite(gen_id('sprite'),'spritex',8,8)
+        let sprite = new Sprite(gen_id('sprite'),'spritex',8,8,doc)
         sheet.add(sprite)
         doc.sheets.push(sheet)
         doc.mark_dirty()
@@ -350,6 +350,31 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface):HBox {
         return doc.dirty()?"dirty":"clean"
     });
     toolbar.add(dirty_label)
+
+    let change_palette_button = new ActionButton('palette')
+    change_palette_button.on('action',()=>{
+
+        let popup = new PopupContainer();
+        let popup_box = new VBox()
+        let grayscale_button = new ActionButton('grayscale')
+        grayscale_button.on('action',()=>{
+            this.log("switch to grayscale")
+            popup.hide()
+        })
+        popup_box.add(grayscale_button)
+
+        let inverted_button = new ActionButton('inverted')
+        inverted_button.on('action',()=>{
+            this.log("switch to inverted")
+            popup.hide()
+        })
+        popup_box.add(inverted_button)
+
+        popup.add(popup_box)
+        popup_layer.add(popup)
+        popup.open_at(500,50);
+    })
+    toolbar.add(change_palette_button)
 
     return toolbar
 }
@@ -502,11 +527,11 @@ function make_sheet_editor_view(doc: Doc) {
     sheet_editor._name = 'sheet-editor-view'
 
     let vb1 = new VBox()
-    let palette_chooser = new PaletteChooser(doc,doc.palette);
+    let palette_chooser = new PaletteChooser(doc,doc.palette());
     vb1.add(palette_chooser);
 
     // tile editor, edits the current tile
-    let tile_editor = new TileEditor(doc, doc.palette);
+    let tile_editor = new TileEditor(doc, doc.palette());
     vb1.add(tile_editor)
     doc.addEventListener('change',() => {
         tile_editor.set_sprite(doc.get_selected_tile())
@@ -517,7 +542,7 @@ function make_sheet_editor_view(doc: Doc) {
     let add_tile_button = new ActionButton("add tile")
     add_tile_button.on('action',()=>{
         let sheet = doc.get_selected_sheet()
-        sheet.add(new Sprite(gen_id("tile"), 'tilename',8, 8));
+        sheet.add(new Sprite(gen_id("tile"), 'tilename',8, 8, doc));
         doc.mark_dirty()
         doc.fire('change', "added a tile");
     });
@@ -832,7 +857,7 @@ function make_font_view(doc: Doc) {
     let add_glyph_button = new ActionButton("add glyph")
     add_glyph_button.on('action',()=>{
         let font = doc.get_selected_font()
-        let glyph = new SpriteGlyph(gen_id('glyph'),'glyphname',8,8)
+        let glyph = new SpriteGlyph(gen_id('glyph'),'glyphname',8,8, doc)
         glyph.meta.codepoint = 400
         font.add(glyph)
         doc.set_selected_glyph(glyph)
@@ -903,6 +928,9 @@ function make_font_view(doc: Doc) {
 
 
 export function start() {
+    let root = new LayerView()
+    let popup_layer = new LayerView()
+
     log("starting")
     let All = new Observable();
 
@@ -931,7 +959,7 @@ export function start() {
     let main_label = new Header('Tile Map Editor')
     main_view.add(main_label);
 
-    let toolbar = setup_toolbar(doc, surface);
+    let toolbar = setup_toolbar(doc, surface, popup_layer);
     toolbar.id = 'toolbar'
     main_view.add(toolbar);
 
@@ -1013,7 +1041,9 @@ export function start() {
         console.log("main selection changed. refresh the view")
     })
 
-    surface.set_root(main_view)
+    root.add(main_view)
+    root.add(popup_layer)
+    surface.set_root(root)
     surface.load_jsonfont(basefont_data,'somefont','base')
     surface.addToPage();
     surface.setup_mouse_input()
