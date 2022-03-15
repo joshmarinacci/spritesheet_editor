@@ -12,7 +12,7 @@ import {Observable, Point, Rect, Size, SuperArray} from "./uilib/common";
 import {CommonEvent, SuperChildView, SuperParentView} from "./uilib/core";
 import {Doc, Sheet, Sprite, SpriteFont} from "./app-model";
 
-const SCALE = 3
+const SCALE = 3.5
 
 class GridView extends SuperParentView {
     private model: GridModel;
@@ -21,6 +21,8 @@ class GridView extends SuperParentView {
     private empty: Sprite;
     private tail: Sprite;
     private food: Sprite;
+    private heart: Sprite;
+    private shrink: Sprite;
     constructor(model: GridModel, sheet: Sheet) {
         super('grid-view')
         this.model = model;
@@ -29,6 +31,8 @@ class GridView extends SuperParentView {
         this.empty = sheet.sprites.find(s => s.name === 'ground')
         this.tail = sheet.sprites.find(s => s.name === 'tail')
         this.food = sheet.sprites.find(s => s.name === 'food')
+        this.heart = sheet.sprites.find(s => s.name === 'heart')
+        this.shrink = sheet.sprites.find(s => s.name === 'potion')
     }
     draw(g: CanvasSurface): void {
         g.ctx.imageSmoothingEnabled = false
@@ -39,13 +43,17 @@ class GridView extends SuperParentView {
             if (w === WALL) color = 'blue'
             if (w === TAIL) color = 'orange'
             if (w === FOOD) color = 'red'
+            if (w === SHRINK) color = 'green'
+            if (w === HEART) color = 'pink'
             let xx = x*8*SCALE
             let yy = y*8*SCALE
-            // g.fill(new Rect(xx,yy,15,15),color);
+            g.fill(new Rect(xx,yy,1*8*SCALE,1*8*SCALE),color);
             if (w === EMPTY) g.draw_sprite(xx,yy,this.empty,SCALE)
             if (w === WALL) g.draw_sprite(xx,yy,this.wall,SCALE)
             if (w === TAIL) g.draw_sprite(xx,yy,this.tail,SCALE)
             if (w === FOOD) g.draw_sprite(xx,yy,this.food,SCALE)
+            if (w === HEART) g.draw_sprite(xx,yy,this.heart,SCALE)
+            if (w === SHRINK) g.draw_sprite(xx,yy,this.shrink,SCALE)
 
         })
     }
@@ -68,7 +76,7 @@ class SnakeView extends SuperChildView {
     }
     draw(g: CanvasSurface): void {
         g.ctx.imageSmoothingEnabled = false
-        g.fill(new Rect(0,0,16,16),'yellow')
+        // g.fill(new Rect(0,0,16,16),'yellow')
         g.draw_sprite(0,0,this.sprite_slice,SCALE)
     }
     position(): Point {
@@ -96,8 +104,10 @@ class SnakeModel {
 
 class ScoreModel {
     level: number;
+    lives: number
     constructor() {
         this.level = 0;
+        this.lives = 0
     }
 }
 
@@ -124,6 +134,7 @@ class ScoreView extends SuperChildView{
         g.ctx.translate(this.position().x,this.position().y)
         // g.fillBackgroundSize(this.size(),'red')
         g.fillStandardText('level '+this.score.level,10,16,'base')
+        g.fillStandardText('hearts '+this.score.lives,10,16+16+16,'base')
         g.ctx.restore()
     }
     layout2(g: CanvasSurface, available: Size): Size {
@@ -141,14 +152,14 @@ export async function start() {
 
     let All = new Observable();
 
-    let surface = new CanvasSurface(40*8*SCALE,30*8*SCALE);
+    let surface = new CanvasSurface(35*8*SCALE,25*8*SCALE);
     surface.load_jsonfont(doc,'base','base')
 
 
     let root = new LayerView()
     let snake = new SnakeModel()
     snake.position.set(10,10);
-    let board = new GridModel(30,30)
+    let board = new GridModel(25,25)
     board.fill_all(()=>0)
     let board_layer = new LayerView();
     board_layer._name = 'board'
@@ -160,7 +171,7 @@ export async function start() {
 
     let score = new ScoreModel()
     let score_view = new ScoreView(score, doc.fonts[0])
-    score_view.set_position(new Point(8*SCALE*16,8*SCALE*1))
+    score_view.set_position(new Point(8*SCALE*13,8*SCALE*1))
     board_layer.add(score_view)
 
 
@@ -187,6 +198,7 @@ export async function start() {
 
     function restart() {
         score.level = 0
+        score.lives = 3
         snake.position.set(5,5);
         snake.tail.clear();
         nextLevel()
@@ -202,18 +214,48 @@ export async function start() {
         snake.length = score.level
         snake.tail.forEach(val=>board.set_at(val,TAIL));
         while(true) {
-            let x = randi(1,19)
-            let y = randi(1,12)
+            let x = randi(1,29)
+            let y = randi(1,29)
             if(board.get_xy(x,y) == EMPTY) {
                 board.set_xy(x,y,FOOD)
                 break;
+            }
+        }
+        let shrink = randi(0,3)
+        if(shrink === 0) {
+            while(true) {
+                let x = randi(1,29)
+                let y = randi(1,29)
+                if(board.get_xy(x,y) == EMPTY) {
+                    board.set_xy(x,y,SHRINK)
+                    break;
+                }
+            }
+        }
+        let heart = randi(0,3)
+        if(heart === 0) {
+            while(true) {
+                let x = randi(1,29)
+                let y = randi(1,29)
+                if(board.get_xy(x,y) == EMPTY) {
+                    board.set_xy(x,y,HEART)
+                    break;
+                }
             }
         }
         surface.repaint()
     }
     function die() {
         console.log("you died");
-        restart()
+        if(score.lives === 0) {
+            restart()
+        } else {
+            score.lives -= 1
+            snake.position.set(5,5);
+            snake.tail.clear();
+            score.level = score.level-1
+            nextLevel()
+        }
     }
 
     function move_by(offset:Point) {
@@ -235,6 +277,21 @@ export async function start() {
         if (spot === WALL) return die();
         if (spot === TAIL) return die();
         if (spot === FOOD) return nextLevel();
+        if (spot === HEART) {
+            score.lives += 1
+            surface.repaint()
+            return
+        }
+        if (spot == SHRINK) {
+            if(snake.length > 3) {
+                snake.length -= 3
+            }
+            while (snake.tail.length() > snake.length) {
+                board.set_at(snake.tail.pop_start(),EMPTY) // remove tail spot
+            }
+            surface.repaint()
+            return
+        }
 
         surface.repaint()
     }
