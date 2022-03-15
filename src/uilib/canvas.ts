@@ -1,7 +1,7 @@
 import {Callback, Observable, Point, Rect, Size} from "./common";
 import {StandardTextColor, StandardTextHeight, StandardTextStyle} from "../style";
 import {CommonEvent, ParentView, View} from "./core";
-import {SpriteGlyph} from "../app-model";
+import {Sprite, SpriteGlyph} from "../app-model";
 
 export function log(...args) {
     console.log('SNAKE:', ...args);
@@ -206,6 +206,7 @@ export class CanvasSurface {
                 ctrl:e.ctrlKey,
             }
             this.dispatch_keyboard_event(evt)
+            if(this._input_callback) this._input_callback(e)
             this.repaint()
             // if (e.key === 'ArrowLeft') KBD.fire(EVENTS.LEFT, {});
             // if (e.key === 'ArrowRight') KBD.fire(EVENTS.RIGHT, {});
@@ -352,6 +353,10 @@ export class CanvasSurface {
     load_jsonfont(basefont_data: any, name:string, ref_name: string) {
         let fnt = basefont_data.fonts.find(ft => ft.name === name)
         this.fonts.set(ref_name,new CanvasFont(fnt))
+    }
+
+    draw_sprite(x: number, y: number, sprite: Sprite, scale: number) {
+        this.ctx.drawImage(sprite._img,x,y,sprite._img.width*scale,sprite._img.height*scale)
     }
 }
 
