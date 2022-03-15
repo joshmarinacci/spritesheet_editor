@@ -305,7 +305,7 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface, popup_layer:LayerView):
     let save_button = new ActionButton("save")
     save_button.on('action',()=>{
         let blob = jsonObjToBlob(doc.toJsonObj())
-        forceDownloadBlob('project.json',blob)
+        forceDownloadBlob(`${doc.name}.json`,blob)
     });
     toolbar.add(save_button);
 
@@ -435,6 +435,17 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface, popup_layer:LayerView):
         popup.open_at(500,50);
     })
     toolbar.add(change_palette_button)
+
+    let doc_name_edit = new TextLine()
+    doc_name_edit.set_pref_width(200)
+    doc_name_edit.set_text('unknownprojectx')
+    doc_name_edit.on('action',(text)=>{
+        doc.name = text
+    })
+    toolbar.add(doc_name_edit)
+    doc.addEventListener('reload',() => {
+        doc_name_edit.set_text(doc.name)
+    })
 
     return toolbar
 }
@@ -593,8 +604,21 @@ function make_sheet_editor_view(doc: Doc) {
     // tile editor, edits the current tile
     let tile_editor = new TileEditor(doc, doc.palette());
     vb1.add(tile_editor)
+    let tile_name_editor = new TextLine()
+    tile_name_editor.set_pref_width(200)
+    vb1.add(tile_name_editor)
+    tile_name_editor.on('action',(text) => {
+        let tile = doc.get_selected_tile()
+        if(tile) {
+            tile.name = text
+        }
+    })
     doc.addEventListener('change',() => {
-        tile_editor.set_sprite(doc.get_selected_tile())
+        let tile = doc.get_selected_tile()
+        if(tile) {
+            tile_editor.set_sprite(tile)
+            tile_name_editor.set_text(tile.name)
+        }
     })
     let bucket_button = new ActionButton('fill once')
     bucket_button.on('action',()=>{

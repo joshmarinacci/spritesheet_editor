@@ -301,6 +301,7 @@ export class Doc extends Observable {
     sheets: Sheet[]
     fonts: SpriteFont[]
     maps:Tilemap[]
+    name:string
 
     selected_color: number
     private _palette: string[]
@@ -340,6 +341,7 @@ export class Doc extends Observable {
         this.selected_tree_item_index = -1
         this.selected_tree_item = null
         this._dirty = false
+        this.name = 'unnamed-project'
     }
 
     palette(): string[] {

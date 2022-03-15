@@ -25,10 +25,11 @@ class GridView extends SuperParentView {
         this.sheet = sheet
         this.wall = sheet.sprites.find(s => s.name === 'wall1')
         this.empty = sheet.sprites.find(s => s.name === 'ground')
-        this.tail = sheet.sprites.find(s => s.name === 'head')
-        this.food = sheet.sprites.find(s => s.name === 'potion')
+        this.tail = sheet.sprites.find(s => s.name === 'tail')
+        this.food = sheet.sprites.find(s => s.name === 'food')
     }
     draw(g: CanvasSurface): void {
+        g.ctx.imageSmoothingEnabled = false
         g.fillBackgroundSize(this.size(),'white')
         this.model.forEach((w,x,y)=>{
             let color = 'white'
@@ -39,7 +40,7 @@ class GridView extends SuperParentView {
             g.fill(new Rect(x*16,y*16,15,15),color);
             if (w === EMPTY) g.draw_sprite(x*16,y*16,this.empty,2)
             if (w === WALL) g.draw_sprite(x*16,y*16,this.wall,2)
-            // if (w === TAIL) g.draw_slice(x*16,y*16,this.tail,2)
+            if (w === TAIL) g.draw_sprite(x*16,y*16,this.tail,2)
             if (w === FOOD) g.draw_sprite(x*16,y*16,this.food,2)
 
         })
@@ -62,8 +63,9 @@ class SnakeView extends SuperChildView {
         this.set_size(new Size(16,16))
     }
     draw(g: CanvasSurface): void {
+        g.ctx.imageSmoothingEnabled = false
         g.fill(new Rect(0,0,16,16),'yellow')
-        // g.draw_sprite(0,0,this.sprite_slice,2)
+        g.draw_sprite(0,0,this.sprite_slice,2)
     }
     position(): Point {
         return new Point(
@@ -171,9 +173,7 @@ export async function start() {
     surface.repaint();
 
     surface.on_input((e) => {
-        console.log("got input",e)
         if(e.type === 'keydown') {
-            console.log('details are',e)
             if(e.key === 'ArrowLeft')  move_by(new Point(-1,0));
             if(e.key === 'ArrowRight') move_by(new Point(+1,0));
             if(e.key === 'ArrowUp')    move_by(new Point(+0,-1));

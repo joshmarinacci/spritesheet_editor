@@ -29,6 +29,7 @@ export class CanvasSurface {
     private _input_callback: Callback;
     private _keyboard_focus: View;
     private fonts:Map<string,CanvasFont>
+    private global_smoothing = true
 
     constructor(w: number, h: number, scale?:number) {
         this.log("making canvas ",w,h)
@@ -82,6 +83,7 @@ export class CanvasSurface {
         }
     }
     private draw_stack() {
+        this.ctx.imageSmoothingEnabled = this.global_smoothing
         this.ctx.save();
         this.ctx.translate(0.5, 0.5);
         this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
