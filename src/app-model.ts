@@ -1,6 +1,41 @@
 import {CanvasSurface} from "./uilib/canvas";
 import {gen_id} from "./uilib/common";
 
+export const GRAYSCALE_PALETTE = [
+    '#ff00ff',
+    '#f0f0f0',
+    '#d0d0d0',
+    '#909090',
+    '#404040',
+];
+export const INVERTED_PALETTE = [
+    '#ff00ff',
+    '#404040',
+    '#909090',
+    '#d0d0d0',
+    '#f0f0f0',
+];
+export const DEMI_CHROME = [
+    '#ff00ff',
+    '#e9efec',
+    '#a0a08b',
+    '#555568',
+    '#211e20',
+];
+export const CHERRY_BLOSSOM = [
+    '#ff00ff',
+    '#ffe9fc',
+    '#e6cdf7',
+    '#dea0d9',
+    '#a76e87',
+];
+export const DUNE = [
+    '#ff00ff',
+    '#edcda7',
+    '#dcac70',
+    '#e67718',
+    '#320404',
+];
 
 export class Sprite {
     id: string
@@ -119,7 +154,7 @@ export class Tilemap {
 }
 
 export type CB = (any) => void;
-export type Etype = "change"|"reload"|"structure"|'main-selection'
+export type Etype = "change"|"reload"|"structure"|'main-selection'|'palette-change'
 
 export class Observable {
     listeners: Map<Etype, Array<CB>>
@@ -283,13 +318,7 @@ export class Doc extends Observable {
     constructor() {
         super();
         this.selected_color = 1;
-        this._palette = [
-            '#ff00ff',
-            '#f0f0f0',
-            '#d0d0d0',
-            '#909090',
-            '#404040',
-        ];
+        this._palette = GRAYSCALE_PALETTE
         this.font_palette = [
             '#ffffff',
             '#404040',
@@ -442,6 +471,16 @@ export class Doc extends Observable {
             let data = JSON.parse(item)
             this.reset_from_json(data)
         }
+    }
+
+    set_palette(palette: string[]) {
+        this._palette = palette
+        this.fire('palette-change',this._palette)
+        this.sheets.forEach(sh => {
+            sh.sprites.forEach(sp => {
+                sp.sync()
+            })
+        })
     }
 }
 

@@ -279,23 +279,30 @@ export class CanvasSurface {
     }
 
     private dispatch_pointer_event(view: View, e:CommonEvent): View | null {
-        if(this.debug) log("dispatching",view,view.position(),view.size());
+        if(this.debug) log("dispatching",e.type,e.pt,view.name(),view.position(),view.size());
         if (!view.visible()) return null
         let bounds = rect_from_pos_size(view.position(),view.size())
+        if(this.debug) log('bounds',bounds)
         if (bounds.contains(e.pt)) {
             // @ts-ignore
             if (view.is_parent_view && view.is_parent_view()) {
                 let parent = view as unknown as ParentView;
-                for (let i = 0; i < parent.get_children().length; i++) {
+                // go in reverse order to the top drawn children are picked first
+                for (let i = parent.get_children().length-1; i >= 0; i--) {
                     let ch = parent.get_children()[i]
                     let e2 = e.translate(view.position().x,view.position().y);
                     let picked = this.dispatch_pointer_event(ch, e2)
                     if (picked) return picked;
                 }
             }
-            let e2 = e.translate(view.position().x,view.position().y)
-            view.input(e2);
-            return view;
+            // @ts-ignore
+            if (view._type === 'layer-view') {
+                // log("its a layer view. don't capture it, go up instead")
+            } else {
+                let e2 = e.translate(view.position().x, view.position().y)
+                view.input(e2);
+                return view;
+            }
         }
         return null;
     }

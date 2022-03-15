@@ -15,7 +15,19 @@ import {
     jsonObjToBlob,
     on
 } from "./util";
-import {Doc, draw_sprite, Sheet, Sprite, SpriteFont, SpriteGlyph, Tilemap} from "./app-model";
+import {
+    CHERRY_BLOSSOM,
+    DEMI_CHROME,
+    Doc,
+    draw_sprite, DUNE,
+    GRAYSCALE_PALETTE,
+    INVERTED_PALETTE,
+    Sheet,
+    Sprite,
+    SpriteFont,
+    SpriteGlyph,
+    Tilemap
+} from "./app-model";
 import {
     CanvasSurface,
     EVENTS,
@@ -356,19 +368,41 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface, popup_layer:LayerView):
 
         let popup = new PopupContainer();
         let popup_box = new VBox()
+        popup_box.vflex = false
         let grayscale_button = new ActionButton('grayscale')
         grayscale_button.on('action',()=>{
-            this.log("switch to grayscale")
+            doc.set_palette(GRAYSCALE_PALETTE)
             popup.hide()
         })
         popup_box.add(grayscale_button)
 
         let inverted_button = new ActionButton('inverted')
         inverted_button.on('action',()=>{
-            this.log("switch to inverted")
+            doc.set_palette(INVERTED_PALETTE)
             popup.hide()
         })
         popup_box.add(inverted_button)
+
+        let demichrome = new ActionButton('demichrome')
+        demichrome.on('action',()=>{
+            doc.set_palette(DEMI_CHROME)
+            popup.hide()
+        })
+        popup_box.add(demichrome)
+
+        let cherry_blossom = new ActionButton('cherry blossom')
+        cherry_blossom.on('action',()=>{
+            doc.set_palette(CHERRY_BLOSSOM)
+            popup.hide()
+        })
+        popup_box.add(cherry_blossom)
+
+        let dune = new ActionButton('dune')
+        dune.on('action',()=>{
+            doc.set_palette(DUNE)
+            popup.hide()
+        })
+        popup_box.add(dune)
 
         popup.add(popup_box)
         popup_layer.add(popup)
@@ -928,13 +962,14 @@ function make_font_view(doc: Doc) {
 
 
 export function start() {
-    let root = new LayerView()
-    let popup_layer = new LayerView()
+    let root = new LayerView('root-layer')
+    let popup_layer = new LayerView('popup-layer')
 
     log("starting")
     let All = new Observable();
 
     let surface = new CanvasSurface(1200,700);
+    surface.debug = false
     let doc = new Doc();
     doc.check_backup();
     let timeout_id = 0

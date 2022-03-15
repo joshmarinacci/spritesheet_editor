@@ -137,8 +137,13 @@ export class SelectList extends SuperChildView {
 }
 
 export class LayerView extends SuperParentView {
-    constructor() {
+    _type:string
+    constructor(name?:string) {
         super(gen_id('layer'))
+        this._type = 'layer-view'
+        if(name) {
+            this._name = name
+        }
     }
     draw(g: CanvasSurface): void {
     }
@@ -532,7 +537,7 @@ export class PopupContainer extends SuperParentView {
 
     layout2(g: CanvasSurface, available: Size): Size {
         let box = this._children[0]
-        let size = box.layout2(g, new Size(100, 100))
+        let size = box.layout2(g, new Size(1000, 1000))
         this.set_size(size)
         return new Size(size.w, size.h)
     }
