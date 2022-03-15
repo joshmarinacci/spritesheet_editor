@@ -52,12 +52,14 @@ class TileEditor extends SuperChildView {
     scale: number
     sprite: Sprite
     private palette: string[];
+    private _next_click_fill: boolean;
     constructor(doc, palette) {
         super('tile editor')
         this.doc = doc
         this.palette = palette
         this.scale = 32;
         this.sprite = null
+        this._next_click_fill = false
     }
 
     draw(g: CanvasSurface) {
@@ -89,7 +91,13 @@ class TileEditor extends SuperChildView {
             }
             return
         }
-        tile.set_pixel(pt.x, pt.y, this.doc.selected_color);
+        if(this._next_click_fill && e.type === 'mousedown') {
+            let v = tile.get_pixel(pt.x,pt.y)
+            this.bucket_fill(tile,v,this.doc.selected_color,pt)
+            this._next_click_fill = false
+        } else {
+            tile.set_pixel(pt.x, pt.y, this.doc.selected_color);
+        }
         this.doc.mark_dirty()
         this.doc.fire('change', "tile edited");
     }
@@ -101,6 +109,24 @@ class TileEditor extends SuperChildView {
 
     set_sprite(sprite: Sprite) {
         this.sprite = sprite
+    }
+
+    next_click_fill() {
+        this._next_click_fill = true
+    }
+
+    private bucket_fill(tile: Sprite, target: number, replace: number, pt: Point) {
+        let v = tile.get_pixel(pt.x,pt.y)
+        if(v !== target) return
+        if(v === target) {
+            tile.set_pixel(pt.x,pt.y,replace)
+        } else {
+            return
+        }
+        if(pt.x > 0) this.bucket_fill(tile,target,replace,pt.add(new Point(-1,0)))
+        if(pt.x < tile.w - 1) this.bucket_fill(tile,target,replace,pt.add(new Point(+1,0)))
+        if(pt.y > 0) this.bucket_fill(tile,target,replace,pt.add(new Point(0,-1)))
+        if(pt.y < tile.h - 1) this.bucket_fill(tile,target,replace,pt.add(new Point(0,+1)))
     }
 }
 
@@ -570,6 +596,11 @@ function make_sheet_editor_view(doc: Doc) {
     doc.addEventListener('change',() => {
         tile_editor.set_sprite(doc.get_selected_tile())
     })
+    let bucket_button = new ActionButton('fill once')
+    bucket_button.on('action',()=>{
+        tile_editor.next_click_fill()
+    })
+    vb1.add(bucket_button)
     sheet_editor.add(vb1)
 
     let vb2 = new VBox()
