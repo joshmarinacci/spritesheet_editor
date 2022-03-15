@@ -12,6 +12,8 @@ import {Observable, Point, Rect, Size, SuperArray} from "./uilib/common";
 import {CommonEvent, SuperChildView, SuperParentView} from "./uilib/core";
 import {Doc, Sheet, Sprite, SpriteFont} from "./app-model";
 
+const SCALE = 3
+
 class GridView extends SuperParentView {
     private model: GridModel;
     private sheet: Sheet;
@@ -37,11 +39,13 @@ class GridView extends SuperParentView {
             if (w === WALL) color = 'blue'
             if (w === TAIL) color = 'orange'
             if (w === FOOD) color = 'red'
-            g.fill(new Rect(x*16,y*16,15,15),color);
-            if (w === EMPTY) g.draw_sprite(x*16,y*16,this.empty,2)
-            if (w === WALL) g.draw_sprite(x*16,y*16,this.wall,2)
-            if (w === TAIL) g.draw_sprite(x*16,y*16,this.tail,2)
-            if (w === FOOD) g.draw_sprite(x*16,y*16,this.food,2)
+            let xx = x*8*SCALE
+            let yy = y*8*SCALE
+            // g.fill(new Rect(xx,yy,15,15),color);
+            if (w === EMPTY) g.draw_sprite(xx,yy,this.empty,SCALE)
+            if (w === WALL) g.draw_sprite(xx,yy,this.wall,SCALE)
+            if (w === TAIL) g.draw_sprite(xx,yy,this.tail,SCALE)
+            if (w === FOOD) g.draw_sprite(xx,yy,this.food,SCALE)
 
         })
     }
@@ -49,7 +53,7 @@ class GridView extends SuperParentView {
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
-        this.set_size(new Size(this.model.w*16,this.model.h*16))
+        this.set_size(new Size(this.model.w*8*SCALE,this.model.h*8*SCALE))
         return this.size()
     }
 }
@@ -60,17 +64,17 @@ class SnakeView extends SuperChildView {
         super('snake')
         this.model = model;
         this.sprite_slice = spritesheet.sprites.find(sp => sp.name === 'head')
-        this.set_size(new Size(16,16))
+        this.set_size(new Size(8*SCALE,8*SCALE))
     }
     draw(g: CanvasSurface): void {
         g.ctx.imageSmoothingEnabled = false
         g.fill(new Rect(0,0,16,16),'yellow')
-        g.draw_sprite(0,0,this.sprite_slice,2)
+        g.draw_sprite(0,0,this.sprite_slice,SCALE)
     }
     position(): Point {
         return new Point(
-            this.model.position.x*16,
-            this.model.position.y*16
+            this.model.position.x*8*SCALE,
+            this.model.position.y*8*SCALE
         )
     }
 
@@ -137,7 +141,7 @@ export async function start() {
 
     let All = new Observable();
 
-    let surface = new CanvasSurface(40*16,30*16);
+    let surface = new CanvasSurface(40*8*SCALE,30*8*SCALE);
     surface.load_jsonfont(doc,'base','base')
 
 
@@ -156,7 +160,7 @@ export async function start() {
 
     let score = new ScoreModel()
     let score_view = new ScoreView(score, doc.fonts[0])
-    score_view.set_position(new Point(8*32,16*2))
+    score_view.set_position(new Point(8*SCALE*16,8*SCALE*1))
     board_layer.add(score_view)
 
 
@@ -197,7 +201,14 @@ export async function start() {
         board.fill_col(board.w-1,()=>WALL)
         snake.length = score.level
         snake.tail.forEach(val=>board.set_at(val,TAIL));
-        board.set_xy(randi(1,19),randi(1,19),FOOD)
+        while(true) {
+            let x = randi(1,19)
+            let y = randi(1,12)
+            if(board.get_xy(x,y) == EMPTY) {
+                board.set_xy(x,y,FOOD)
+                break;
+            }
+        }
         surface.repaint()
     }
     function die() {
