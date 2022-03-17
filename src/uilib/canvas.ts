@@ -198,7 +198,6 @@ export class CanvasSurface {
     setup_keyboard_input() {
         // let KBD = new Observable()
         document.addEventListener('keydown', (e) => {
-            e.preventDefault()
             let evt = new CommonEvent('keydown',new Point(0,0,),this)
             evt.details = {
                 key:e.key,
@@ -210,6 +209,7 @@ export class CanvasSurface {
             this.dispatch_keyboard_event(evt)
             if(this._input_callback) this._input_callback(e)
             this.repaint()
+            if(!e.altKey && !e.metaKey) e.preventDefault()
             // if (e.key === 'ArrowLeft') KBD.fire(EVENTS.LEFT, {});
             // if (e.key === 'ArrowRight') KBD.fire(EVENTS.RIGHT, {});
             // if (e.key === 'ArrowDown') KBD.fire(EVENTS.DOWN, {});
@@ -329,11 +329,12 @@ export class CanvasSurface {
         return new Size(metrics.width, 16);
     }
 
-    fillStandardText(caption: string, x: number, y: number, font_name?:string) {
+    fillStandardText(caption: string, x: number, y: number, font_name?:string, scale?:number) {
+        if(!scale) scale = 1
         if(font_name && this.fonts.has(font_name)) {
             let font = this.fonts.get(font_name)
             if(font) {
-                font.fillText(this.ctx,caption,x,y-StandardTextHeight)
+                font.fillText(this.ctx,caption,x,y-StandardTextHeight,scale)
                 return
             }
         }
@@ -444,7 +445,8 @@ class CanvasFont {
         return new Size(xoff*this.scale,h*this.scale)
     }
 
-    fillText(ctx:CanvasRenderingContext2D, text:string,x:number,y:number) {
+    fillText(ctx:CanvasRenderingContext2D, text:string,x:number,y:number, scale?:number) {
+        if(!scale) scale = 1
         ctx.fillStyle = 'red'
         let size = this.measureText(text)
         let xoff = 0
@@ -461,10 +463,10 @@ class CanvasFont {
                 let sy = 0
                 let sw = glyph.w - glyph.meta.left - glyph.meta.right
                 let sh = glyph.h //- glyph.meta.baseline
-                let dx = x + xoff*this.scale
-                let dy = y + (yoff+glyph.meta.baseline-1)*this.scale
-                let dw = sw*this.scale
-                let dh = sh*this.scale
+                let dx = x + xoff*this.scale*scale
+                let dy = y + (yoff+glyph.meta.baseline-1)*this.scale*scale
+                let dw = sw*this.scale*scale
+                let dh = sh*this.scale*scale
                 ctx.drawImage(img, sx,sy,sw,sh, dx,dy, dw,dh)
                 xoff += sw + 1
             }

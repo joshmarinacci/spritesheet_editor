@@ -130,9 +130,12 @@ class SnakeView extends SuperChildView {
 class ScoreView extends SuperChildView{
     private score: ScoreModel;
     private font: SpriteFont;
-    constructor(score: ScoreModel, font:SpriteFont) {
+    private snake: SnakeModel;
+
+    constructor(score: ScoreModel, snake: SnakeModel, font: SpriteFont) {
         super('score-view')
         this.score = score;
+        this.snake = snake
         this.font = font
         this.set_size(new Size(32,16))
     }
@@ -141,13 +144,37 @@ class ScoreView extends SuperChildView{
         g.ctx.translate(this.position().x,this.position().y)
         // g.fillBackgroundSize(this.size(),'red')
         g.fillStandardText('level '+this.score.level,10,16,'base')
-        g.fillStandardText('hearts '+this.score.lives,10,16+16+16,'base')
+        g.fillStandardText('hearts '+this.score.lives,10,16*3,'base')
+        g.fillStandardText('speed '+this.snake.speed,10,16*5,'base')
+        g.fillStandardText('length '+this.snake.length,10,16*7,'base')
         g.ctx.restore()
     }
     layout2(g: CanvasSurface, available: Size): Size {
         return this.size()
     }
 }
+class SplashView extends SuperChildView {
+    constructor() {
+        super('splash-view');
+    }
+    draw(g: CanvasSurface): void {
+        g.fillBackgroundSize(this.size(),'rgba(255,255,255,0.7)')
+        g.fillStandardText('Snake 2: The Snakening', 200,100,'base',2)
+        g.fillStandardText('arrows to turn. p switch colors.',200,150,'base',1)
+        g.fillStandardText('press any key to play',200,170,'base',1)
+
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        this.set_size(available)
+        return this.size()
+    }
+
+    set_visible(visible: boolean) {
+        this._visible = visible
+    }
+}
+
 
 function find_empty_point(board: GridModel, min: number, max: number):Point {
     while(true) {
@@ -184,24 +211,25 @@ export async function start() {
 
 
     let score = new ScoreModel()
-    let score_view = new ScoreView(score, doc.fonts[0])
+    let score_view = new ScoreView(score, snake, doc.fonts[0])
     score_view.set_position(SCORE_POSITION)
     board_layer.add(score_view)
 
 
-    // let overlay_layer = new LayerView();
-    // overlay_layer.add(snake_logo);
-    // overlay_layer.add(start_button);
-    // root.add(overlay_layer);
+    let splash_layer = new SplashView();
+    root.add(splash_layer);
 
-    on(All,EVENTS.START,()=>restart());
 
     surface.addToPage();
     surface.set_root(root);
     surface.setup_keyboard_input()
-    surface.repaint();
 
     surface.on_input((e) => {
+        if(!playing) {
+            splash_layer.set_visible(false)
+            playing = true
+            nextLevel()
+        }
         if(e.type === 'keydown') {
             if(e.key === 'ArrowLeft')  turn_to(new Point(-1,0));
             if(e.key === 'ArrowRight') turn_to(new Point(+1,0));
@@ -209,14 +237,14 @@ export async function start() {
             if(e.key === 'ArrowDown')  turn_to(new Point(+0,+1));
         }
     })
-    let playing = true
+    let playing = false
 
     function restart() {
         score.level = 0
         score.lives = 3
         snake.position.copy_from(START_POSITION);
         snake.tail.clear();
-        nextLevel()
+        // nextLevel()
     }
 
     function nextLevel() {
@@ -244,7 +272,8 @@ export async function start() {
     function die() {
         console.log("you died");
         if(score.lives === 0) {
-            restart()
+            // restart()
+            console.log("game over")
         } else {
             score.lives -= 1
             snake.position.copy_from(START_POSITION);
@@ -289,7 +318,7 @@ export async function start() {
         }
     }
 
-    All.fire(EVENTS.START,{})
+    restart()
 
     function refresh() {
         if(playing)process_tick()
