@@ -10,7 +10,16 @@ import {GridModel} from "./models";
 import {LayerView} from "./uilib/components";
 import {Observable, Point, Rect, Size, SuperArray} from "./uilib/common";
 import {CommonEvent, SuperChildView, SuperParentView} from "./uilib/core";
-import {Doc, Sheet, Sprite, SpriteFont} from "./app-model";
+import {
+    CHERRY_BLOSSOM,
+    DEMI_CHROME,
+    Doc, DUNE,
+    GRAYSCALE_PALETTE,
+    INVERTED_PALETTE,
+    Sheet,
+    Sprite,
+    SpriteFont
+} from "./app-model";
 
 const SCALE = 3
 const SPEEDS = [40,30,25,20,15,13,10,9,8,7,6,5,4]
@@ -26,6 +35,13 @@ const SHRINK = 5;
 const SCORE_POSITION = new Point(8*SCALE*10,8*SCALE*0)
 const SHRINK_ODDS = 3
 const HEART_ODDS = 6
+const COLOR_PALETTES = [
+    GRAYSCALE_PALETTE,
+    INVERTED_PALETTE,
+    DEMI_CHROME,
+    CHERRY_BLOSSOM,
+    DUNE,
+]
 
 class SnakeModel {
     position: Point
@@ -158,11 +174,11 @@ class SplashView extends SuperChildView {
         super('splash-view');
     }
     draw(g: CanvasSurface): void {
+        g.strokeBackgroundSize(this.size(),'black')
         g.fillBackgroundSize(this.size(),'rgba(255,255,255,0.7)')
-        g.fillStandardText('Snake 2: The Snakening', 200,100,'base',2)
-        g.fillStandardText('arrows to turn. p switch colors.',200,150,'base',1)
-        g.fillStandardText('press any key to play',200,170,'base',1)
-
+        g.fillStandardText('Snake 2: The Snakening', 200,150,'base',2)
+        g.fillStandardText('arrows to turn. p switch colors.',200,220,'base',1)
+        g.fillStandardText('press any key to play',200,240,'base',1)
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
@@ -224,6 +240,12 @@ export async function start() {
     surface.set_root(root);
     surface.setup_keyboard_input()
 
+    let current_palette = 0
+    function cycle_palette() {
+        current_palette = (current_palette + 1) % COLOR_PALETTES.length
+        doc.set_palette(COLOR_PALETTES[current_palette])
+    }
+
     surface.on_input((e) => {
         if(!playing) {
             splash_layer.set_visible(false)
@@ -235,6 +257,7 @@ export async function start() {
             if(e.key === 'ArrowRight') turn_to(new Point(+1,0));
             if(e.key === 'ArrowUp')    turn_to(new Point(+0,-1));
             if(e.key === 'ArrowDown')  turn_to(new Point(+0,+1));
+            if(e.key === 'p') cycle_palette()
         }
     })
     let playing = false
