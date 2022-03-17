@@ -70,17 +70,23 @@ class ScoreModel {
 class GridView extends SuperParentView {
     private model: GridModel;
     private sheet: Sheet;
-    private wall: Sprite;
+    private wall_left: Sprite;
+    private wall_right: Sprite;
     private empty: Sprite;
     private tail: Sprite;
     private food: Sprite;
     private heart: Sprite;
     private shrink: Sprite;
+    private wall_top: Sprite;
+    private wall_bottom: Sprite;
     constructor(model: GridModel, sheet: Sheet) {
         super('grid-view')
         this.model = model;
         this.sheet = sheet
-        this.wall = sheet.sprites.find(s => s.name === 'wall1')
+        this.wall_left = sheet.sprites.find(s => s.name === 'wall_left')
+        this.wall_right = sheet.sprites.find(s => s.name === 'wall_right')
+        this.wall_top = sheet.sprites.find(s => s.name === 'wall_top')
+        this.wall_bottom = sheet.sprites.find(s => s.name === 'wall_bottom')
         this.empty = sheet.sprites.find(s => s.name === 'ground')
         this.tail = sheet.sprites.find(s => s.name === 'tail')
         this.food = sheet.sprites.find(s => s.name === 'food')
@@ -102,7 +108,12 @@ class GridView extends SuperParentView {
             let yy = y*8*SCALE
             g.fill(new Rect(xx,yy,1*8*SCALE,1*8*SCALE),color);
             if (w === EMPTY) g.draw_sprite(xx,yy,this.empty,SCALE)
-            if (w === WALL) g.draw_sprite(xx,yy,this.wall,SCALE)
+            if (w === WALL) {
+                if(x === 0) g.draw_sprite(xx, yy, this.wall_left, SCALE)
+                if(x === this.model.w-1) g.draw_sprite(xx, yy, this.wall_right, SCALE)
+                if(y === 0) g.draw_sprite(xx, yy, this.wall_top, SCALE)
+                if(y === this.model.w-1) g.draw_sprite(xx, yy, this.wall_bottom, SCALE)
+            }
             if (w === TAIL) g.draw_sprite(xx,yy,this.tail,SCALE)
             if (w === FOOD) g.draw_sprite(xx,yy,this.food,SCALE)
             if (w === HEART) g.draw_sprite(xx,yy,this.heart,SCALE)
@@ -190,6 +201,30 @@ class SplashView extends SuperChildView {
         this._visible = visible
     }
 }
+class DialogView extends SuperChildView {
+    private text: string;
+    constructor() {
+        super('dialog-view');
+        this.text = 'dialog text here'
+    }
+    draw(g: CanvasSurface): void {
+        g.fillBackgroundSize(this.size(),'rgba(255,255,255,0.7)')
+        g.fillStandardText(this.text, 200,150,'base',2)
+        // g.fillStandardText('arrows to turn. p switch colors.',200,220,'base',1)
+        // g.fillStandardText('press any key to play',200,240,'base',1)
+    }
+    layout2(g: CanvasSurface, available: Size): Size {
+        this.set_size(available)
+        return this.size()
+    }
+    set_visible(visible: boolean) {
+        this._visible = visible
+    }
+
+    set_text(died: string) {
+        this.text = died
+    }
+}
 
 
 function find_empty_point(board: GridModel, min: number, max: number):Point {
@@ -201,6 +236,7 @@ function find_empty_point(board: GridModel, min: number, max: number):Point {
         }
     }
 }
+
 
 export async function start() {
     log("starting", snake_json)
@@ -235,6 +271,9 @@ export async function start() {
     let splash_layer = new SplashView();
     root.add(splash_layer);
 
+    let dialog_layer = new DialogView();
+    root.add(dialog_layer)
+    dialog_layer.set_visible(false)
 
     surface.addToPage();
     surface.set_root(root);
@@ -265,9 +304,9 @@ export async function start() {
     function restart() {
         score.level = 0
         score.lives = 3
+        snake.speed = 0
         snake.position.copy_from(START_POSITION);
         snake.tail.clear();
-        // nextLevel()
     }
 
     function nextLevel() {
@@ -290,19 +329,35 @@ export async function start() {
         if(randi(0,HEART_ODDS) === 0) {
             board.set_at(find_empty_point(board,gap,max),HEART)
         }
-        surface.repaint()
+        playing = false
+        dialog_layer.set_text('Level '+score.level)
+        dialog_layer.set_visible(true)
+        setTimeout(()=>{
+            playing = true
+            dialog_layer.set_visible(false)
+        },1000)
     }
     function die() {
         console.log("you died");
+        playing = false
         if(score.lives === 0) {
-            // restart()
-            console.log("game over")
+            dialog_layer.set_text('): game over :(')
+            dialog_layer.set_visible(true)
+            setTimeout(()=>{
+                restart()
+            },1000)
         } else {
-            score.lives -= 1
-            snake.position.copy_from(START_POSITION);
-            snake.tail.clear();
-            score.level = score.level-1
-            nextLevel()
+            dialog_layer.set_text('died :(')
+            dialog_layer.set_visible(true)
+            setTimeout(()=>{
+                dialog_layer.set_visible(false)
+                playing = true
+                score.lives -= 1
+                snake.position.copy_from(START_POSITION);
+                snake.tail.clear();
+                score.level = score.level-1
+                nextLevel()
+            },1000)
         }
     }
 
