@@ -12,7 +12,44 @@ import {Observable, Point, Rect, Size, SuperArray} from "./uilib/common";
 import {CommonEvent, SuperChildView, SuperParentView} from "./uilib/core";
 import {Doc, Sheet, Sprite, SpriteFont} from "./app-model";
 
-const SCALE = 3.5
+const SCALE = 3
+const SPEEDS = [40,30,25,20,15,13,10,9,8,7,6,5,4]
+const START_POSITION = new Point(15,15)
+const CANVAS_SIZE = new Size(35,20)
+const BOARD_SIZE = new Size(20,20)
+const EMPTY = 0;
+const WALL = 1;
+const TAIL = 2;
+const FOOD = 3;
+const HEART = 4;
+const SHRINK = 5;
+const SCORE_POSITION = new Point(8*SCALE*10,8*SCALE*0)
+const SHRINK_ODDS = 3
+const HEART_ODDS = 6
+
+class SnakeModel {
+    position: Point
+    direction: Point
+    tail: SuperArray
+    speed:number
+    length:number
+    constructor() {
+        this.position = new Point(0,0)
+        this.direction = new Point(0,-1)
+        this.tail = new SuperArray()
+        this.speed = 0
+        this.length = 1
+    }
+
+}
+class ScoreModel {
+    level: number;
+    lives: number
+    constructor() {
+        this.level = 0;
+        this.lives = 0
+    }
+}
 
 class GridView extends SuperParentView {
     private model: GridModel;
@@ -90,36 +127,6 @@ class SnakeView extends SuperChildView {
         return this.size()
     }
 }
-
-class SnakeModel {
-    position: Point
-    tail: SuperArray
-    length:number
-    constructor() {
-        this.position = new Point(0,0)
-        this.tail = new SuperArray()
-        this.length = 1
-    }
-}
-
-class ScoreModel {
-    level: number;
-    lives: number
-    constructor() {
-        this.level = 0;
-        this.lives = 0
-    }
-}
-
-
-const EMPTY = 0;
-const WALL = 1;
-const TAIL = 2;
-const FOOD = 3;
-const HEART = 4;
-const SHRINK = 5;
-
-
 class ScoreView extends SuperChildView{
     private score: ScoreModel;
     private font: SpriteFont;
@@ -142,25 +149,32 @@ class ScoreView extends SuperChildView{
     }
 }
 
+function find_empty_point(board: GridModel, min: number, max: number):Point {
+    while(true) {
+        let x = randi(min,max)
+        let y = randi(min,max)
+        if(board.get_xy(x,y) === EMPTY) {
+            return new Point(x,y)
+        }
+    }
+}
+
 export async function start() {
     log("starting", snake_json)
     let doc = new Doc()
     doc.reset_from_json(snake_json)
-    // draw map
-    // draw score using font
-    // draw snake using the sheet directly
 
     let All = new Observable();
 
-    let surface = new CanvasSurface(35*8*SCALE,25*8*SCALE);
+    let surface = new CanvasSurface(CANVAS_SIZE.w*8*SCALE,CANVAS_SIZE.h*8*SCALE);
     surface.load_jsonfont(doc,'base','base')
 
 
     let root = new LayerView()
     let snake = new SnakeModel()
-    snake.position.set(10,10);
-    let board = new GridModel(25,25)
-    board.fill_all(()=>0)
+    snake.position.copy_from(START_POSITION);
+    let board = new GridModel(BOARD_SIZE)
+    board.fill_all(()=>EMPTY)
     let board_layer = new LayerView();
     board_layer._name = 'board'
     let board_view = new GridView(board,doc.sheets[0])
@@ -171,7 +185,7 @@ export async function start() {
 
     let score = new ScoreModel()
     let score_view = new ScoreView(score, doc.fonts[0])
-    score_view.set_position(new Point(8*SCALE*13,8*SCALE*1))
+    score_view.set_position(SCORE_POSITION)
     board_layer.add(score_view)
 
 
@@ -189,17 +203,18 @@ export async function start() {
 
     surface.on_input((e) => {
         if(e.type === 'keydown') {
-            if(e.key === 'ArrowLeft')  move_by(new Point(-1,0));
-            if(e.key === 'ArrowRight') move_by(new Point(+1,0));
-            if(e.key === 'ArrowUp')    move_by(new Point(+0,-1));
-            if(e.key === 'ArrowDown')  move_by(new Point(+0,+1));
+            if(e.key === 'ArrowLeft')  turn_to(new Point(-1,0));
+            if(e.key === 'ArrowRight') turn_to(new Point(+1,0));
+            if(e.key === 'ArrowUp')    turn_to(new Point(+0,-1));
+            if(e.key === 'ArrowDown')  turn_to(new Point(+0,+1));
         }
     })
+    let playing = true
 
     function restart() {
         score.level = 0
         score.lives = 3
-        snake.position.set(5,5);
+        snake.position.copy_from(START_POSITION);
         snake.tail.clear();
         nextLevel()
     }
@@ -213,35 +228,16 @@ export async function start() {
         board.fill_col(board.w-1,()=>WALL)
         snake.length = score.level
         snake.tail.forEach(val=>board.set_at(val,TAIL));
-        while(true) {
-            let x = randi(1,29)
-            let y = randi(1,29)
-            if(board.get_xy(x,y) == EMPTY) {
-                board.set_xy(x,y,FOOD)
-                break;
-            }
+        if(snake.speed < SPEEDS.length-1) snake.speed += 1
+        let gap = 3
+        let max = BOARD_SIZE.w - gap // don't be right next to the edge
+        let food = find_empty_point(board,gap,max)
+        board.set_at(food,FOOD)
+        if(randi(0,SHRINK_ODDS) === 0) {
+            board.set_at(find_empty_point(board,gap,max),SHRINK)
         }
-        let shrink = randi(0,3)
-        if(shrink === 0) {
-            while(true) {
-                let x = randi(1,29)
-                let y = randi(1,29)
-                if(board.get_xy(x,y) == EMPTY) {
-                    board.set_xy(x,y,SHRINK)
-                    break;
-                }
-            }
-        }
-        let heart = randi(0,3)
-        if(heart === 0) {
-            while(true) {
-                let x = randi(1,29)
-                let y = randi(1,29)
-                if(board.get_xy(x,y) == EMPTY) {
-                    board.set_xy(x,y,HEART)
-                    break;
-                }
-            }
+        if(randi(0,HEART_ODDS) === 0) {
+            board.set_at(find_empty_point(board,gap,max),HEART)
         }
         surface.repaint()
     }
@@ -251,14 +247,20 @@ export async function start() {
             restart()
         } else {
             score.lives -= 1
-            snake.position.set(5,5);
+            snake.position.copy_from(START_POSITION);
             snake.tail.clear();
             score.level = score.level-1
             nextLevel()
         }
     }
 
-    function move_by(offset:Point) {
+    let clock = 0
+    function turn_to(pt) {
+        snake.direction = pt
+    }
+    function process_tick() {
+        clock += 1
+        if(clock % SPEEDS[snake.speed] !== 0) return
 
         //drop a tail spot where the head is
         board.set_at(snake.position,TAIL)
@@ -270,31 +272,29 @@ export async function start() {
         }
 
         //move the head
-        snake.position = snake.position.add(offset)
+        snake.position = snake.position.add(snake.direction)
 
         //check the new spot
         let spot = board.get_at(snake.position);
         if (spot === WALL) return die();
         if (spot === TAIL) return die();
         if (spot === FOOD) return nextLevel();
-        if (spot === HEART) {
-            score.lives += 1
-            surface.repaint()
-            return
-        }
+        if (spot === HEART) return score.lives += 1
         if (spot == SHRINK) {
-            if(snake.length > 3) {
-                snake.length -= 3
-            }
+            if(snake.length > 3) snake.length -= 3
             while (snake.tail.length() > snake.length) {
                 board.set_at(snake.tail.pop_start(),EMPTY) // remove tail spot
             }
-            surface.repaint()
             return
         }
-
-        surface.repaint()
     }
 
     All.fire(EVENTS.START,{})
+
+    function refresh() {
+        if(playing)process_tick()
+        surface.repaint()
+        requestAnimationFrame(refresh)
+    }
+    requestAnimationFrame(refresh)
 }

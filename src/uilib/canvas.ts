@@ -60,11 +60,11 @@ export class CanvasSurface {
     }
 
     repaint() {
-        console.time("repaint");
+        if(this.debug) console.time("repaint");
         this.layout_stack();
         this.clear();
         this.draw_stack()
-        console.timeEnd("repaint");
+        if(this.debug) console.timeEnd("repaint");
     }
 
     clear() {
