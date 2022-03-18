@@ -350,7 +350,7 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface, popup_layer:LayerView):
                 ctx.fillRect(x+i*8, y+j*8, 8,8);
             });
         })
-        canvasToPNGBlob(canvas).then((blob)=> forceDownloadBlob(`tileset@1.png`,blob))
+        canvasToPNGBlob(canvas).then((blob)=> forceDownloadBlob(`${doc.name}@8.png`,blob))
     })
     toolbar.add(export_button);
 
