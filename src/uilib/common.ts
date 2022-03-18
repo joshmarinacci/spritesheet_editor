@@ -82,6 +82,11 @@ export class Point {
         this.x = x;
         this.y = y;
     }
+
+    copy_from(pt: Point) {
+        this.x = pt.x
+        this.y = pt.y
+    }
 }
 
 export class Rect {

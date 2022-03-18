@@ -1,14 +1,14 @@
 import {log} from "./uilib/canvas";
-import {Callback, Point} from "./uilib/common";
+import {Callback, Point, Size} from "./uilib/common";
 
 export class GridModel {
     w: number;
     h: number;
     private data: any[];
 
-    constructor(w: number, h: number) {
-        this.w = w;
-        this.h = h;
+    constructor(size:Size) {
+        this.w = size.w;
+        this.h = size.h;
         this.data = []
         for (let i = 0; i < this.w * this.h; i++) {
             this.data[i] = 0;

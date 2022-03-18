@@ -1,7 +1,7 @@
 import {Callback, Observable, Point, Rect, Size} from "./common";
 import {StandardTextColor, StandardTextHeight, StandardTextStyle} from "../style";
 import {CommonEvent, ParentView, View} from "./core";
-import {Sprite, SpriteGlyph} from "../app-model";
+import {Sheet, Sprite, SpriteGlyph, Tilemap} from "../app-model";
 
 export function log(...args) {
     console.log('SNAKE:', ...args);
@@ -60,11 +60,11 @@ export class CanvasSurface {
     }
 
     repaint() {
-        console.time("repaint");
+        if(this.debug) console.time("repaint");
         this.layout_stack();
         this.clear();
         this.draw_stack()
-        console.timeEnd("repaint");
+        if(this.debug) console.timeEnd("repaint");
     }
 
     clear() {
@@ -198,7 +198,6 @@ export class CanvasSurface {
     setup_keyboard_input() {
         // let KBD = new Observable()
         document.addEventListener('keydown', (e) => {
-            e.preventDefault()
             let evt = new CommonEvent('keydown',new Point(0,0,),this)
             evt.details = {
                 key:e.key,
@@ -210,6 +209,7 @@ export class CanvasSurface {
             this.dispatch_keyboard_event(evt)
             if(this._input_callback) this._input_callback(e)
             this.repaint()
+            if(!e.altKey && !e.metaKey) e.preventDefault()
             // if (e.key === 'ArrowLeft') KBD.fire(EVENTS.LEFT, {});
             // if (e.key === 'ArrowRight') KBD.fire(EVENTS.RIGHT, {});
             // if (e.key === 'ArrowDown') KBD.fire(EVENTS.DOWN, {});
@@ -329,11 +329,12 @@ export class CanvasSurface {
         return new Size(metrics.width, 16);
     }
 
-    fillStandardText(caption: string, x: number, y: number, font_name?:string) {
+    fillStandardText(caption: string, x: number, y: number, font_name?:string, scale?:number) {
+        if(!scale) scale = 1
         if(font_name && this.fonts.has(font_name)) {
             let font = this.fonts.get(font_name)
             if(font) {
-                font.fillText(this.ctx,caption,x,y-StandardTextHeight)
+                font.fillText(this.ctx,caption,x,y-StandardTextHeight,scale)
                 return
             }
         }
@@ -359,6 +360,19 @@ export class CanvasSurface {
 
     draw_sprite(x: number, y: number, sprite: Sprite, scale: number) {
         this.ctx.drawImage(sprite._img,x,y,sprite._img.width*scale,sprite._img.height*scale)
+    }
+
+    draw_tilemap(tilemap: Tilemap, sheet:Sheet, x: number, y: number, scale: number) {
+        tilemap.forEachPixel((val,i,j) => {
+            if (!val || val === 0) return;
+            // let sheet = this.doc.get_selected_sheet()
+            let tile = sheet.sprites.find((t:Sprite) => t.id ===val);
+            this.ctx.imageSmoothingEnabled = false
+            if(tile) {
+                this.ctx.drawImage(tile._img,x+i*scale,y+j*scale, scale, scale)
+            }
+        })
+
     }
 }
 
@@ -444,7 +458,8 @@ class CanvasFont {
         return new Size(xoff*this.scale,h*this.scale)
     }
 
-    fillText(ctx:CanvasRenderingContext2D, text:string,x:number,y:number) {
+    fillText(ctx:CanvasRenderingContext2D, text:string,x:number,y:number, scale?:number) {
+        if(!scale) scale = 1
         ctx.fillStyle = 'red'
         let size = this.measureText(text)
         let xoff = 0
@@ -461,10 +476,10 @@ class CanvasFont {
                 let sy = 0
                 let sw = glyph.w - glyph.meta.left - glyph.meta.right
                 let sh = glyph.h //- glyph.meta.baseline
-                let dx = x + xoff*this.scale
-                let dy = y + (yoff+glyph.meta.baseline-1)*this.scale
-                let dw = sw*this.scale
-                let dh = sh*this.scale
+                let dx = x + xoff*this.scale*scale
+                let dy = y + (yoff+glyph.meta.baseline-1)*this.scale*scale
+                let dw = sw*this.scale*scale
+                let dh = sh*this.scale*scale
                 ctx.drawImage(img, sx,sy,sw,sh, dx,dy, dw,dh)
                 xoff += sw + 1
             }
