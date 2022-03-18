@@ -1,7 +1,7 @@
 import {Callback, Observable, Point, Rect, Size} from "./common";
 import {StandardTextColor, StandardTextHeight, StandardTextStyle} from "../style";
 import {CommonEvent, ParentView, View} from "./core";
-import {Sprite, SpriteGlyph} from "../app-model";
+import {Sheet, Sprite, SpriteGlyph, Tilemap} from "../app-model";
 
 export function log(...args) {
     console.log('SNAKE:', ...args);
@@ -360,6 +360,19 @@ export class CanvasSurface {
 
     draw_sprite(x: number, y: number, sprite: Sprite, scale: number) {
         this.ctx.drawImage(sprite._img,x,y,sprite._img.width*scale,sprite._img.height*scale)
+    }
+
+    draw_tilemap(tilemap: Tilemap, sheet:Sheet, x: number, y: number, scale: number) {
+        tilemap.forEachPixel((val,i,j) => {
+            if (!val || val === 0) return;
+            // let sheet = this.doc.get_selected_sheet()
+            let tile = sheet.sprites.find((t:Sprite) => t.id ===val);
+            this.ctx.imageSmoothingEnabled = false
+            if(tile) {
+                this.ctx.drawImage(tile._img,x+i*scale,y+j*scale, scale, scale)
+            }
+        })
+
     }
 }
 

@@ -18,13 +18,23 @@ import {
     INVERTED_PALETTE,
     Sheet,
     Sprite,
-    SpriteFont
+    SpriteFont, Tilemap
 } from "./app-model";
 
 const SCALE = 3
-const SPEEDS = [40,30,25,20,15,13,10,9,8,7,6,5,4]
+const SPEEDS = [
+    40,35,30,25,20,20,20,
+    15,15,15,
+    13,13,13,
+    10,10,10,
+    9,9,9,
+    8,8,8,
+    7,7,7,
+    6,6,6,
+    5,5,5,
+    4,4,4]
 const START_POSITION = new Point(15,15)
-const CANVAS_SIZE = new Size(35,20)
+const CANVAS_SIZE = new Size(30,20)
 const BOARD_SIZE = new Size(20,20)
 const EMPTY = 0;
 const WALL = 1;
@@ -170,10 +180,15 @@ class ScoreView extends SuperChildView{
         g.ctx.save()
         g.ctx.translate(this.position().x,this.position().y)
         // g.fillBackgroundSize(this.size(),'red')
-        g.fillStandardText('level '+this.score.level,10,16,'base')
-        g.fillStandardText('hearts '+this.score.lives,10,16*3,'base')
-        g.fillStandardText('speed '+this.snake.speed,10,16*5,'base')
-        g.fillStandardText('length '+this.snake.length,10,16*7,'base')
+        let lines = [
+            `Level ${this.score.level}`,
+            `Hearts ${this.score.lives}`,
+            `Speed ${this.snake.speed}`,
+            `Length ${this.snake.length}`,
+        ]
+        lines.forEach((str,i) => {
+            g.fillStandardText(str, 10, 16*i*4+32, 'base', 2)
+        })
         g.ctx.restore()
     }
     layout2(g: CanvasSurface, available: Size): Size {
@@ -185,8 +200,12 @@ class SplashView extends SuperChildView {
         super('splash-view');
     }
     draw(g: CanvasSurface): void {
-        g.strokeBackgroundSize(this.size(),'black')
         g.fillBackgroundSize(this.size(),'rgba(255,255,255,0.7)')
+        g.ctx.save()
+        g.ctx.strokeStyle = 'black'
+        g.ctx.lineWidth = 4
+        g.ctx.strokeRect(4,4,this.size().w-4*2,this.size().h-4*2)
+        g.ctx.restore()
         g.fillStandardText('Snake 2: The Snakening', 200,150,'base',2)
         g.fillStandardText('arrows to turn. p switch colors.',200,220,'base',1)
         g.fillStandardText('press any key to play',200,240,'base',1)
@@ -203,15 +222,24 @@ class SplashView extends SuperChildView {
 }
 class DialogView extends SuperChildView {
     private text: string;
-    constructor() {
+    private map: Tilemap;
+    private sheet: Sheet;
+    constructor(map:Tilemap, sheet:Sheet) {
         super('dialog-view');
+        this.map = map
+        this.sheet = sheet
         this.text = 'dialog text here'
     }
     draw(g: CanvasSurface): void {
         g.fillBackgroundSize(this.size(),'rgba(255,255,255,0.7)')
-        g.fillStandardText(this.text, 200,150,'base',2)
-        // g.fillStandardText('arrows to turn. p switch colors.',200,220,'base',1)
-        // g.fillStandardText('press any key to play',200,240,'base',1)
+        let sprite_w = this.sheet.sprites[0].w
+        let map_w = this.map.w * sprite_w * SCALE
+        let map_scale = SCALE * sprite_w
+        let map_x = (this.size().w - map_w)/2
+        let text_w = g.measureText(this.text,'base').w *2
+        let text_x = (this.size().w - text_w)/2
+        g.draw_tilemap(this.map,this.sheet,map_x,16,map_scale)
+        g.fillStandardText(this.text, text_x,150,'base',2)
     }
     layout2(g: CanvasSurface, available: Size): Size {
         this.set_size(available)
@@ -271,7 +299,7 @@ export async function start() {
     let splash_layer = new SplashView();
     root.add(splash_layer);
 
-    let dialog_layer = new DialogView();
+    let dialog_layer = new DialogView(doc.maps.find(m => m.name === 'dialog'), doc.sheets[0]);
     root.add(dialog_layer)
     dialog_layer.set_visible(false)
 
@@ -286,8 +314,9 @@ export async function start() {
     }
 
     surface.on_input((e) => {
-        if(!playing) {
+        if(gameover) {
             splash_layer.set_visible(false)
+            gameover = false
             playing = true
             nextLevel()
         }
@@ -300,6 +329,7 @@ export async function start() {
         }
     })
     let playing = false
+    let gameover = true
 
     function restart() {
         score.level = 0
