@@ -396,7 +396,7 @@ export class Doc extends Observable {
     }
 
     reset_from_json(data) {
-        console.log('data is',data)
+        // console.log('data is',data)
         if(data.version === 1) {
             if(data.fonts && data.fonts.length > 0) {
                 console.log("pretending to upgrade the document")
@@ -414,20 +414,20 @@ export class Doc extends Observable {
             }
         }
         if(data.version !== 2) throw new Error("we can only parse version 2 json")
-        console.log("processing",data);
+        // console.log("processing",data);
 
         this.sheets = data.sheets.map(sh => {
-            console.log("sheet",sh)
+            // console.log("sheet",sh)
             return obj_to_class(sh,this)
         })
         this.fonts = data.fonts.map(fnt => {
-            console.log("font",fnt)
+            // console.log("font",fnt)
             return obj_to_class(fnt, this)
         })
         this.maps = data.maps.map(mp => {
-            console.log("map is",mp)
+            // console.log("map is",mp)
             let mp2 = obj_to_class(mp, this)
-            console.log("restored map is",mp2)
+            // console.log("restored map is",mp2)
             return mp2
         })
 

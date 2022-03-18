@@ -32,7 +32,8 @@ const SPEEDS = [
     7,7,7,
     6,6,6,
     5,5,5,
-    4,4,4]
+    4,4,4
+]
 const START_POSITION = new Point(15,15)
 const CANVAS_SIZE = new Size(30,20)
 const BOARD_SIZE = new Size(20,20)
@@ -200,15 +201,25 @@ class SplashView extends SuperChildView {
         super('splash-view');
     }
     draw(g: CanvasSurface): void {
-        g.fillBackgroundSize(this.size(),'rgba(255,255,255,0.7)')
+        g.fillBackgroundSize(this.size(),'rgba(255,255,255,1.0)')
         g.ctx.save()
         g.ctx.strokeStyle = 'black'
         g.ctx.lineWidth = 4
         g.ctx.strokeRect(4,4,this.size().w-4*2,this.size().h-4*2)
         g.ctx.restore()
-        g.fillStandardText('Snake 2: The Snakening', 200,150,'base',2)
-        g.fillStandardText('arrows to turn. p switch colors.',200,220,'base',1)
-        g.fillStandardText('press any key to play',200,240,'base',1)
+        let x = 150
+        g.fillStandardText('Snake 2: The Snakening', x,150,'base',2)
+        let lines = [
+            'arrow keys turn',
+            `'p' switch colors`,
+            'press any key to start'
+        ]
+        lines.forEach((str,i) => {
+            g.fillStandardText(str,x,220+i*32,'base',1)
+        })
+        // g.fillStandardText('arrows to turn. p switch colors.',x,220,'base',1)
+        // g.fillStandardText('p switch colors.',x,240,'base',1)
+        // g.fillStandardText('press any key to play',x,260,'base',1)
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
@@ -268,6 +279,7 @@ function find_empty_point(board: GridModel, min: number, max: number):Point {
 
 export async function start() {
     log("starting", snake_json)
+    log("total level count =", SPEEDS.length)
     let doc = new Doc()
     doc.reset_from_json(snake_json)
 
@@ -349,6 +361,9 @@ export async function start() {
         snake.length = score.level
         snake.tail.forEach(val=>board.set_at(val,TAIL));
         if(snake.speed < SPEEDS.length-1) snake.speed += 1
+        if(snake.speed === SPEEDS.length-1) {
+            return win()
+        }
         let gap = 3
         let max = BOARD_SIZE.w - gap // don't be right next to the edge
         let food = find_empty_point(board,gap,max)
@@ -367,6 +382,14 @@ export async function start() {
             dialog_layer.set_visible(false)
         },1000)
     }
+    function win() {
+        console.log("you won")
+        playing = false
+        dialog_layer.set_text('!!! You Win!!!!')
+        dialog_layer.set_visible(true)
+        gameover = true
+    }
+
     function die() {
         console.log("you died");
         playing = false
