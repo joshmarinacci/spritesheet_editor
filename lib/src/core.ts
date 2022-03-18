@@ -58,7 +58,7 @@ export interface ParentView {
     clip_children(): boolean,
 }
 
-export abstract class SuperParentView implements View, ParentView {
+export abstract class BaseParentView implements View, ParentView {
     hflex: boolean
     vflex: boolean
     id: string
@@ -146,7 +146,7 @@ export abstract class SuperParentView implements View, ParentView {
     }
 }
 
-export abstract class SuperChildView implements View {
+export abstract class BaseView implements View {
     hflex: boolean;
     vflex: boolean;
     protected _visible: boolean

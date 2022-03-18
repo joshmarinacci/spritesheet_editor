@@ -9,7 +9,7 @@ import {
 import {GridModel} from "../../common/models";
 import {LayerView} from "../../lib/src/components";
 import {Observable, Point, Rect, Size, SuperArray} from "../../lib/src/common";
-import {CommonEvent, SuperChildView, SuperParentView} from "../../lib/src/core";
+import {CommonEvent, BaseView, BaseParentView} from "../../lib/src/core";
 import {
     CHERRY_BLOSSOM,
     DEMI_CHROME,
@@ -78,7 +78,7 @@ class ScoreModel {
     }
 }
 
-class GridView extends SuperParentView {
+class GridView extends BaseParentView {
     private model: GridModel;
     private sheet: Sheet;
     private wall_left: Sprite;
@@ -140,7 +140,7 @@ class GridView extends SuperParentView {
         return this.size()
     }
 }
-class SnakeView extends SuperChildView {
+class SnakeView extends BaseView {
     private model: SnakeModel;
     private sprite_slice: Sprite;
     constructor(model: SnakeModel, spritesheet: Sheet) {
@@ -165,7 +165,7 @@ class SnakeView extends SuperChildView {
         return this.size()
     }
 }
-class ScoreView extends SuperChildView{
+class ScoreView extends BaseView{
     private score: ScoreModel;
     private font: SpriteFont;
     private snake: SnakeModel;
@@ -196,7 +196,7 @@ class ScoreView extends SuperChildView{
         return this.size()
     }
 }
-class SplashView extends SuperChildView {
+class SplashView extends BaseView {
     constructor() {
         super('splash-view');
     }
@@ -231,7 +231,7 @@ class SplashView extends SuperChildView {
         this._visible = visible
     }
 }
-class DialogView extends SuperChildView {
+class DialogView extends BaseView {
     private text: string;
     private map: Tilemap;
     private sheet: Sheet;

@@ -12,9 +12,9 @@ import {
     VBox
 } from "./components";
 import {gen_id, Point, Size} from "./common";
-import {SuperChildView, SuperParentView} from "./core";
+import {BaseView, BaseParentView} from "./core";
 
-class DialogContainer extends SuperParentView {
+class DialogContainer extends BaseParentView {
     constructor() {
         super("dialog-container")
         this._name = 'dialog-container'
@@ -36,7 +36,7 @@ class DialogContainer extends SuperParentView {
         this.set_position(new Point(x,y))
     }
 }
-class FixedGridPanel extends SuperChildView {
+class FixedGridPanel extends BaseView {
     private sw: number;
     private sh: number;
     constructor(w: number, h: number) {

@@ -8,9 +8,9 @@ import {
     StandardTextHeight
 } from "./style";
 import {Callback, gen_id, Point, Rect, Size} from "./common";
-import {CommonEvent, SuperChildView, SuperParentView, View} from "./core";
+import {CommonEvent, BaseView, BaseParentView, View} from "./core";
 
-export class Label extends SuperChildView {
+export class Label extends BaseView {
     protected caption: string
 
     constructor(caption: string) {
@@ -42,7 +42,7 @@ export class CustomLabel extends Label {
         super.draw(ctx);
     }
 }
-export class ActionButton extends SuperChildView {
+export class ActionButton extends BaseView {
     private caption: string
     constructor(button1: string) {
         super(gen_id("button2"))
@@ -66,7 +66,7 @@ export class ActionButton extends SuperChildView {
         return this.size()
     }
 }
-export class ToggleButton extends SuperChildView {
+export class ToggleButton extends BaseView {
     title: string
     selected:boolean
     constructor(title: string) {
@@ -94,7 +94,7 @@ export class ToggleButton extends SuperChildView {
     }
 }
 
-export class SelectList extends SuperChildView {
+export class SelectList extends BaseView {
     private data: any[];
     private renderer: any;
     private selected_index: number;
@@ -136,7 +136,7 @@ export class SelectList extends SuperChildView {
     }
 }
 
-export class LayerView extends SuperParentView {
+export class LayerView extends BaseParentView {
     _type:string
     constructor(name?:string) {
         super(gen_id('layer'))
@@ -154,7 +154,7 @@ export class LayerView extends SuperParentView {
     }
 }
 
-export class Header extends SuperChildView {
+export class Header extends BaseView {
     private caption: string
     private fill: string;
 
@@ -179,7 +179,7 @@ export class Header extends SuperChildView {
     }
 }
 
-export class HBox extends SuperParentView {
+export class HBox extends BaseParentView {
     fill: string;
     pad: number;
 
@@ -246,7 +246,7 @@ export class HBox extends SuperParentView {
     }
 }
 
-export class VBox extends SuperParentView {
+export class VBox extends BaseParentView {
     fill: string;
     pad: number;
 
@@ -315,7 +315,7 @@ export class VBox extends SuperParentView {
     }
 }
 
-export class HSpacer extends SuperChildView {
+export class HSpacer extends BaseView {
     constructor() {
         super("h-spacer");
         this.hflex = true
@@ -331,7 +331,7 @@ export class HSpacer extends SuperChildView {
     }
 }
 
-export class GrowPanel extends SuperParentView {
+export class GrowPanel extends BaseParentView {
     private fill: string
 
     constructor() {
@@ -356,7 +356,7 @@ export class GrowPanel extends SuperParentView {
     }
 }
 
-class ScrollWrapper extends SuperParentView {
+class ScrollWrapper extends BaseParentView {
     xoff: number
     yoff: number
     constructor() {
@@ -400,7 +400,7 @@ viewport size / content size = thumb length / gutter length
 (vs/cs) * gl = tl
 
  */
-class ScrollBar extends SuperChildView {
+class ScrollBar extends BaseView {
     private vert: boolean;
     private wrapper: ScrollWrapper;
     constructor(vert:boolean, wrapper:ScrollWrapper) {
@@ -466,7 +466,7 @@ class ScrollBar extends SuperChildView {
         return this.size()
     }
 }
-export class ScrollView extends SuperParentView {
+export class ScrollView extends BaseParentView {
     private hbar: ScrollBar;
     private vbar: ScrollBar
     private content: View
@@ -525,7 +525,7 @@ export class ScrollView extends SuperParentView {
     }
 }
 
-export class PopupContainer extends SuperParentView {
+export class PopupContainer extends BaseParentView {
     constructor() {
         super(gen_id("popupcontainer"))
         this._name = "popup_container"

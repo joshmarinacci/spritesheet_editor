@@ -41,13 +41,13 @@ import {
     StandardTextHeight, StandardTextStyle
 } from "../../lib/src/style";
 import {gen_id, Observable, Point, Rect, Size} from "../../lib/src/common";
-import {CommonEvent, SuperChildView, SuperParentView} from "../../lib/src/core";
+import {CommonEvent, BaseView, BaseParentView} from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
 
 export const EMPTY_COLOR = '#62fcdc'
 
-class TileEditor extends SuperChildView {
+class TileEditor extends BaseView {
     doc: Doc;
     scale: number
     sprite: Sprite
@@ -130,7 +130,7 @@ class TileEditor extends SuperChildView {
     }
 }
 
-class TileSelector extends SuperChildView {
+class TileSelector extends BaseView {
     doc: Doc;
     scale: number;
     constructor(doc) {
@@ -174,7 +174,7 @@ function wrap_number(num:number,width:number):Point {
     )
 }
 
-class MapEditor extends SuperChildView {
+class MapEditor extends BaseView {
     doc: Doc;
     _scale:number;
     private tilemap: Tilemap | null;
@@ -237,7 +237,7 @@ class MapEditor extends SuperChildView {
     }
 }
 
-class PaletteChooser extends SuperChildView{
+class PaletteChooser extends BaseView{
     palette: any;
     doc: Doc;
     scale:number;
@@ -452,7 +452,7 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface, popup_layer:LayerView):
 
 //expands all children to fill the view
 //choose one to be visible based on the selected-tree-item
-class SinglePanel extends SuperParentView {
+class SinglePanel extends BaseParentView {
     private doc: Doc;
     private pad: number;
     constructor(doc:Doc) {
@@ -497,7 +497,7 @@ class SinglePanel extends SuperParentView {
     }
 }
 
-class TextLine extends SuperChildView {
+class TextLine extends BaseView {
     private text: string;
     private cursor: number;
     private pref_width: number;
@@ -744,7 +744,7 @@ function make_map_view(doc: Doc) {
     return map_view
 }
 
-class GlyphChooser extends SuperChildView {
+class GlyphChooser extends BaseView {
     private doc: Doc;
     private scale: number;
     private wrap: number;
@@ -783,7 +783,7 @@ class GlyphChooser extends SuperChildView {
     }
 }
 
-class FontPreview extends SuperChildView {
+class FontPreview extends BaseView {
     private text: string;
     private doc: any;
     constructor(doc) {
