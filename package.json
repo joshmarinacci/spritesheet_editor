@@ -6,11 +6,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npx tsc",
-    "local-dev": "npx parcel src/index.html",
-    "snake-dev": "npx parcel src/snake.html",
+    "local-dev": "npx parcel apps/tileeditor/index.html",
+    "snake-dev": "npx parcel apps/snake/snake.html",
     "snake-build": "npx parcel build",
-    "guitest": "npx parcel src/guitest.html",
-    "minesweeper-dev": "npx parcel src/minesweeper.html"
+    "guitest": "npx parcel lib/src/guitest.html",
+    "minesweeper-dev": "npx parcel apps/minesweeper/minesweeper.html"
   },
   "author": "",
   "license": "ISC",

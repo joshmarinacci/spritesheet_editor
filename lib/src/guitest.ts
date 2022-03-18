@@ -1,4 +1,4 @@
-import {CanvasSurface} from "./uilib/canvas";
+import {CanvasSurface} from "./canvas";
 import {
     ActionButton,
     GrowPanel,
@@ -10,9 +10,9 @@ import {
     PopupContainer,
     ScrollView,
     VBox
-} from "./uilib/components";
-import {gen_id, Point, Size} from "./uilib/common";
-import {SuperChildView, SuperParentView} from "./uilib/core";
+} from "./components";
+import {gen_id, Point, Size} from "./common";
+import {SuperChildView, SuperParentView} from "./core";
 
 class DialogContainer extends SuperParentView {
     constructor() {

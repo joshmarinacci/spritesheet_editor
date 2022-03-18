@@ -6,7 +6,7 @@ import {
     StandardLeftPadding,
     StandardSelectionColor,
     StandardTextHeight
-} from "../style";
+} from "./style";
 import {Callback, gen_id, Point, Rect, Size} from "./common";
 import {CommonEvent, SuperChildView, SuperParentView, View} from "./core";
 

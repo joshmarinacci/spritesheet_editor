@@ -1,7 +1,7 @@
 import {Callback, Observable, Point, Rect, Size} from "./common";
-import {StandardTextColor, StandardTextHeight, StandardTextStyle} from "../style";
+import {StandardTextColor, StandardTextHeight, StandardTextStyle} from "./style";
 import {CommonEvent, ParentView, View} from "./core";
-import {Sheet, Sprite, SpriteGlyph, Tilemap} from "../app-model";
+import {Sheet, Sprite, SpriteGlyph, Tilemap} from "../../apps/tileeditor/app-model";
 
 export function log(...args) {
     console.log('SNAKE:', ...args);

@@ -1,15 +1,15 @@
-import {on, randi} from "./util";
+import {on, randi} from "../../common/util";
 // @ts-ignore
 import snake_json from "./snake.json";
 
 import {
     CanvasSurface, EVENTS,
     log,
-} from "./uilib/canvas";
-import {GridModel} from "./models";
-import {LayerView} from "./uilib/components";
-import {Observable, Point, Rect, Size, SuperArray} from "./uilib/common";
-import {CommonEvent, SuperChildView, SuperParentView} from "./uilib/core";
+} from "../../lib/src/canvas";
+import {GridModel} from "../../common/models";
+import {LayerView} from "../../lib/src/components";
+import {Observable, Point, Rect, Size, SuperArray} from "../../lib/src/common";
+import {CommonEvent, SuperChildView, SuperParentView} from "../../lib/src/core";
 import {
     CHERRY_BLOSSOM,
     DEMI_CHROME,
@@ -19,7 +19,7 @@ import {
     Sheet,
     Sprite,
     SpriteFont, Tilemap
-} from "./app-model";
+} from "../tileeditor/app-model";
 
 const SCALE = 3
 const SPEEDS = [

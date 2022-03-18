@@ -1,8 +1,8 @@
-import {CanvasSurface, EVENTS} from "./uilib/canvas";
-import {GridModel} from "./models";
-import {LayerView} from "./uilib/components";
-import {Callback, Rect, Size} from "./uilib/common";
-import {CommonEvent, SuperChildView, View} from "./uilib/core";
+import {CanvasSurface, EVENTS} from "../../lib/src/canvas";
+import {GridModel} from "../../common/models";
+import {LayerView} from "../../lib/src/components";
+import {Callback, Rect, Size} from "../../lib/src/common";
+import {CommonEvent, SuperChildView, View} from "../../lib/src/core";
 
 /*
 
@@ -37,7 +37,7 @@ class Cell {
 class MinesweeperModel {
     grid: GridModel;
     constructor() {
-        this.grid = new GridModel(20,20)
+        this.grid = new GridModel(new Size(20,20))
         this.grid.fill_all(()=>{
             return new Cell()
         })

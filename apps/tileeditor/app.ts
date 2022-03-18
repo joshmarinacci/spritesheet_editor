@@ -8,13 +8,13 @@ import {
     VBox,
     Header,
     ScrollView, LayerView, PopupContainer
-} from "./uilib/components";
+} from "../../lib/src/components";
 import {
     canvasToPNGBlob, fileToJSON,
     forceDownloadBlob,
     jsonObjToBlob,
     on
-} from "./util";
+} from "../../common/util";
 import {
     CHERRY_BLOSSOM,
     DEMI_CHROME,
@@ -32,18 +32,18 @@ import {
     CanvasSurface,
     EVENTS,
     log,
-} from "./uilib/canvas";
+} from "../../lib/src/canvas";
 import {
     StandardLeftPadding,
     StandardPanelBackgroundColor,
     StandardSelectionColor,
     StandardTextColor,
     StandardTextHeight, StandardTextStyle
-} from "./style";
-import {gen_id, Observable, Point, Rect, Size} from "./uilib/common";
-import {CommonEvent, SuperChildView, SuperParentView} from "./uilib/core";
+} from "../../lib/src/style";
+import {gen_id, Observable, Point, Rect, Size} from "../../lib/src/common";
+import {CommonEvent, SuperChildView, SuperParentView} from "../../lib/src/core";
 // @ts-ignore
-import basefont_data from "./base_font.json";
+import basefont_data from "../../lib/src/base_font.json";
 
 export const EMPTY_COLOR = '#62fcdc'
 
