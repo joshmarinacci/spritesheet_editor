@@ -8,6 +8,6 @@
   },
   "scripts": {
     "minesweeper-dev": "npx parcel minesweeper.html",
-    "build": "npx parcel build"
+    "build": "npx parcel build minesweeper.html"
   }
 }
