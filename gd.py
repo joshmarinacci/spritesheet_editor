@@ -10,6 +10,11 @@ block_bitmap = bytearray([0,0,4,0,0])
 # BITMAP: width: 5, height: 5
 cubey_bitmap = bytearray([0,10,8,10,0])
 
+gravity = 0.15 # pixels per tick
+jump_power = -3 #vertical pixels, single impulse
+scroll_speed = 0.4  #pixels per tick
+
+
 class Cubey:
     def __init__(self, x, y, w, h):
         self.x = x
@@ -19,6 +24,25 @@ class Cubey:
         self.dv = 0
         self.alive = True
         self.standing = False
+
+    def reset(self):
+        self.alive =  True
+        self.dv = 0
+        self.x = 5
+        self.y = 5
+
+    def draw(self):
+        thumby.display.blit(cubey_bitmap, math.trunc(self.x),math.trunc(self.y),self.w,self.h, -1,0,0)
+
+    def check_input(self):
+        if thumby.buttonA.pressed() and self.standing:
+            self.standing = False
+            self.dv += jump_power
+
+    def update(self):
+        # apply gravity
+        self.dv += gravity
+        self.y += self.dv
 
     def intersects(self, rect):
         if rect.x + rect.w < self.x:
@@ -31,6 +55,8 @@ class Cubey:
             return False
         return True
 
+
+
 SPIKE = 5
 BLOCK = 6
 
@@ -41,6 +67,16 @@ class Wall:
         self.w = 5
         self.h = 5
         self.type = typ
+    def draw(self):
+        bm = spike_bitmap
+        if self.type == BLOCK:
+            bm = block_bitmap
+        thumby.display.blit(bm, math.trunc(self.x),math.trunc(self.y),self.w,self.h, -1,0,0)
+    def update(self):
+        self.x -= scroll_speed
+        if self.x < -20:
+            self.x += 100
+
 
 def make_walls(walls):
     walls.append(Wall(50,SPIKE))
@@ -49,26 +85,10 @@ def make_walls(walls):
 
 
 thumby.display.setFPS(60)
-
 cubey = Cubey(5.0,5.0,5,5)
-cubey.alive = True
-cubey.dv = 0
-gravity = 0.15 # pixels per tick
-jump_power = -3 #vertical pixels, single impulse
-scroll_speed = 0.4  #pixels per tick
-
+cubey.reset()
 count = 0
 floor = thumby.display.height - 5
-
-
-def draw_cubey(c):
-    thumby.display.blit(cubey_bitmap, math.trunc(c.x),math.trunc(c.y),c.w,c.h, -1,0,0)
-
-def draw_wall(c):
-    if c.type == SPIKE:
-        thumby.display.blit(spike_bitmap, math.trunc(c.x),math.trunc(c.y),c.w,c.h, -1,0,0)
-    if c.type == BLOCK:
-        thumby.display.blit(block_bitmap, math.trunc(c.x),math.trunc(c.y),c.w,c.h, -1,0,0)
 
 walls = []
 make_walls(walls)
@@ -77,13 +97,8 @@ while(cubey.alive):
     count = count + 1
 
     # jump
-    if thumby.buttonA.pressed() and cubey.standing:
-        cubey.standing = False
-        cubey.dv += jump_power
-
-    # apply gravity
-    cubey.dv += gravity
-    cubey.y += cubey.dv
+    cubey.check_input()
+    cubey.update()
 
     # stop at floor
     if cubey.y >= floor:
@@ -93,14 +108,12 @@ while(cubey.alive):
 
     # scroll walls
     for wall in walls:
-        wall.x -= scroll_speed
-        if wall.x < -20:
-            wall.x += 100
+        wall.update()
 
     thumby.display.fill(1)
     for wall in walls:
-        draw_wall(wall)
-    draw_cubey(cubey)
+        wall.draw()
+    cubey.draw()
     thumby.display.update()
 
 thumby.display.fill(0) # Fill canvas to black
