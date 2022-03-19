@@ -66,6 +66,46 @@ class FixedGridPanel extends BaseView {
     }
 }
 
+function make_toolbar() {
+    let toolbar = new HBox()
+    toolbar.hflex = false
+    toolbar.vflex = false
+
+    toolbar.add(new ActionButton("prev"))
+    toolbar.add(new ActionButton("play"))
+    toolbar.add(new ActionButton("next"))
+
+    toolbar.add(new HSpacer())
+
+    toolbar.add(new ActionButton('volume'))
+
+    return toolbar
+}
+
+/*
+itunes like app
+
+vbox
+    toolbar
+        prev, playpause, next
+        spacer
+        custom display
+        spacer
+        volume slider
+        dropdown for output list
+
+    hbox
+        source list
+        add button
+        table view
+
+dialog for choosing files to add
+    header: file add
+    body: just fixed size panel
+    toolbar
+        cancel dismiss
+
+ */
 export function start() {
     console.log("guitest: starting")
     let surface = new CanvasSurface(640,480, 1.0);
@@ -82,17 +122,10 @@ export function start() {
     main.add(popup_layer)
 
     let root = new VBox();
-    root.fill = 'green'
-    root.add(new Header("cool guitest demo"))
-    let toolbar = new HBox();
-    toolbar.fill = '#f0ffc0'
-    let dialog_button = new ActionButton("dialog")
-    let button1 = new ActionButton('button 1')
-    toolbar.add(button1)
-    toolbar.add(dialog_button)
-    toolbar.add(new HSpacer())
-    toolbar.add(new ActionButton("Button 3"))
-    root.add(toolbar)
+    root.add(make_toolbar())
+    // toolbar.add(new HSpacer())
+    // toolbar.add(new ActionButton("Button 3"))
+    // root.add(toolbar)
 
 
     let middle_layer = new HBox()
@@ -105,21 +138,21 @@ export function start() {
     middle_layer.add(new GrowPanel().with_fill('yellow'))
     root.add(middle_layer)
 
-    dialog_button.on('action',()=>{
-        console.log("triggering a dialog",dialog_button)
-        let dialog = new DialogContainer()
-        let box = new VBox()
-        box.add(new ActionButton("dialog header"))
-        box.add(new ActionButton("dialog body"))
-        let tb = new HBox()
-        tb.add(new ActionButton("okay"))
-        tb.add(new HSpacer())
-        tb.add(new ActionButton("cancel"))
-        box.add(tb)
-        dialog.add(box)
-        dialog_layer.add(dialog)
-        surface.repaint()
-    })
+    // dialog_button.on('action',()=>{
+    //     console.log("triggering a dialog",dialog_button)
+    //     let dialog = new DialogContainer()
+    //     let box = new VBox()
+    //     box.add(new ActionButton("dialog header"))
+    //     box.add(new ActionButton("dialog body"))
+    //     let tb = new HBox()
+    //     tb.add(new ActionButton("okay"))
+    //     tb.add(new HSpacer())
+    //     tb.add(new ActionButton("cancel"))
+    //     box.add(tb)
+    //     dialog.add(box)
+    //     dialog_layer.add(dialog)
+    //     surface.repaint()
+    // })
 
     let popup = new PopupContainer();
     let popup_box = new VBox()

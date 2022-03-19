@@ -13,3 +13,4 @@ Create a canvas surface, init the inputs, add some components, then go.
     let surface = new CanvasSurface(1200,700);
 
 ```
+
