@@ -14,6 +14,13 @@ gravity = 0.15 # pixels per tick
 jump_power = -3 #vertical pixels, single impulse
 scroll_speed = 0.5  #pixels per tick
 
+class AABB:
+    def __init__(self, x,y,w,h):
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+        self.empty = False
 
 class Cubey:
     def __init__(self, x, y, w, h):
@@ -45,6 +52,8 @@ class Cubey:
         self.y += self.dv
 
     def intersects(self, rect):
+        if rect.empty:
+            return False
         if rect.x + rect.w < self.x:
             return False
         if rect.y + rect.h < self.y:
@@ -60,6 +69,11 @@ class Cubey:
 SPIKE = 5
 BLOCK = 6
 
+def draw_rect(rect):
+    if rect.empty:
+        return
+    thumby.display.drawRectangle(math.trunc(rect.x),math.trunc(rect.y),rect.w,rect.h,0)
+
 class Wall:
     def __init__(self, x, typ):
         self.x = x
@@ -67,15 +81,27 @@ class Wall:
         self.w = 5
         self.h = 5
         self.type = typ
+        self.collision = AABB(self.x+1,self.y,3,1)
+        self.dead = AABB(self.x,self.y+2,4,3)
+        if self.type == SPIKE:
+            self.collision = AABB(self.x+3,self.y,0,0)
+            self.dead = AABB(self.x+1,self.y+2,1,3)
+            self.collision.empty = True
     def draw(self):
         bm = spike_bitmap
         if self.type == BLOCK:
             bm = block_bitmap
         thumby.display.blit(bm, math.trunc(self.x),math.trunc(self.y),self.w,self.h, -1,0,0)
+        #draw_rect(self.collision)
+        #draw_rect(self.dead)
     def update(self):
         self.x -= scroll_speed
         if self.x < -20:
             self.x += 100
+        self.collision.x = self.x+1
+        self.collision.y = self.y
+        self.dead.x = self.x
+        self.dead.y = self.y+2
 
 
 def make_walls(walls):
@@ -90,12 +116,20 @@ def make_walls(walls):
 
 thumby.display.setFPS(60)
 cubey = Cubey(5.0,5.0,5,5)
-cubey.reset()
 count = 0
 floor = thumby.display.height - 5
 
 walls = []
-make_walls(walls)
+
+# if collision box hit, then push up
+# if hurt box hit, then die
+
+def reset_game():
+    cubey.reset()
+    make_walls(walls)
+
+walls = []
+reset_game()
 
 while(cubey.alive):
     count = count + 1
@@ -103,11 +137,6 @@ while(cubey.alive):
     # jump
     cubey.check_input()
     cubey.update()
-
-    # if cubey hits block from side, die
-    #     for wall in walls:
-    #         if cubey.intersects(wall):
-    #             cubey.alive = False
 
     # stop at floor
     if cubey.y >= floor:
@@ -121,10 +150,14 @@ while(cubey.alive):
 
     # if cubey hits block from above, stop it there
     for wall in walls:
-        if cubey.intersects(wall):
-            cubey.y = wall.y-cubey.h
+        if cubey.intersects(wall.collision):
+            cubey.y = wall.collision.y-cubey.h
             cubey.dv = 0
             cubey.standing = True
+            continue
+        if cubey.intersects(wall.dead):
+            walls = []
+            reset_game()
 
     thumby.display.fill(1)
     for wall in walls:
