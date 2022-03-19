@@ -104,15 +104,26 @@ class Wall:
         self.dead.y = self.y+2
 
 
-def make_walls(walls):
-    walls.append(Wall(40,SPIKE))
-    walls.append(Wall(70,BLOCK))
-    blk2 = Wall(70,BLOCK)
-    blk2.y -= 6
-    walls.append(blk2)
-    walls.append(Wall(80,BLOCK))
-    walls.append(Wall(90,SPIKE))
 
+def make_row(walls,str,y):
+    for i, ch in enumerate(list(str)):
+        if ch == "-":
+            continue
+        x = 40+i*5
+        if ch == "^":
+            w = Wall(x,SPIKE)
+            w.y = y
+            walls.append(w)
+        if ch == 'X':
+            w = Wall(x,BLOCK)
+            w.y = y
+            walls.append(w)
+
+def make_walls(walls):
+    make_row(walls,"---------------X",19)
+    make_row(walls,"--------------XX",24)
+    make_row(walls,"-------------XXX",29)
+    make_row(walls,"--^--^X-----XXXX",34)
 
 thumby.display.setFPS(60)
 cubey = Cubey(5.0,5.0,5,5)
