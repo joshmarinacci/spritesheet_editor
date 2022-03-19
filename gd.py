@@ -10,8 +10,8 @@ block_bitmap = bytearray([0,0,4,0,0])
 # BITMAP: width: 5, height: 5
 cubey_bitmap = bytearray([0,10,8,10,0])
 
-gravity = 0.15 # pixels per tick
-jump_power = -3 #vertical pixels, single impulse
+gravity = 0.05 # pixels per tick
+jump_power = -1.23 #vertical pixels, single impulse
 scroll_speed = 0.5  #pixels per tick
 
 class AABB:
@@ -105,7 +105,7 @@ class Wall:
 
 
 def make_walls(walls):
-    walls.append(Wall(50,SPIKE))
+    walls.append(Wall(40,SPIKE))
     walls.append(Wall(70,BLOCK))
     blk2 = Wall(70,BLOCK)
     blk2.y -= 6
