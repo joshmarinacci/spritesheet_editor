@@ -81,6 +81,10 @@ class Wall:
 def make_walls(walls):
     walls.append(Wall(50,SPIKE))
     walls.append(Wall(70,BLOCK))
+    blk2 = Wall(70,BLOCK)
+    blk2.y -= 6
+    walls.append(blk2)
+    walls.append(Wall(80,BLOCK))
     walls.append(Wall(90,SPIKE))
 
 
