@@ -12,7 +12,7 @@ cubey_bitmap = bytearray([0,10,8,10,0])
 
 gravity = 0.15 # pixels per tick
 jump_power = -3 #vertical pixels, single impulse
-scroll_speed = 0.4  #pixels per tick
+scroll_speed = 0.5  #pixels per tick
 
 
 class Cubey:
@@ -104,6 +104,11 @@ while(cubey.alive):
     cubey.check_input()
     cubey.update()
 
+    # if cubey hits block from side, die
+    #     for wall in walls:
+    #         if cubey.intersects(wall):
+    #             cubey.alive = False
+
     # stop at floor
     if cubey.y >= floor:
         cubey.y = floor -1
@@ -113,6 +118,13 @@ while(cubey.alive):
     # scroll walls
     for wall in walls:
         wall.update()
+
+    # if cubey hits block from above, stop it there
+    for wall in walls:
+        if cubey.intersects(wall):
+            cubey.y = wall.y-cubey.h
+            cubey.dv = 0
+            cubey.standing = True
 
     thumby.display.fill(1)
     for wall in walls:
