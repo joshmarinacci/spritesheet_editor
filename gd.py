@@ -20,6 +20,7 @@ start_bitmap = bytearray([255,255,255,255,255,255,255,255,255,255,255,255,255,25
 gravity = 0.05 # pixels per tick
 jump_power = -1.23 #vertical pixels, single impulse
 scroll_speed = 0.5  #pixels per tick
+loop_count = 2
 
 class AABB:
     def __init__(self, x,y,w,h):
@@ -76,6 +77,8 @@ class Cubey:
 SPIKE = 5
 BLOCK = 6
 
+end_game = False
+
 def draw_rect(rect):
     if rect.empty:
         return
@@ -103,7 +106,7 @@ class Wall:
         #draw_rect(self.dead)
     def update(self):
         self.x -= scroll_speed
-        if self.x < -20:
+        if self.x < -20 and not end_game:
             self.x += 250
         self.collision.x = self.x+1
         self.collision.y = self.y
@@ -157,48 +160,65 @@ def draw_start_screen():
     thumby.display.blit(start_bitmap, -3,0,72,40, -1,0,0)
     thumby.display.update()
 
+def draw_end_screen():
+    thumby.display.fill(0) # Fill canvas to black
+    thumby.display.drawText("you won",10,10,1)
+    thumby.display.update()
+
 def wait_for_button():
     while(True):
         if thumby.buttonA.pressed():
             break
 
-draw_start_screen()
-wait_for_button()
+while True:
+    draw_start_screen()
+    wait_for_button()
+    walls = []
+    reset_game()
 
-while(cubey.alive):
-    count = count + 1
+    total_scroll = 0
+    win = False
+    while(cubey.alive):
+        count = count + 1
 
-    # jump
-    cubey.check_input()
-    cubey.update()
+        # jump
+        cubey.check_input()
+        cubey.update()
 
-    # stop at floor
-    if cubey.y >= floor:
-        cubey.y = floor -1
-        cubey.dv = 0
-        cubey.standing = True
-
-    # scroll walls
-    for wall in walls:
-        wall.update()
-
-    # if cubey hits block from above, stop it there
-    for wall in walls:
-        if cubey.intersects(wall.collision):
-            cubey.y = wall.collision.y-cubey.h
+        # stop at floor
+        if cubey.y >= floor:
+            cubey.y = floor -1
             cubey.dv = 0
             cubey.standing = True
-            continue
-        if cubey.intersects(wall.dead):
-            walls = []
-            reset_game()
 
-    thumby.display.fill(1)
-    for wall in walls:
-        wall.draw()
-    cubey.draw()
-    thumby.display.update()
+        # scroll walls
+        total_scroll += scroll_speed
+        if total_scroll > loop_count * 250:
+            end_game = True
+        if total_scroll > loop_count * 250 + 100:
+            win = True
+            break;
 
-thumby.display.fill(0) # Fill canvas to black
-thumby.display.drawText("ded",10,10,1)
-thumby.display.update()
+        for wall in walls:
+            wall.update()
+
+        # if cubey hits block from above, stop it there
+        for wall in walls:
+            if cubey.intersects(wall.collision):
+                cubey.y = wall.collision.y-cubey.h
+                cubey.dv = 0
+                cubey.standing = True
+                continue
+            if cubey.intersects(wall.dead):
+                walls = []
+                reset_game()
+                total_scroll = 0
+
+        thumby.display.fill(1)
+        for wall in walls:
+            wall.draw()
+        cubey.draw()
+        thumby.display.update()
+
+    draw_end_screen()
+    wait_for_button()
