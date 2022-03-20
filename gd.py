@@ -97,7 +97,7 @@ class Wall:
     def update(self):
         self.x -= scroll_speed
         if self.x < -20:
-            self.x += 100
+            self.x += 200
         self.collision.x = self.x+1
         self.collision.y = self.y
         self.dead.x = self.x
@@ -119,11 +119,13 @@ def make_row(walls,str,y):
             w.y = y
             walls.append(w)
 
+# level editor - is air X is block ^ is spike
+
 def make_walls(walls):
-    make_row(walls,"---------------X",19)
-    make_row(walls,"--------------XX",24)
-    make_row(walls,"-------------XXX",29)
-    make_row(walls,"--^--^X-----XXXX",34)
+    make_row(walls,"-----------------------------------X",19)
+    make_row(walls,"------------------------------X----X",24)
+    make_row(walls,"-------------------------X----X----X",29)
+    make_row(walls,"----^----^----^^----X^^^^X^^^^X^^^^X",34)
 
 thumby.display.setFPS(60)
 cubey = Cubey(5.0,5.0,5,5)
