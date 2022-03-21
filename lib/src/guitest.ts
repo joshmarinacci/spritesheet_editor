@@ -14,7 +14,7 @@ import {
     VBox
 } from "./components";
 import {gen_id, Point, Size} from "./common";
-import {BaseView} from "./core";
+import {BaseView, CommonEvent} from "./core";
 
 class FixedGridPanel extends BaseView {
     private sw: number;
@@ -64,6 +64,44 @@ class LCDView extends BaseView {
     }
 }
 
+class DropdownButton extends ActionButton {
+    private data: any[];
+    private renderer: (v:any) => string;
+    private selected_index: number;
+    constructor(data: string[], selected:number, param2: (v:any) => string) {
+        super(gen_id('dropdown'))
+        this.data = data
+        this.selected_index = selected
+        this.renderer = param2
+        this.caption = 'invalid'
+        if(this.selected_index >= 0 && this.selected_index < this.data.length) {
+            this.caption = this.renderer(this.data[this.selected_index])
+        }
+        this.on('action',(evt:CommonEvent)=>{
+            let popup = new PopupContainer();
+            let popup_box = new VBox()
+            this.data.map(item => new ActionButton(this.renderer(item)))
+                .forEach((btn,i) => {
+                    btn.on('action',(evt2)=>{
+                        let popup_layer = evt2.ctx.find_by_name('popup-layer') as PopupLayer
+                        popup_layer.remove(popup)
+                        this.selected_index = i
+                        if(this.selected_index >= 0 && this.selected_index < this.data.length) {
+                            this.caption = this.renderer(this.data[this.selected_index])
+                        }
+                    })
+                    popup_box.add(btn)
+                })
+            popup.add(popup_box)
+            let pt = evt.ctx.view_to_local(new Point(0,this.size().h),this)
+            popup.set_position(pt)
+            let popup_layer = evt.ctx.find_by_name('popup-layer') as LayerView
+            popup_layer.add(popup)
+        })
+    }
+
+}
+
 function make_toolbar(surf:CanvasSurface) {
     let toolbar = new HBox()
     toolbar.fill = '#aaa'
@@ -76,25 +114,8 @@ function make_toolbar(surf:CanvasSurface) {
     toolbar.add(new HSpacer())
     toolbar.add(new LCDView())
     toolbar.add(new HSpacer())
-    let volume = new ActionButton('volume')
-    volume.on('action',()=>{
-        let popup = new PopupContainer();
-        let popup_box = new VBox()
-        popup_box.add(new Label("Popup"))
-        let b1 = new ActionButton('item 1')
-        b1.on('action',()=>{
-            let popup_layer = surf.find_by_name('popup-layer') as LayerView
-            popup_layer.remove(popup)
-        })
-        popup_box.add(b1)
-        popup_box.add(new ActionButton("item 2"))
-        popup_box.add(new ActionButton("item 3"))
-        popup.add(popup_box)
-        let pt = surf.view_to_local(new Point(0,volume.size().h),volume)
-        popup.set_position(pt)
-        let popup_layer = surf.find_by_name('popup-layer') as LayerView
-        popup_layer.add(popup)
-    })
+    let data = ['zero','mid','loud','bleeding ears']
+    let volume = new DropdownButton(data,0,(v)=>v.toString())
     toolbar.add(volume)
     let add_songs = new ActionButton('add songs')
     add_songs.on('action',()=>{
@@ -134,34 +155,8 @@ function make_statusbar() {
     return status_bar
 }
 
-/*
-itunes like app
-
-vbox
-    toolbar
-        prev, playpause, next
-        spacer
-        custom display
-        spacer
-        volume slider
-        dropdown for output list
-
-    hbox
-        source list
-        add button
-        table view
-
-    status bar
-dialog for choosing files to add
-    header: file add
-    body: just fixed size panel
-    toolbar
-        cancel dismiss
-
- */
 export function start() {
-    console.log("guitest: starting")
-    let surface = new CanvasSurface(640,480, 1.0);
+    let surface = new CanvasSurface(1024,720, 1.0);
     surface.debug = false
 
     let main = new LayerView();

@@ -43,7 +43,7 @@ export class CustomLabel extends Label {
     }
 }
 export class ActionButton extends BaseView {
-    private caption: string
+    protected caption: string
     private active: boolean
     constructor(button1: string) {
         super(gen_id("button2"))
@@ -64,7 +64,8 @@ export class ActionButton extends BaseView {
     }
     input(event: CommonEvent): void {
         if (event.type === "mousedown") {
-            this.fire('action', {})
+            let evt2 = new CommonEvent('action',event.pt,event.ctx)
+            this.fire('action', evt2)
             this.active = true
         }
         if (event.type === 'mouseup') {
