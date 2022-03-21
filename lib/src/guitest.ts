@@ -14,7 +14,7 @@ import {
     VBox
 } from "./components";
 import {gen_id, Point, Size} from "./common";
-import {BaseView, CommonEvent} from "./core";
+import {BaseView, CommonEvent, ParentView, View} from "./core";
 
 class FixedGridPanel extends BaseView {
     private sw: number;
@@ -155,6 +155,77 @@ function make_statusbar() {
     return status_bar
 }
 
+class DebugLayer extends LayerView {
+    private debug_button: ActionButton;
+    private show_debug: boolean;
+    constructor() {
+        super("debug-layer");
+        this._name = 'debug-layer'
+        this.debug_button = new ActionButton('debug')
+        this.add(this.debug_button)
+        this.show_debug = false;
+        this.debug_button.on('action',(e:CommonEvent)=>{
+            this.show_debug = !this.show_debug
+            e.ctx.repaint()
+        })
+    }
+    override draw(g: CanvasSurface) {
+        // g.fillBackgroundSize(this.size(),'rgb(0,0,0,0.0)')
+        if(this.show_debug) {
+            let root = g.get_root()
+            this.draw_outline(g, root)
+        }
+    }
+
+    private draw_outline(g: CanvasSurface, view: View) {
+        let pos = view.position()
+        let size = view.size()
+        g.ctx.save()
+        g.ctx.strokeStyle = 'black'
+        g.ctx.lineWidth = 1
+        let s = 3
+        g.ctx.beginPath()
+        g.ctx.rect(pos.x+s,pos.y+s,size.w-s*2,size.h-s*2)
+        g.ctx.moveTo(pos.x,pos.y)
+        g.ctx.lineTo(pos.x+size.w,pos.y+size.h)
+        g.ctx.moveTo(pos.x+size.w,pos.y)
+        g.ctx.lineTo(pos.x,pos.y+size.h)
+        g.ctx.stroke()
+        let text = view.name()
+        let metrics = g.measureText(text)
+        g.ctx.fillStyle = 'black'
+        g.ctx.fillRect(pos.x+2,pos.y+2,metrics.w+4,10+4)
+        g.ctx.fillStyle = 'white'
+        g.ctx.fillText(text,pos.x+4,pos.y+10+4)
+
+        function is_parent(view: View) {
+            // @ts-ignore
+            return view.is_parent_view && view.is_parent_view()
+        }
+        function as_parent(view: View):ParentView {
+            return view as unknown as ParentView
+        }
+
+        if(is_parent(view)) {
+            let parent = as_parent(view)
+            g.ctx.save()
+            g.ctx.translate(pos.x,pos.y)
+            parent.get_children().forEach((ch:View) => {
+                this.draw_outline(g,ch)
+            })
+            g.ctx.restore()
+        }
+    }
+    override layout2(g: CanvasSurface, available: Size): Size {
+        super.layout2(g, available);
+        let size = this.size()
+        let csize = this.debug_button.size()
+        let pt = new Point(size.w-csize.w, size.h-csize.h)
+        this.debug_button.set_position(pt)
+        return this.size()
+    }
+}
+
 export function start() {
     let surface = new CanvasSurface(1024,720, 1.0);
     surface.debug = false
@@ -196,6 +267,7 @@ export function start() {
     app_layer.add(root)
 
 
+    main.add(new DebugLayer())
     surface.set_root(main)
     surface.setup_mouse_input()
     surface.addToPage();

@@ -60,6 +60,9 @@ export class CanvasSurface {
     set_root(root: View) {
         this.root = root;
     }
+    get_root():View {
+        return this.root
+    }
 
     repaint() {
         if(this.debug) console.time("repaint");
