@@ -185,7 +185,7 @@ export class HBox extends BaseParentView {
 
     constructor() {
         super(gen_id('hbox'));
-        this.hflex = true
+        this.hflex = false
         this.vflex = false
         this.pad = 0
         this.fill = null
@@ -254,7 +254,7 @@ export class VBox extends BaseParentView {
         super(gen_id('vbox'));
         this.fill = null
         this.hflex = false
-        this.vflex = true
+        this.vflex = false
         this.pad = 0
     }
 
@@ -473,11 +473,13 @@ export class ScrollView extends BaseParentView {
     private wrapper: ScrollWrapper;
     private up: ActionButton;
     private down: ActionButton;
+    private _pref_width: number
     constructor() {
         super(gen_id("scroll-view"))
         this._name = 'scroll-view'
         this.hflex = false
         this.vflex = false
+        this._pref_width = 300
 
         this.wrapper = new ScrollWrapper()
         this.add(this.wrapper)
@@ -496,8 +498,12 @@ export class ScrollView extends BaseParentView {
         g.fillBackgroundSize(this.size(), '#aaa')
     }
 
+    set_pref_width(num:number) {
+        this._pref_width = num
+    }
+
     layout2(g: CanvasSurface, available: Size): Size {
-        this.set_size(new Size(300,300))
+        this.set_size(new Size(this._pref_width,300))
         if(this.hflex) {
             this.size().w = available.w
         }

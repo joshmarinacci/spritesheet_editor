@@ -123,7 +123,7 @@ export class CanvasSurface {
         }
         let bds = rect_from_pos_size(view.position(),view.size())
         // @ts-ignore
-        this.debug_draw_rect(bds, (view.id) ? (view.id) : "view");
+        this.debug_draw_rect(bds, view.name())
         this.ctx.restore()
     }
 
@@ -149,22 +149,24 @@ export class CanvasSurface {
         if (!this.debug) return
         this.ctx.strokeStyle = 'black'
         this.ctx.lineWidth = 0.5;
+        let cx = bds.x + bds.w/2
+        let cy = bds.y + bds.h/2
         for (let i = 0; i < 3; i++) {
             this.ctx.beginPath()
             this.ctx.strokeStyle = (i % 2 === 1) ? 'red' : 'black'
             this.ctx.rect(bds.x + i, bds.y + i, bds.w - i * 2, bds.h - i * 2);
             this.ctx.stroke()
         }
-        let str = `${title} (${bds.x},${bds.y}) (${bds.w}x${bds.h})`
+        let str = `${title} (${bds.x.toFixed(1)},${bds.y.toFixed(1)}) (${bds.w.toFixed(1)}x${bds.h.toFixed(1)})`
         for (let i = 0; i < 3; i++) {
             this.ctx.font = '10px sans-serif';
             this.ctx.fillStyle = 'white'
-            this.ctx.fillText(str, 3 + i, 3 + i + bds.h)
+            this.ctx.fillText(str, cx+3 + i, cy+3 + i)
         }
         for (let i = 0; i < 1; i++) {
             this.ctx.font = '10px sans-serif';
             this.ctx.fillStyle = 'black'
-            this.ctx.fillText(str, 3 + i + 1, 3 + i + 1 + bds.h)
+            this.ctx.fillText(str, cx+3 + i + 1, cy+3 + i + 1)
         }
     }
 
@@ -373,6 +375,25 @@ export class CanvasSurface {
             }
         })
 
+    }
+
+    find_by_name(name: string):View|null {
+        return this.find_by_name_view(this.root,name)
+    }
+
+    private find_by_name_view(view: View, name: string):View|null {
+        if (view.name() === name) return view
+        // @ts-ignore
+        if (view.is_parent_view && view.is_parent_view()) {
+            let parent = view as unknown as ParentView;
+            // go in reverse order to the top drawn children are picked first
+            for (let i = parent.get_children().length - 1; i >= 0; i--) {
+                let ch = parent.get_children()[i]
+                let res = this.find_by_name_view(ch,name)
+                if(res) return res
+            }
+        }
+        return null
     }
 }
 

@@ -8,7 +8,7 @@ import {
     Label,
     LayerView,
     PopupContainer,
-    ScrollView,
+    ScrollView, SelectList,
     VBox
 } from "./components";
 import {gen_id, Point, Size} from "./common";
@@ -41,8 +41,6 @@ class FixedGridPanel extends BaseView {
     private sh: number;
     constructor(w: number, h: number) {
         super(gen_id("fixed-grid"))
-        this.hflex = false;
-        this.vflex = false
         this.sw = w
         this.sh = h
     }
@@ -66,20 +64,69 @@ class FixedGridPanel extends BaseView {
     }
 }
 
-function make_toolbar() {
+class LCDView extends BaseView {
+    constructor() {
+        super("lcd-view");
+    }
+    draw(g: CanvasSurface): void {
+        g.fillBackgroundSize(this.size(),'#ccc')
+        let text = 'LCD View'
+        let size = g.measureText(text,'base')
+        let x = (this.size().w - size.w)/2
+        let y = (this.size().h - size.h)/2
+        // g.fillRect(x,y,size.w,size.h,'aqua')
+        g.fillStandardText(text,x,y+size.h,'base')
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        this.set_size(new Size(200,60))
+        return this.size()
+    }
+}
+
+function make_toolbar(surf:CanvasSurface) {
     let toolbar = new HBox()
-    toolbar.hflex = false
-    toolbar.vflex = false
+    toolbar.fill = '#aaa'
+    toolbar._name = 'toolbar'
 
     toolbar.add(new ActionButton("prev"))
     toolbar.add(new ActionButton("play"))
     toolbar.add(new ActionButton("next"))
 
     toolbar.add(new HSpacer())
-
-    toolbar.add(new ActionButton('volume'))
+    toolbar.add(new LCDView())
+    toolbar.add(new HSpacer())
+    let volume = new ActionButton('volume')
+    volume.on('action',()=>{
+        let dialog = new DialogContainer()
+        let box = new VBox()
+        box.add(new ActionButton("dialog header"))
+        box.add(new ActionButton("dialog body"))
+        let tb = new HBox()
+        tb.add(new ActionButton("okay"))
+        tb.add(new HSpacer())
+        tb.add(new ActionButton("cancel"))
+        box.add(tb)
+        dialog.add(box)
+        let dialog_layer = surf.find_by_name('dialog-layer')
+        // @ts-ignore
+        dialog_layer.add(dialog)
+    })
+    toolbar.add(volume)
 
     return toolbar
+}
+
+function make_statusbar() {
+    let status_bar = new HBox()
+    status_bar._name = 'statusbar'
+    status_bar.fill = '#aaa'
+    status_bar.vflex = false
+    status_bar.hflex = true
+    status_bar.add(new Label("cool status bar"))
+    status_bar.add(new HSpacer())
+    status_bar.add(new ActionButton("blah"))
+    return status_bar
 }
 
 /*
@@ -99,6 +146,7 @@ vbox
         add button
         table view
 
+    status bar
 dialog for choosing files to add
     header: file add
     body: just fixed size panel
@@ -116,27 +164,32 @@ export function start() {
     main.add(app_layer)
 
     let dialog_layer = new LayerView()
+    dialog_layer._name = 'dialog-layer'
     main.add(dialog_layer)
 
     let popup_layer = new LayerView()
     main.add(popup_layer)
 
     let root = new VBox();
-    root.add(make_toolbar())
-    // toolbar.add(new HSpacer())
-    // toolbar.add(new ActionButton("Button 3"))
-    // root.add(toolbar)
-
+    root._name = 'root'
+    root.add(make_toolbar(surface))
 
     let middle_layer = new HBox()
     middle_layer.vflex = true
-    middle_layer.fill = 'aqua'
-    middle_layer.add(new GrowPanel().with_fill('red'))
+    middle_layer._name = 'middle'
+    let source_list = new SelectList(['A','B','C'],()=>"cool source")
+    source_list.vflex = false
+
     let scroll = new ScrollView()
-    scroll.add(new FixedGridPanel(500,500))
+    scroll.set_content(source_list)
+    scroll.set_pref_width(220)
+    scroll.vflex = true
     middle_layer.add(scroll)
-    middle_layer.add(new GrowPanel().with_fill('yellow'))
+
+    let song_list = new SelectList(['X,Y,Z'],()=>"cool song")
+    middle_layer.add(song_list)
     root.add(middle_layer)
+    root.add(make_statusbar())
 
     // dialog_button.on('action',()=>{
     //     console.log("triggering a dialog",dialog_button)
@@ -162,7 +215,7 @@ export function start() {
     popup_box.add(new ActionButton("item 3"))
     popup.add(popup_box)
     popup.open_at(200,200);
-    popup_layer.add(popup)
+    // popup_layer.add(popup)
     app_layer.add(root)
 
 
@@ -174,16 +227,16 @@ export function start() {
     // unit test 1
     //click button1 with a fake mouse click through the canvas.
     //add callback to button1 to confirm the test worked
-    function test1(value) {
-        console.log("starting test1")
-        return new Promise((res,rej)=>{
-            button1.on('action',() => {
-                console.log("test complete")
-                res(value)
-            })
-            surface.dispatch_fake_mouse_event('mousedown', new Point(60,60))
-        })
-    }
+    // function test1(value) {
+    //     console.log("starting test1")
+    //     return new Promise((res,rej)=>{
+    //         button1.on('action',() => {
+    //             console.log("test complete")
+    //             res(value)
+    //         })
+    //         surface.dispatch_fake_mouse_event('mousedown', new Point(60,60))
+    //     })
+    // }
 
     function wait(number: number) {
         return new Promise((res,rej)=>{
@@ -192,15 +245,15 @@ export function start() {
             },number)
         })
     }
-    async function run_all_tests() {
-        console.log("starting tests")
-        // await wait(500)
-        // console.log('continuing')
-        let val = await test1(99)
-        console.assert(val === 99,'test1 failed')
-        // console.log("test1 passed")
-        console.log("end of tests")
-    }
-    wait(1000).then(run_all_tests)
+    // async function run_all_tests() {
+    //     console.log("starting tests")
+    //     // await wait(500)
+    //     // console.log('continuing')
+    //     let val = await test1(99)
+    //     console.assert(val === 99,'test1 failed')
+    //     // console.log("test1 passed")
+    //     console.log("end of tests")
+    // }
+    // wait(1000).then(run_all_tests)
 }
 
