@@ -1,41 +1,21 @@
 import {CanvasSurface} from "./canvas";
 import {
     ActionButton,
-    GrowPanel,
+    DialogContainer,
+    DialogLayer,
     HBox,
-    Header,
     HSpacer,
     Label,
     LayerView,
     PopupContainer,
-    ScrollView, SelectList,
+    PopupLayer,
+    ScrollView,
+    SelectList,
     VBox
 } from "./components";
 import {gen_id, Point, Size} from "./common";
-import {BaseView, BaseParentView} from "./core";
+import {BaseView} from "./core";
 
-class DialogContainer extends BaseParentView {
-    constructor() {
-        super("dialog-container")
-        this._name = 'dialog-container'
-    }
-    draw(g: CanvasSurface): void {
-        g.fillBackgroundSize(this.size(),'gray')
-    }
-    layout2(g: CanvasSurface, available: Size): Size {
-        let box = this._children[0]
-        let size = box.layout2(g, new Size(100,100))
-        this.set_size(size)
-        this.set_position(new Point(
-            (g.w-size.w)/2,
-            (g.h-size.h)/2
-        ))
-        return new Size(size.w,size.h)
-    }
-    open_at(x: number, y: number) {
-        this.set_position(new Point(x,y))
-    }
-}
 class FixedGridPanel extends BaseView {
     private sw: number;
     private sh: number;
@@ -98,6 +78,26 @@ function make_toolbar(surf:CanvasSurface) {
     toolbar.add(new HSpacer())
     let volume = new ActionButton('volume')
     volume.on('action',()=>{
+        let popup = new PopupContainer();
+        let popup_box = new VBox()
+        popup_box.add(new Label("Popup"))
+        let b1 = new ActionButton('item 1')
+        b1.on('action',()=>{
+            let popup_layer = surf.find_by_name('popup-layer') as LayerView
+            popup_layer.remove(popup)
+        })
+        popup_box.add(b1)
+        popup_box.add(new ActionButton("item 2"))
+        popup_box.add(new ActionButton("item 3"))
+        popup.add(popup_box)
+        let pt = surf.view_to_local(new Point(0,volume.size().h),volume)
+        popup.set_position(pt)
+        let popup_layer = surf.find_by_name('popup-layer') as LayerView
+        popup_layer.add(popup)
+    })
+    toolbar.add(volume)
+    let add_songs = new ActionButton('add songs')
+    add_songs.on('action',()=>{
         let dialog = new DialogContainer()
         let box = new VBox()
         box.add(new ActionButton("dialog header"))
@@ -105,14 +105,19 @@ function make_toolbar(surf:CanvasSurface) {
         let tb = new HBox()
         tb.add(new ActionButton("okay"))
         tb.add(new HSpacer())
-        tb.add(new ActionButton("cancel"))
+        let cancel = new ActionButton('cancel')
+        cancel.on('action',()=>{
+            let dialog_layer = surf.find_by_name('dialog-layer') as LayerView
+            dialog_layer.remove(dialog)
+        })
+        tb.add(cancel)
         box.add(tb)
         dialog.add(box)
         let dialog_layer = surf.find_by_name('dialog-layer')
         // @ts-ignore
         dialog_layer.add(dialog)
     })
-    toolbar.add(volume)
+    toolbar.add(add_songs)
 
     return toolbar
 }
@@ -163,11 +168,12 @@ export function start() {
     let app_layer = new LayerView()
     main.add(app_layer)
 
-    let dialog_layer = new LayerView()
+    let dialog_layer = new DialogLayer()
     dialog_layer._name = 'dialog-layer'
     main.add(dialog_layer)
 
-    let popup_layer = new LayerView()
+    let popup_layer = new PopupLayer()
+    popup_layer._name = 'popup-layer'
     main.add(popup_layer)
 
     let root = new VBox();
@@ -192,31 +198,6 @@ export function start() {
     root.add(middle_layer)
     root.add(make_statusbar())
 
-    // dialog_button.on('action',()=>{
-    //     console.log("triggering a dialog",dialog_button)
-    //     let dialog = new DialogContainer()
-    //     let box = new VBox()
-    //     box.add(new ActionButton("dialog header"))
-    //     box.add(new ActionButton("dialog body"))
-    //     let tb = new HBox()
-    //     tb.add(new ActionButton("okay"))
-    //     tb.add(new HSpacer())
-    //     tb.add(new ActionButton("cancel"))
-    //     box.add(tb)
-    //     dialog.add(box)
-    //     dialog_layer.add(dialog)
-    //     surface.repaint()
-    // })
-
-    let popup = new PopupContainer();
-    let popup_box = new VBox()
-    popup_box.add(new Label("popup"))
-    popup_box.add(new ActionButton("item 1"))
-    popup_box.add(new ActionButton("item 2"))
-    popup_box.add(new ActionButton("item 3"))
-    popup.add(popup_box)
-    popup.open_at(200,200);
-    // popup_layer.add(popup)
     app_layer.add(root)
 
 

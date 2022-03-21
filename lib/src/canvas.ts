@@ -401,7 +401,7 @@ export class CanvasSurface {
         return null
     }
 
-    private local_to_view(pt: Point, view: View) {
+    public local_to_view(pt: Point, view: View) {
         let trans = this.calculate_transform_to(this.root,view)
         let f = pt.subtract(trans)
         return f
@@ -422,6 +422,11 @@ export class CanvasSurface {
             }
         }
         return null
+    }
+
+    view_to_local(pt: Point, view: View) {
+        let trans = this.calculate_transform_to(this.root,view)
+        return pt.add(trans)
     }
 }
 

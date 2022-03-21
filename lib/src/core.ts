@@ -111,6 +111,10 @@ export abstract class BaseParentView implements View, ParentView {
         this._children.push(view)
     }
 
+    remove(view: View) {
+        this._children = this._children.filter(ch => ch !== view)
+    }
+
     input(event: CommonEvent): void {
     }
 

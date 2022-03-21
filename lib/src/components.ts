@@ -8,7 +8,7 @@ import {
     StandardTextHeight
 } from "./style";
 import {Callback, gen_id, Point, Rect, Size} from "./common";
-import {CommonEvent, BaseView, BaseParentView, View} from "./core";
+import {BaseParentView, BaseView, CommonEvent, View} from "./core";
 
 export class Label extends BaseView {
     protected caption: string
@@ -570,5 +570,49 @@ export class PopupContainer extends BaseParentView {
     hide() {
         this._visible = false
         console.log("hiding",this._visible)
+    }
+}
+
+export class PopupLayer extends LayerView {
+    constructor() {
+        super(gen_id('popup-layer'))
+        this._name = 'popup-layer'
+    }
+
+    draw(g: CanvasSurface) {
+        if (this._children.length > 0) g.fillBackgroundSize(this.size(), 'rgba(255,255,255,0.7)')
+    }
+}
+
+export class DialogLayer extends LayerView {
+    constructor() {
+        super(gen_id('dialog-layer'))
+        this._name = 'dialog-layer'
+    }
+
+    draw(g: CanvasSurface) {
+        if (this._children.length > 0) g.fillBackgroundSize(this.size(), 'rgba(255,255,255,0.7)')
+    }
+}
+
+export class DialogContainer extends BaseParentView {
+    constructor() {
+        super("dialog-container")
+        this._name = 'dialog-container'
+    }
+
+    draw(g: CanvasSurface): void {
+        g.fillBackgroundSize(this.size(), 'gray')
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        let box = this._children[0]
+        let size = box.layout2(g, new Size(300, 200))
+        this.set_size(size)
+        this.set_position(new Point(
+            (g.w - size.w) / 2,
+            (g.h - size.h) / 2
+        ))
+        return new Size(size.w, size.h)
     }
 }
