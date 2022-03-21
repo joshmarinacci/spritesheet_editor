@@ -187,6 +187,7 @@ export function start() {
     middle_layer.add(scroll)
 
     let song_list = new SelectList(['X,Y,Z'],()=>"cool song")
+    song_list.hflex = true
     middle_layer.add(song_list)
     root.add(middle_layer)
     root.add(make_statusbar())

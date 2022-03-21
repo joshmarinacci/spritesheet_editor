@@ -44,21 +44,32 @@ export class CustomLabel extends Label {
 }
 export class ActionButton extends BaseView {
     private caption: string
+    private active: boolean
     constructor(button1: string) {
         super(gen_id("button2"))
         this._name = 'button2'
         this.caption = button1
         this.hflex = false
         this.vflex = false
+        this.active = false
     }
     draw(g: CanvasSurface): void {
-        g.fillBackgroundSize(this.size(), ButtonBackgroundColor)
+        if(this.active) {
+            g.fillBackgroundSize(this.size(), ButtonBackgroundColor_active)
+        } else {
+            g.fillBackgroundSize(this.size(), ButtonBackgroundColor)
+        }
         g.strokeBackgroundSize(this.size(), ButtonBorderColor)
         g.fillStandardText(this.caption, StandardLeftPadding, StandardTextHeight, 'base');
     }
     input(event: CommonEvent): void {
         if (event.type === "mousedown") {
             this.fire('action', {})
+            this.active = true
+        }
+        if (event.type === 'mouseup') {
+            this.active = false
+            event.ctx.repaint()
         }
     }
     layout2(g: CanvasSurface, available: Size): Size {
@@ -131,7 +142,11 @@ export class SelectList extends BaseView {
         this.data = data
     }
     layout2(g: CanvasSurface, available: Size): Size {
-        this.set_size(new Size(200,available.h))
+        if(this.hflex) {
+            this.set_size(new Size(available.w, available.h))
+        } else {
+            this.set_size(new Size(200, available.h))
+        }
         return this.size()
     }
 }

@@ -87,6 +87,17 @@ export class Point {
         this.x = pt.x
         this.y = pt.y
     }
+
+    clone() {
+        return new Point(this.x,this.y)
+    }
+
+    subtract(trans: Point) {
+        return new Point(
+            this.x - trans.x,
+            this.y - trans.y
+        )
+    }
 }
 
 export class Rect {

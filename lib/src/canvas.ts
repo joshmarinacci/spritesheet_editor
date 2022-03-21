@@ -30,6 +30,7 @@ export class CanvasSurface {
     private _keyboard_focus: View;
     private fonts:Map<string,CanvasFont>
     private global_smoothing = true
+    private _pointer_target: View|null;
 
     constructor(w: number, h: number, scale?:number) {
         this.log("making canvas ",w,h)
@@ -49,6 +50,7 @@ export class CanvasSurface {
         this.debug = false;
         this.clear()
         this.fonts = new Map()
+        this._pointer_target = null
     }
 
     addToPage() {
@@ -239,20 +241,22 @@ export class CanvasSurface {
             this.repaint()
         })
         this.canvas.addEventListener('mousemove',(evt)=>{
-            if(down) {
+            if(down && this._pointer_target) {
                 let pt = this.screen_to_local(evt)
+                pt = this.local_to_view(pt,this._pointer_target)
                 let e = new CommonEvent('mousedrag', pt, this)
                 e.button = evt.button
-                this.dispatch_pointer_event(this.root,e)// {type:'mousedrag', pt:pt, button:button, ctx:this});
+                this._pointer_target.input(e)
                 if(this._input_callback) this._input_callback(e)
             }
         })
         this.canvas.addEventListener('mouseup',(evt)=>{
             down = false;
             let pt = this.screen_to_local(evt)
+            pt = this.local_to_view(pt,this._pointer_target)
             let e = new CommonEvent('mouseup', pt, this)
             e.button = evt.button
-            this.dispatch_pointer_event(this.root,e)//{type:'mouseup',pt:pt, button:button, ctx:this});
+            this._pointer_target.input(e)
             if(this._input_callback) this._input_callback(e)
         })
         this.canvas.addEventListener('wheel',(evt)=>{
@@ -306,6 +310,7 @@ export class CanvasSurface {
             } else {
                 let e2 = e.translate(view.position().x, view.position().y)
                 view.input(e2);
+                this._pointer_target = view
                 return view;
             }
         }
@@ -391,6 +396,29 @@ export class CanvasSurface {
                 let ch = parent.get_children()[i]
                 let res = this.find_by_name_view(ch,name)
                 if(res) return res
+            }
+        }
+        return null
+    }
+
+    private local_to_view(pt: Point, view: View) {
+        let trans = this.calculate_transform_to(this.root,view)
+        let f = pt.subtract(trans)
+        return f
+    }
+    private calculate_transform_to(root:View,view:View):Point {
+        if(root === view) {
+            return root.position().clone()
+        }
+        // @ts-ignore
+        if (root.is_parent_view && root.is_parent_view()) {
+            let parent = root as unknown as ParentView;
+            for(let i=0; i<parent.get_children().length; i++) {
+                let ch = parent.get_children()[i]
+                let ptx = this.calculate_transform_to(ch,view)
+                if(ptx) {
+                    return ptx.add(root.position())
+                }
             }
         }
         return null
