@@ -1,7 +1,7 @@
 import {CanvasSurface} from "./canvas";
 import {
     ButtonBackgroundColor,
-    ButtonBackgroundColor_active,
+    ButtonBackgroundColor_active, ButtonBackgroundColor_selected,
     ButtonBorderColor,
     StandardLeftPadding,
     StandardSelectionColor,
@@ -81,6 +81,7 @@ export class ActionButton extends BaseView {
 export class ToggleButton extends BaseView {
     title: string
     selected:boolean
+    private active: boolean
     constructor(title: string) {
         super(gen_id("toggle-button"))
         this.title = title
@@ -88,14 +89,28 @@ export class ToggleButton extends BaseView {
     }
 
     draw(ctx: CanvasSurface) {
-        ctx.fillBackgroundSize(this.size(), this.selected?ButtonBackgroundColor_active:ButtonBackgroundColor)
+        let bg = ButtonBackgroundColor
+        if(this.selected) {
+            bg = ButtonBackgroundColor_selected
+        }
+        if(this.active) {
+            bg = ButtonBackgroundColor_active
+        }
+        ctx.fillBackgroundSize(this.size(), bg)
         ctx.strokeBackgroundSize(this.size(),ButtonBorderColor)
         ctx.fillStandardText(this.title, StandardLeftPadding, StandardTextHeight, 'base')
     }
 
     input(event: CommonEvent): void {
-        if(event.type === 'mousedown') {
-            this.fire('action',event)
+        if (event.type === "mousedown") {
+            this.active = true
+        }
+        if (event.type === 'mouseup') {
+            this.selected = !this.selected
+            this.active = false
+            let evt2 = new CommonEvent('action',event.pt,event.ctx)
+            this.fire('action', evt2)
+            event.ctx.repaint()
         }
     }
 
@@ -336,6 +351,7 @@ export class HSpacer extends BaseView {
         super("h-spacer");
         this.hflex = true
         this.vflex = false
+        this._name = 'h-spacer'
     }
 
     layout2(g: CanvasSurface, available: Size): Size {

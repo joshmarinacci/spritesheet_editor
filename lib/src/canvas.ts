@@ -31,6 +31,7 @@ export class CanvasSurface {
     private fonts:Map<string,CanvasFont>
     private global_smoothing = true
     private _pointer_target: View|null;
+    private last_point: Point;
 
     constructor(w: number, h: number, scale?:number) {
         this.log("making canvas ",w,h)
@@ -236,6 +237,7 @@ export class CanvasSurface {
         this.canvas.addEventListener('mousedown',(evt)=>{
             down = true;
             let pt = this.screen_to_local(evt)
+            this.last_point = pt.clone()
             button = evt.button as any
             let e = new CommonEvent('mousedown', pt, this)
             e.button = evt.button
@@ -246,9 +248,12 @@ export class CanvasSurface {
         this.canvas.addEventListener('mousemove',(evt)=>{
             if(down && this._pointer_target) {
                 let pt = this.screen_to_local(evt)
+                let delta = pt.subtract(this.last_point)
+                this.last_point = pt.clone()
                 pt = this.local_to_view(pt,this._pointer_target)
                 let e = new CommonEvent('mousedrag', pt, this)
                 e.button = evt.button
+                e.delta = delta
                 this._pointer_target.input(e)
                 if(this._input_callback) this._input_callback(e)
             }

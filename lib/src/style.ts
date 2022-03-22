@@ -1,4 +1,5 @@
 export const ButtonBackgroundColor_active = '#a3e3ff';
+export const ButtonBackgroundColor_selected = '#36baec';
 export const ButtonBackgroundColor = '#e3e3e0';
 export const ButtonBorderColor = '#949492';
 export const StandardSelectionColor = ButtonBackgroundColor_active

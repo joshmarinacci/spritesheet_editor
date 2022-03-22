@@ -10,11 +10,11 @@ import {
     PopupContainer,
     PopupLayer,
     ScrollView,
-    SelectList,
+    SelectList, ToggleButton,
     VBox
 } from "./components";
 import {gen_id, Point, Size} from "./common";
-import {BaseView, CommonEvent, ParentView, View} from "./core";
+import {BaseParentView, BaseView, CommonEvent, ParentView, View} from "./core";
 
 class FixedGridPanel extends BaseView {
     private sw: number;
@@ -47,6 +47,7 @@ class FixedGridPanel extends BaseView {
 class LCDView extends BaseView {
     constructor() {
         super("lcd-view");
+        this._name = 'lcd-view'
     }
     draw(g: CanvasSurface): void {
         g.fillBackgroundSize(this.size(),'#ccc')
@@ -155,48 +156,66 @@ function make_statusbar() {
     return status_bar
 }
 
-class DebugLayer extends LayerView {
-    private debug_button: ActionButton;
-    private show_debug: boolean;
-    constructor() {
-        super("debug-layer");
-        this._name = 'debug-layer'
-        this.debug_button = new ActionButton('debug')
-        this.add(this.debug_button)
-        this.show_debug = false;
-        this.debug_button.on('action',(e:CommonEvent)=>{
-            this.show_debug = !this.show_debug
-            e.ctx.repaint()
-        })
+class DebugLensGlass extends BaseView {
+    private draw_names: boolean;
+    private draw_sizes: boolean;
+    private draw_bounds: boolean;
+    constructor(size: Size) {
+        super(gen_id('debug-glass'));
+        this.set_size(size)
+    }
+    layout2(g: CanvasSurface, available: Size): Size {
+        return this.size()
     }
     override draw(g: CanvasSurface) {
-        // g.fillBackgroundSize(this.size(),'rgb(0,0,0,0.0)')
-        if(this.show_debug) {
-            let root = g.get_root()
-            this.draw_outline(g, root)
-        }
+        let root = g.get_root()
+        g.ctx.save()
+        g.ctx.beginPath()
+        let size = this.size()
+        g.ctx.rect(0,0,size.w,size.h);
+        g.ctx.clip()
+        let trans = g.view_to_local(new Point(0,0),this)
+        g.ctx.translate(-trans.x,-trans.y)
+        this.draw_outline(g, root)
+        g.ctx.restore()
     }
-
     private draw_outline(g: CanvasSurface, view: View) {
         let pos = view.position()
         let size = view.size()
         g.ctx.save()
-        g.ctx.strokeStyle = 'black'
-        g.ctx.lineWidth = 1
-        let s = 3
-        g.ctx.beginPath()
-        g.ctx.rect(pos.x+s,pos.y+s,size.w-s*2,size.h-s*2)
-        g.ctx.moveTo(pos.x,pos.y)
-        g.ctx.lineTo(pos.x+size.w,pos.y+size.h)
-        g.ctx.moveTo(pos.x+size.w,pos.y)
-        g.ctx.lineTo(pos.x,pos.y+size.h)
-        g.ctx.stroke()
-        let text = view.name()
-        let metrics = g.measureText(text)
-        g.ctx.fillStyle = 'black'
-        g.ctx.fillRect(pos.x+2,pos.y+2,metrics.w+4,10+4)
-        g.ctx.fillStyle = 'white'
-        g.ctx.fillText(text,pos.x+4,pos.y+10+4)
+        if(this.draw_bounds) {
+            g.ctx.strokeStyle = 'black'
+            g.ctx.lineWidth = 1
+            let s = 3
+            g.ctx.beginPath()
+            g.ctx.rect(pos.x + s, pos.y + s, size.w - s * 2, size.h - s * 2)
+            g.ctx.moveTo(pos.x, pos.y)
+            g.ctx.lineTo(pos.x + size.w, pos.y + size.h)
+            g.ctx.moveTo(pos.x + size.w, pos.y)
+            g.ctx.lineTo(pos.x, pos.y + size.h)
+            g.ctx.stroke()
+        }
+        if(this.draw_names) {
+            let text = view.name()
+            let metrics = g.measureText(text)
+            g.ctx.fillStyle = 'black'
+            g.ctx.fillRect(pos.x + 2, pos.y + 2, metrics.w + 4, 10 + 4)
+            g.ctx.fillStyle = 'white'
+            g.ctx.fillText(text, pos.x + 4, pos.y + 10 + 4)
+        }
+        if(this.draw_sizes) {
+            let size = view.size()
+            let text = `${size.w.toFixed(1)} x ${size.h.toFixed(1)}`
+            let metrics = g.measureText(text)
+            g.ctx.fillStyle = 'black'
+            let offx = 10
+            let offy = 15
+            g.ctx.fillRect(pos.x + 2+offx, pos.y + 2 + offy, metrics.w + 4, 10 + 4)
+            g.ctx.strokeStyle = 'white'
+            g.ctx.strokeRect(pos.x + 2 +offx, pos.y + 2 + offy, metrics.w + 4, 10+4)
+            g.ctx.fillStyle = 'white'
+            g.ctx.fillText(text, pos.x + 4+offx, pos.y + 10 + 4 + offy)
+        }
 
         function is_parent(view: View) {
             // @ts-ignore
@@ -215,14 +234,86 @@ class DebugLayer extends LayerView {
             })
             g.ctx.restore()
         }
+        g.ctx.restore()
     }
-    override layout2(g: CanvasSurface, available: Size): Size {
-        super.layout2(g, available);
-        let size = this.size()
-        let csize = this.debug_button.size()
-        let pt = new Point(size.w-csize.w, size.h-csize.h)
-        this.debug_button.set_position(pt)
+
+
+    set_draw_names(selected: boolean) {
+        this.draw_names = selected
+    }
+
+    set_draw_sizes(selected: boolean) {
+        this.draw_sizes = selected
+    }
+
+    set_draw_bounds(selected: boolean) {
+        this.draw_bounds = selected
+    }
+}
+class DebugLens extends BaseParentView {
+    private vbox: VBox;
+    private glass: DebugLensGlass;
+    constructor() {
+        super(gen_id('debug-window'));
+        this._name = 'debug-window'
+        this.set_size(new Size(400,300))
+        let vbox = new VBox()
+        this.vbox = vbox
+        let names = new ToggleButton('names')
+        vbox.add(names)
+        names.on('action',()=> this.glass.set_draw_names(names.selected))
+        let sizes = new ToggleButton('sizes')
+        vbox.add(sizes)
+        sizes.on('action',()=>this.glass.set_draw_sizes(sizes.selected))
+        let bounds = new ToggleButton('bounds')
+        vbox.add(bounds)
+        bounds.on('action',()=>this.glass.set_draw_bounds(bounds.selected))
+        this.add(vbox)
+        this.glass = new DebugLensGlass(this.size())
+        this.add(this.glass)
+    }
+    input(event: CommonEvent) {
+        if(event.type === 'mousedown') {
+            // console.log('starting at',event)
+        }
+        if(event.type === 'mousedrag') {
+            this.set_position(this.position().add(event.delta))
+            event.ctx.repaint()
+        }
+    }
+    override draw(g: CanvasSurface) {
+        g.ctx.save()
+        g.ctx.fillStyle = '#888'
+        let s = this.size()
+        g.ctx.fillRect(0,0,s.w,20)
+        g.ctx.fillRect(0,0,80,s.h)
+        g.ctx.fillRect(s.w-20,0,20,s.h)
+        g.ctx.fillRect(0,s.h-20,s.w,20)
+        g.ctx.strokeStyle = '#444'
+        g.ctx.strokeRect(0,0,this.size().w,this.size().h)
+        g.fillStandardText('debug lens',10,15)
+        g.ctx.restore()
+
+        // g.fillBackgroundSize(this.size(),'#ccc')
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        this.get_children().forEach(ch => {
+            ch.layout2(g,available)
+        })
+        let s = this.size()
+        this.vbox.set_position(new Point(0,20))
+        this.glass.set_position(new Point(80,20))
+        this.glass.set_size(new Size(s.w-80-20,s.h-20-20))
         return this.size()
+    }
+
+}
+class DebugLayer extends LayerView {
+    constructor() {
+        super("debug-layer");
+        this._name = 'debug-layer'
+        this.add(new DebugLens())
     }
 }
 
@@ -250,6 +341,7 @@ export function start() {
     middle_layer.vflex = true
     middle_layer._name = 'middle'
     let source_list = new SelectList(['A','B','C'],()=>"cool source")
+    source_list._name = 'source-list'
     source_list.vflex = false
 
     let scroll = new ScrollView()
@@ -259,6 +351,7 @@ export function start() {
     middle_layer.add(scroll)
 
     let song_list = new SelectList(['X,Y,Z'],()=>"cool song")
+    song_list._name = 'song-list'
     song_list.hflex = true
     middle_layer.add(song_list)
     root.add(middle_layer)

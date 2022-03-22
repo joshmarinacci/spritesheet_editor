@@ -19,6 +19,7 @@ export class CommonEvent {
     button: number
     ctx: CanvasSurface
     details?: any
+    delta?: Point;
 
     constructor(type: string, pt: Point, ctx: CanvasSurface) {
         this.type = type
