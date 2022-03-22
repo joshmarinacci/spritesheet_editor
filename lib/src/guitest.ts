@@ -269,7 +269,7 @@ class ResizeHandle extends BaseView {
     }
 
     draw(g: CanvasSurface): void {
-        g.fillBackgroundSize(this.size(),'#888')
+        g.fillBackgroundSize(this.size(),'#444')
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
