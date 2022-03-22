@@ -146,4 +146,12 @@ export class Size {
     grow(pad: number) {
         return new Size(this.w+pad*2,this.h+pad*2)
     }
+
+    subtract(delta: Point) {
+        return new Size(this.w-delta.x,this.h-delta.y)
+    }
+
+    add(delta: Point) {
+        return new Size(this.w+delta.x,this.h+delta.y)
+    }
 }

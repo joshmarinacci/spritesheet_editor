@@ -15,6 +15,7 @@ import {
 } from "./components";
 import {gen_id, Point, Size} from "./common";
 import {BaseParentView, BaseView, CommonEvent, ParentView, View} from "./core";
+import basefont_data from "./base_font.json";
 
 class FixedGridPanel extends BaseView {
     private sw: number;
@@ -195,26 +196,27 @@ class DebugLensGlass extends BaseView {
             g.ctx.lineTo(pos.x, pos.y + size.h)
             g.ctx.stroke()
         }
-        if(this.draw_names) {
-            let text = view.name()
-            let metrics = g.measureText(text)
-            g.ctx.fillStyle = 'black'
-            g.ctx.fillRect(pos.x + 2, pos.y + 2, metrics.w + 4, 10 + 4)
+        function draw_debug_text(g,pos,text) {
+            let metrics = g.measureText(text,'base')
+            g.ctx.save()
+            g.ctx.translate(pos.x,pos.y)
             g.ctx.fillStyle = 'white'
-            g.ctx.fillText(text, pos.x + 4, pos.y + 10 + 4)
+            g.ctx.fillRect(0,0, metrics.w + 4, 10 + 4+4)
+            g.ctx.strokeStyle = 'black'
+            g.ctx.lineWidth = 1
+            g.ctx.strokeRect(0,0,metrics.w+4,10+4+4)
+            g.ctx.fillStyle = 'black'
+            g.fillStandardText(text,4,10+4+4,'base')
+            g.ctx.restore()
+
+        }
+        if(this.draw_names) {
+            draw_debug_text(g,pos.add(new Point(5,5)),view.name())
         }
         if(this.draw_sizes) {
             let size = view.size()
             let text = `${size.w.toFixed(1)} x ${size.h.toFixed(1)}`
-            let metrics = g.measureText(text)
-            g.ctx.fillStyle = 'black'
-            let offx = 10
-            let offy = 15
-            g.ctx.fillRect(pos.x + 2+offx, pos.y + 2 + offy, metrics.w + 4, 10 + 4)
-            g.ctx.strokeStyle = 'white'
-            g.ctx.strokeRect(pos.x + 2 +offx, pos.y + 2 + offy, metrics.w + 4, 10+4)
-            g.ctx.fillStyle = 'white'
-            g.ctx.fillText(text, pos.x + 4+offx, pos.y + 10 + 4 + offy)
+            draw_debug_text(g,pos.add(new Point(5,25)),text)
         }
 
         function is_parent(view: View) {
@@ -250,9 +252,36 @@ class DebugLensGlass extends BaseView {
         this.draw_bounds = selected
     }
 }
+
+class ResizeHandle extends BaseView {
+    private lens: DebugLens;
+    constructor(lens: DebugLens) {
+        super(gen_id('debug-lense'))
+        this.lens = lens
+        this.set_size(new Size(20,20))
+    }
+
+    override input(event: CommonEvent) {
+        if(event.type === 'mousedrag') {
+            this.lens.set_size(this.lens.size().add(event.delta))
+            event.ctx.repaint()
+        }
+    }
+
+    draw(g: CanvasSurface): void {
+        g.fillBackgroundSize(this.size(),'#888')
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        return this.size()
+    }
+
+}
+
 class DebugLens extends BaseParentView {
     private vbox: VBox;
     private glass: DebugLensGlass;
+    private resize_handle: ResizeHandle;
     constructor() {
         super(gen_id('debug-window'));
         this._name = 'debug-window'
@@ -271,6 +300,8 @@ class DebugLens extends BaseParentView {
         this.add(vbox)
         this.glass = new DebugLensGlass(this.size())
         this.add(this.glass)
+        this.resize_handle = new ResizeHandle(this)
+        this.add(this.resize_handle)
     }
     input(event: CommonEvent) {
         if(event.type === 'mousedown') {
@@ -291,7 +322,7 @@ class DebugLens extends BaseParentView {
         g.ctx.fillRect(0,s.h-20,s.w,20)
         g.ctx.strokeStyle = '#444'
         g.ctx.strokeRect(0,0,this.size().w,this.size().h)
-        g.fillStandardText('debug lens',10,15)
+        g.fillStandardText('debug lens',10,15,'base')
         g.ctx.restore()
 
         // g.fillBackgroundSize(this.size(),'#ccc')
@@ -305,6 +336,7 @@ class DebugLens extends BaseParentView {
         this.vbox.set_position(new Point(0,20))
         this.glass.set_position(new Point(80,20))
         this.glass.set_size(new Size(s.w-80-20,s.h-20-20))
+        this.resize_handle.set_position(new Point(s.w-20,s.h-20))
         return this.size()
     }
 
@@ -319,6 +351,7 @@ class DebugLayer extends LayerView {
 
 export function start() {
     let surface = new CanvasSurface(1024,720, 1.0);
+    surface.load_jsonfont(basefont_data,'somefont','base')
     surface.debug = false
 
     let main = new LayerView();
