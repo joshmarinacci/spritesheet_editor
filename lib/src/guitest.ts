@@ -181,6 +181,7 @@ class DebugLensGlass extends BaseView {
         g.ctx.restore()
     }
     private draw_outline(g: CanvasSurface, view: View) {
+        if(view.name() === 'debug-layer') return
         let pos = view.position()
         let size = view.size()
         g.ctx.save()
@@ -373,7 +374,7 @@ export function start() {
     let middle_layer = new HBox()
     middle_layer.vflex = true
     middle_layer._name = 'middle'
-    let source_list = new SelectList(['A','B','C'],()=>"cool source")
+    let source_list = new SelectList(['Library','Playlists','Radio'],(v)=>v)
     source_list._name = 'source-list'
     source_list.vflex = false
 
