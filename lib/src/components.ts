@@ -149,8 +149,7 @@ export class SelectList extends BaseView {
             let y = Math.floor(pt.y / 30)
             let item = this.data[y]
             this.selected_index = y
-            // @ts-ignore
-            this._listeners.get('change').forEach(cb => cb(item,y))
+            this.fire('change',{item:item,y:y})
             event.ctx.repaint()
         }
     }

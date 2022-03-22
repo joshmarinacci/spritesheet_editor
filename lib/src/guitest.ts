@@ -15,6 +15,7 @@ import {
 } from "./components";
 import {gen_id, Point, Size} from "./common";
 import {BaseParentView, BaseView, CommonEvent, ParentView, View} from "./core";
+// @ts-ignore
 import basefont_data from "./base_font.json";
 
 class FixedGridPanel extends BaseView {
