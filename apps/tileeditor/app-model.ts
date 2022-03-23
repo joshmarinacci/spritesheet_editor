@@ -449,6 +449,7 @@ export class Doc extends Observable {
         console.log("selected font is",this.get_selected_font())
         console.log("selected gly0h is",this.get_selected_glyph())
         this.fire('reload',this)
+        this.fire('structure',this)
     }
 
     dirty() {

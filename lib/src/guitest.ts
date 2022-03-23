@@ -105,6 +105,24 @@ class DropdownButton extends ActionButton {
 
 }
 
+class FontIcon extends BaseView {
+    private codepoint: number
+
+    constructor(codepoint: number) {
+        super(gen_id('fonticon'))
+        this.codepoint = codepoint
+    }
+
+    draw(g: CanvasSurface): void {
+        g.draw_glyph(this.codepoint,0,0,'base','black')
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        this.set_size(new Size(16,16))
+        return this.size()
+    }
+}
+
 function make_toolbar(surf:CanvasSurface) {
     let toolbar = new HBox()
     toolbar.fill = '#aaa'
@@ -142,6 +160,8 @@ function make_toolbar(surf:CanvasSurface) {
         dialog_layer.add(dialog)
     })
     toolbar.add(add_songs)
+
+    toolbar.add(new FontIcon(2764))
 
     return toolbar
 }

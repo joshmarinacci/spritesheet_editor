@@ -1085,17 +1085,17 @@ export function start() {
         return "???"
     })
     // @ts-ignore
-    itemlist.on('change',(item,i)  => {
-        doc.selected_tree_item = item
-        doc.selected_tree_item_index = i
-        if (item instanceof Sheet) {
-            doc.set_selected_sheet(item as Sheet)
+    itemlist.on('change',(e)  => {
+        doc.selected_tree_item = e.item
+        doc.selected_tree_item_index = e.y
+        if (e.item instanceof Sheet) {
+            doc.set_selected_sheet(e.item as Sheet)
         }
-        if (item instanceof Tilemap) {
-            doc.set_selected_map(item as Tilemap)
+        if (e.item instanceof Tilemap) {
+            doc.set_selected_map(e.item as Tilemap)
         }
-        if (item instanceof SpriteFont) {
-            doc.set_selected_font(item as SpriteFont)
+        if (e.item instanceof SpriteFont) {
+            doc.set_selected_font(e.item as SpriteFont)
         }
     })
     hb.add(itemlist)

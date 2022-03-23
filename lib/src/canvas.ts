@@ -358,6 +358,17 @@ export class CanvasSurface {
         this.ctx.fillText(caption,x, y)
     }
 
+    draw_glyph(codepoint: number, x:number, y:number, font_name: string, fill: string, scale?:number) {
+        if(!scale) scale = 1
+        this.ctx.fillStyle = fill
+        if(font_name && this.fonts.has(font_name)) {
+            let font = this.fonts.get(font_name)
+            if(font) {
+                font.draw_glpyh(this.ctx,codepoint,x,y,scale)
+            }
+        }
+    }
+
     dispatch_fake_mouse_event(type: string, pos: Point) {
         let e = new CommonEvent('mousedown',pos,this)
         e.button = 0;
@@ -545,6 +556,26 @@ class CanvasFont {
                 ctx.drawImage(img, sx,sy,sw,sh, dx,dy, dw,dh)
                 xoff += sw + 1
             }
+        }
+    }
+
+    draw_glpyh(ctx:CanvasRenderingContext2D, cp:number, x:number, y:number, scale?:number) {
+        let xoff = 0
+        let yoff = 2
+        if(this.metas.has(cp)) {
+            let glyph = this.metas.get(cp)
+            ctx.imageSmoothingEnabled = false
+            //@ts-ignore
+            let img = glyph.img
+            let sx = glyph.meta.left
+            let sy = 0
+            let sw = glyph.w - glyph.meta.left - glyph.meta.right
+            let sh = glyph.h //- glyph.meta.baseline
+            let dx = x + xoff*this.scale*scale
+            let dy = y + (yoff+glyph.meta.baseline-1)*this.scale*scale
+            let dw = sw*this.scale*scale
+            let dh = sh*this.scale*scale
+            ctx.drawImage(img, sx,sy,sw,sh, dx,dy, dw,dh)
         }
     }
 
