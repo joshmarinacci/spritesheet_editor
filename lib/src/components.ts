@@ -209,11 +209,11 @@ export class Header extends BaseView {
     }
 }
 
-type VAlign = "top"|"center"|"bottom"|"stretch"
+export type VAlign = "top"|"center"|"bottom"|"stretch"
 export class HBox extends BaseParentView {
     fill: string;
     pad: number;
-    private valign: VAlign;
+    valign: VAlign;
 
     constructor() {
         super(gen_id('hbox'));
@@ -227,42 +227,35 @@ export class HBox extends BaseParentView {
     layout2(g: CanvasSurface, real_available: Size): Size {
         let available = real_available.shrink(this.pad);
         //split out flex and non-flex children
-        // @ts-ignore
         let yes_flex = this._children.filter(ch => ch.hflex)
-        // @ts-ignore
         let non_flex = this._children.filter(ch => !ch.hflex)
         //call layout on the non-flex children first
-        let sizes: Map<View, Size> = new Map()
         let total_w = 0
         let leftover_w = available.w
-        non_flex.map(ch => {
-            let ch2 = ch as unknown as View
-            let size = ch2.layout2(g, new Size(leftover_w,available.h))
+        non_flex.map((ch:View) => {
+            let size = ch.layout2(g, new Size(leftover_w,available.h))
             total_w += size.w
             leftover_w -= size.w
-            sizes.set(ch2, size)
         })
         if (yes_flex.length > 0) {
             //allocate the rest of the space equally to the flex children
             let flex_avail = new Size((available.w - total_w) / yes_flex.length, available.h)
             //call layout on the flex children
-            yes_flex.map(ch => {
-                let ch2 = ch as unknown as View
-                let size = ch2.layout2(g, flex_avail)
+            yes_flex.map((ch:View) => {
+                let size = ch.layout2(g, flex_avail)
                 total_w += size.w
-                sizes.set(ch2, size)
             })
         }
-        //place all children (they've already set their width and height)
         let maxh = 0
         //find the max height
         this.get_children().forEach(ch => maxh = Math.max(ch.size().h,maxh))
         let nx = this.pad
         let ny = this.pad
+        //place all children (they've already set their width and height)
         this._children.forEach(ch => {
-            if(this.valign === 'top') ch.set_position(new Point(nx, ny))
+            if(this.valign === 'top')    ch.set_position(new Point(nx, ny))
             if(this.valign === 'center') ch.set_position(new Point(nx, (maxh-ch.size().h)/2))
-            if(this.valign === 'bottom') ch.set_position(new Point(nx, maxh-ch.size().h))
+            if(this.valign === 'bottom') ch.set_position(new Point(nx,  maxh-ch.size().h))
             if(this.valign === 'stretch') {
                 ch.set_position(new Point(nx, ny))
                 ch.size().h = maxh
@@ -271,12 +264,8 @@ export class HBox extends BaseParentView {
         })
         //return own size
         this.set_size(new Size(nx+this.pad*2, maxh+this.pad*2))
-        if (this.vflex) {
-            this.size().h = real_available.h
-        }
-        if (this.hflex) {
-            this.size().w = real_available.w
-        }
+        if (this.vflex) this.size().h = real_available.h
+        if (this.hflex) this.size().w = real_available.w
         return this.size()
     }
 
@@ -285,57 +274,57 @@ export class HBox extends BaseParentView {
     }
 }
 
+export type HAlign = "left"|"center"|"right"|"stretch"
 export class VBox extends BaseParentView {
     fill: string;
     pad: number;
+    halign: HAlign;
 
     constructor() {
         super(gen_id('vbox'));
         this.fill = null
         this.hflex = false
         this.vflex = false
+        this.halign = "left"
         this.pad = 0
     }
 
     layout2(g: CanvasSurface, real_available: Size): Size {
         let available = real_available.shrink(this.pad);
 
-        // @ts-ignore
-        let yes_flex = this.get_children().filter(ch => ch.vflex)
-        // @ts-ignore
+        let yes_flex = this.get_children().filter(ch =>  ch.vflex)
         let non_flex = this.get_children().filter(ch => !ch.vflex)
         //call layout on the non-flex children first
-        let sizes: Map<View, Size> = new Map()
         let total_h = 0
         let leftover_h = available.h
         non_flex.map(ch => {
-            let ch2 = ch as unknown as View
-            let size = ch2.layout2(g, new Size(available.w,leftover_h))
+            let size = ch.layout2(g, new Size(available.w,leftover_h))
             total_h += size.h
             leftover_h -= size.h
-            sizes.set(ch2, size)
         })
         if (yes_flex.length > 0) {
             //allocate the rest of the space equally to the flex children
             let flex_avail = new Size(available.w, (available.h - total_h) / yes_flex.length)
             //call layout on the flex children
-            yes_flex.map(ch => {
-                let ch2 = ch as unknown as View
-                let size = ch2.layout2(g, flex_avail)
+            yes_flex.map((ch:View) => {
+                let size = ch.layout2(g, flex_avail)
                 total_h += size.h
-                sizes.set(ch2, size)
             })
         }
         //place all children (they've already set their width and height)
         let nx = this.pad
         let ny = this.pad
         let maxw = 0
+        this.get_children().forEach(ch => maxw = Math.max(ch.size().w,maxw))
         this.get_children().forEach(ch => {
-            let size = sizes.get(ch as unknown as View)
-            ch.set_position(new Point(nx,ny))
-            ch.set_size(size)
+            if(this.halign === 'left')    ch.set_position(new Point(nx, ny))
+            if(this.halign === 'center')  ch.set_position(new Point((maxw-ch.size().w)/2, ny))
+            if(this.halign === 'right')   ch.set_position(new Point(maxw-ch.size().w, ny))
+            if(this.halign === 'stretch') {
+                ch.set_position(new Point(nx, ny))
+                ch.size().w = maxw
+            }
             ny += ch.size().h
-            maxw = Math.max(ch.size().w, maxw)
         })
         //return own size
         this.size().w = maxw + this.pad * 2
@@ -636,7 +625,7 @@ export class DialogContainer extends BaseParentView {
 
     layout2(g: CanvasSurface, available: Size): Size {
         let box = this._children[0]
-        let size = box.layout2(g, new Size(300, 200))
+        let size = box.layout2(g, new Size(300, 300))
         this.set_size(size)
         this.set_position(new Point(
             (g.w - size.w) / 2,

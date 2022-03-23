@@ -144,8 +144,15 @@ function make_toolbar(surf:CanvasSurface) {
     add_songs.on('action',()=>{
         let dialog = new DialogContainer()
         let box = new VBox()
+        box.vflex = true
+        box.halign = 'stretch'
         box.add(new ActionButton("dialog header"))
-        box.add(new ActionButton("dialog body"))
+        let body = new VBox()
+        body.halign = 'right'
+        body.vflex = true
+        body.fill = 'white'
+        body.add(new ActionButton("dialog body"))
+        box.add(body)
         let tb = new HBox()
         tb.add(new ActionButton("okay"))
         tb.add(new HSpacer())
