@@ -128,9 +128,11 @@ function make_toolbar(surf:CanvasSurface) {
     toolbar.fill = '#aaa'
     toolbar._name = 'toolbar'
 
-    toolbar.add(new ActionButton("prev"))
-    toolbar.add(new ActionButton("play"))
-    toolbar.add(new ActionButton("next"))
+
+    toolbar.add(new ActionButton(`⏪`))
+    toolbar.add(new ActionButton(`▶`))
+    toolbar.add(new ActionButton(`⏩`))
+    toolbar.add(new FontIcon(0x1D160))
 
     toolbar.add(new HSpacer())
     toolbar.add(new LCDView())
@@ -291,7 +293,8 @@ class ResizeHandle extends BaseView {
     }
 
     draw(g: CanvasSurface): void {
-        g.fillBackgroundSize(this.size(),'#444')
+        g.fillBackgroundSize(this.size(),'#888')
+        g.draw_glyph(2921,2,0,'base','black')
     }
 
     layout2(g: CanvasSurface, available: Size): Size {

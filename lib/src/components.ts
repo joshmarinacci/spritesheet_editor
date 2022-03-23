@@ -456,21 +456,25 @@ class ScrollBar extends BaseView {
                 let gutter_length = this.size().h - 20
                 let fract = viewport_size.h / content_size.h
                 let s = gutter_length * fract
-                g.fill(new Rect(0,20,20,s), 'red');
+                g.fill(new Rect(0,20,20,s), '#ccc');
             } else {
                 let gutter_length = this.size().w - 20
                 let fract = viewport_size.w / content_size.w
                 let s = gutter_length * fract
-                g.fill(new Rect(0,0,s,20), 'red');
+                g.fill(new Rect(0,0,s,20), '#ccc');
             }
         }
-        //draw the thumbs
+        //draw the arrows
         if(this.vert) {
             g.fill(new Rect(0,0,20,20),'#999')
+            g.draw_glyph(8593,0,0,'base','black',1)
             g.fill(new Rect(0,this.size().h-20,20,20),'#999')
+            g.draw_glyph(8595,0,this.size().h-20,'base','black',1)
         } else {
             g.fill(new Rect(0,0,20,20),'#999')
+            g.draw_glyph(8592,0,0,'base','black',1)
             g.fill(new Rect(this.size().w-20,0,20,20),'#999')
+            g.draw_glyph(8594,this.size().w-20,0,'base','black',1)
         }
     }
     override input(event: CommonEvent) {
