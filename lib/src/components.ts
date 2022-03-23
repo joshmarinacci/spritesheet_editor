@@ -209,14 +209,17 @@ export class Header extends BaseView {
     }
 }
 
+type VAlign = "top"|"center"|"bottom"|"stretch"
 export class HBox extends BaseParentView {
     fill: string;
     pad: number;
+    private valign: VAlign;
 
     constructor() {
         super(gen_id('hbox'));
         this.hflex = false
         this.vflex = false
+        this.valign = 'top'
         this.pad = 0
         this.fill = null
     }
@@ -251,14 +254,20 @@ export class HBox extends BaseParentView {
             })
         }
         //place all children (they've already set their width and height)
+        let maxh = 0
+        //find the max height
+        this.get_children().forEach(ch => maxh = Math.max(ch.size().h,maxh))
         let nx = this.pad
         let ny = this.pad
-        let maxh = 0
         this._children.forEach(ch => {
-            let size = sizes.get(ch as unknown as View)
-            ch.set_position(new Point(nx,ny))
+            if(this.valign === 'top') ch.set_position(new Point(nx, ny))
+            if(this.valign === 'center') ch.set_position(new Point(nx, (maxh-ch.size().h)/2))
+            if(this.valign === 'bottom') ch.set_position(new Point(nx, maxh-ch.size().h))
+            if(this.valign === 'stretch') {
+                ch.set_position(new Point(nx, ny))
+                ch.size().h = maxh
+            }
             nx += ch.size().w
-            maxh = Math.max(ch.size().h, maxh)
         })
         //return own size
         this.set_size(new Size(nx+this.pad*2, maxh+this.pad*2))
