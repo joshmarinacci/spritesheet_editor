@@ -7,6 +7,8 @@ export class DebugLensGlass extends BaseView {
     private draw_names: boolean;
     private draw_sizes: boolean;
     private draw_bounds: boolean;
+    private draw_flex: boolean;
+    private draw_align: boolean;
 
     constructor(size: Size) {
         super(gen_id('debug-glass'));
@@ -38,14 +40,12 @@ export class DebugLensGlass extends BaseView {
         if (this.draw_bounds) {
             g.ctx.strokeStyle = 'black'
             g.ctx.lineWidth = 1
-            let s = 3
-            g.ctx.beginPath()
-            g.ctx.rect(pos.x + s, pos.y + s, size.w - s * 2, size.h - s * 2)
-            g.ctx.moveTo(pos.x, pos.y)
-            g.ctx.lineTo(pos.x + size.w, pos.y + size.h)
-            g.ctx.moveTo(pos.x + size.w, pos.y)
-            g.ctx.lineTo(pos.x, pos.y + size.h)
-            g.ctx.stroke()
+            for(let s=1; s<4; s++) {
+                g.ctx.strokeStyle = (s%2==0)?'red':'black'
+                g.ctx.beginPath()
+                g.ctx.rect(pos.x + s, pos.y + s, size.w - s * 2, size.h - s * 2)
+                g.ctx.stroke()
+            }
         }
 
         function draw_debug_text(g, pos, text) {
@@ -60,7 +60,6 @@ export class DebugLensGlass extends BaseView {
             g.ctx.fillStyle = 'black'
             g.fillStandardText(text, 4, 10 + 4 + 4, 'base')
             g.ctx.restore()
-
         }
 
         if (this.draw_names) {
@@ -70,6 +69,23 @@ export class DebugLensGlass extends BaseView {
             let size = view.size()
             let text = `${size.w.toFixed(1)} x ${size.h.toFixed(1)}`
             draw_debug_text(g, pos.add(new Point(5, 25)), text)
+        }
+
+        if(this.draw_flex) {
+            let text = `hflex=${view.hflex} vflex=${view.vflex}`
+            draw_debug_text(g, pos.add(new Point(5, 35)), text)
+        }
+        if(this.draw_align) {
+            if('halign' in view) {
+                // @ts-ignore
+                let text = `halign=${view.halign}`
+                draw_debug_text(g, pos.add(new Point(5, 45)), text)
+            }
+            if('valign' in view) {
+                // @ts-ignore
+                let text = `valign=${view.valign}`
+                draw_debug_text(g, pos.add(new Point(5, 45)), text)
+            }
         }
 
         function is_parent(view: View) {
@@ -93,7 +109,6 @@ export class DebugLensGlass extends BaseView {
         g.ctx.restore()
     }
 
-
     set_draw_names(selected: boolean) {
         this.draw_names = selected
     }
@@ -104,6 +119,14 @@ export class DebugLensGlass extends BaseView {
 
     set_draw_bounds(selected: boolean) {
         this.draw_bounds = selected
+    }
+
+    set_draw_flex(selected: boolean) {
+        this.draw_flex = selected
+    }
+
+    set_draw_align(selected: boolean) {
+        this.draw_align = selected
     }
 }
 
@@ -144,6 +167,7 @@ export class DebugLens extends BaseParentView {
         this._name = 'debug-window'
         this.set_size(new Size(400, 300))
         let vbox = new VBox()
+        vbox.halign = 'center'
         this.vbox = vbox
         let names = new ToggleButton('names')
         vbox.add(names)
@@ -154,6 +178,13 @@ export class DebugLens extends BaseParentView {
         let bounds = new ToggleButton('bounds')
         vbox.add(bounds)
         bounds.on('action', () => this.glass.set_draw_bounds(bounds.selected))
+        let flex = new ToggleButton('flex')
+        vbox.add(flex)
+        flex.on('action', () => this.glass.set_draw_flex(flex.selected))
+        let align = new ToggleButton('align')
+        vbox.add(align)
+        align.on('action', () => this.glass.set_draw_align(align.selected))
+
         this.add(vbox)
         this.glass = new DebugLensGlass(this.size())
         this.add(this.glass)
@@ -182,6 +213,9 @@ export class DebugLens extends BaseParentView {
         g.ctx.strokeStyle = '#444'
         g.ctx.strokeRect(0, 0, this.size().w, this.size().h)
         g.fillStandardText('debug lens', 10, 15, 'base')
+        let txt = `size: ${this.glass.size().w} x ${this.glass.size().h}`
+        let metrics = g.measureText(txt,'base')
+        g.fillStandardText(txt, (this.size().w-metrics.w)/2,this.size().h,'base')
         g.ctx.restore()
 
         // g.fillBackgroundSize(this.size(),'#ccc')

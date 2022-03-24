@@ -128,6 +128,7 @@ function make_toolbar(surf:CanvasSurface) {
     let toolbar = new HBox()
     toolbar.fill = '#aaa'
     toolbar._name = 'toolbar'
+    toolbar.valign = 'center'
 
 
     toolbar.add(new ActionButton(`⏪`))
