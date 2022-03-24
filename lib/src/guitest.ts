@@ -233,7 +233,9 @@ export function start() {
     app_layer.add(root)
 
 
-    main.add(new DebugLayer())
+    let dl = new DebugLayer()
+    dl.set_visible(false)
+    main.add(dl)
     surface.set_root(main)
     surface.setup_mouse_input()
     surface.addToPage();

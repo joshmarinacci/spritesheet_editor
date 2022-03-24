@@ -182,6 +182,9 @@ export class LayerView extends BaseParentView {
         this.set_size(available)
         return available
     }
+    set_visible(visible:boolean) {
+        this._visible = visible
+    }
 }
 
 export class Header extends BaseView {
