@@ -431,6 +431,9 @@ scroll bar math
 viewport size / content size = thumb length / gutter length
 (vs/cs) * gl = tl
 
+viewport size / content size = scale
+viewport offset * scale = thumb offset
+
  */
 class ScrollBar extends BaseView {
     private vert: boolean;
@@ -447,22 +450,24 @@ class ScrollBar extends BaseView {
     }
     draw(g: CanvasSurface): void {
         //draw the gutter
-        g.fillBackgroundSize(this.size(),'yellow')
-        //draw the bar
+        g.fillBackgroundSize(this.size(),'#888')
+        //draw the thumb
         if(this.wrapper.get_children().length == 1) {
             let viewport_size = this.wrapper.size()
             let content_size = this.wrapper.get_children()[0].size()
             // this.log("content",content,'vs',wsize)
             if(this.vert) {
-                let gutter_length = this.size().h - 20
+                let gutter_length = this.size().h - 40
                 let fract = viewport_size.h / content_size.h
                 let s = gutter_length * fract
-                g.fill(new Rect(0,20,20,s), '#ccc');
+                let thumb_off = this.wrapper.yoff*fract
+                g.fill(new Rect(0,20-thumb_off,20,s), '#ccc');
             } else {
-                let gutter_length = this.size().w - 20
+                let gutter_length = this.size().w - 50
                 let fract = viewport_size.w / content_size.w
                 let s = gutter_length * fract
-                g.fill(new Rect(0,0,s,20), '#ccc');
+                let thumb_off = this.wrapper.xoff*fract
+                g.fill(new Rect(20-thumb_off,0,s,20), '#ccc');
             }
         }
         //draw the arrows
@@ -496,6 +501,18 @@ class ScrollBar extends BaseView {
                     this.wrapper.xoff -= 20
                 }
             }
+        }
+        if(event.type === 'mousedrag') {
+            let viewport_size = this.wrapper.size()
+            let content_size = this.wrapper.get_children()[0].size()
+            if(this.vert) {
+                let fract = viewport_size.h / content_size.h
+                this.wrapper.yoff -= event.delta.y / fract
+            } else {
+                let fract = viewport_size.w / content_size.w
+                this.wrapper.xoff -= event.delta.x / fract
+            }
+            event.ctx.repaint()
         }
     }
     layout2(g: CanvasSurface, available: Size): Size {

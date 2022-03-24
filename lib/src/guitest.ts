@@ -22,10 +22,10 @@ import {DebugLayer} from "./debug";
 class FixedGridPanel extends BaseView {
     private sw: number;
     private sh: number;
-    constructor(w: number, h: number) {
+    constructor(size:Size) {
         super(gen_id("fixed-grid"))
-        this.sw = w
-        this.sh = h
+        this.sw = size.w
+        this.sh = size.h
     }
     draw(g: CanvasSurface): void {
         g.fillBackgroundSize(this.size(),'#ccccff')
@@ -154,6 +154,11 @@ function make_toolbar(surf:CanvasSurface) {
         body.vflex = true
         body.fill = 'white'
         body.add(new ActionButton("dialog body"))
+        let scroll = new ScrollView()
+        scroll.hflex = true
+        scroll.vflex = true
+        scroll.set_content(new FixedGridPanel(new Size(600,600)))
+        body.add(scroll)
         box.add(body)
         let tb = new HBox()
         tb.add(new ActionButton("okay"))
