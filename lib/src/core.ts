@@ -31,6 +31,7 @@ export class CommonEvent {
         let ce = new CommonEvent(this.type, this.pt.translate(x, y), this.ctx)
         ce.button = this.button
         ce.details = this.details
+        ce.delta = this.delta
         return ce
     }
 }

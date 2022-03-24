@@ -270,7 +270,7 @@ export class CanvasSurface {
         this.canvas.addEventListener('wheel',(evt)=>{
             let pt = this.screen_to_local(evt)
             let e = new CommonEvent('wheel',pt,this)
-            e.details = {deltaX:evt.deltaX, deltaY:evt.deltaY}
+            e.delta = new Point(evt.deltaX, evt.deltaY)
             this.dispatch_pointer_event(this.root,e);
             // evt.stopPropagation();
             evt.preventDefault()

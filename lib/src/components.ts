@@ -423,6 +423,11 @@ class ScrollWrapper extends BaseParentView {
         })
         return available
     }
+    input(event: CommonEvent) {
+        if(event.type === 'wheel') {
+            this.log(event)
+        }
+    }
 
 }
 /*
@@ -485,7 +490,6 @@ class ScrollBar extends BaseView {
     }
     override input(event: CommonEvent) {
         if(event.type === 'mousedown') {
-            this.log("clicked on scrollbar")
             if(this.vert) {
                 if(event.pt.y < 20) {
                     this.wrapper.yoff += 20
@@ -503,6 +507,18 @@ class ScrollBar extends BaseView {
             }
         }
         if(event.type === 'mousedrag') {
+            let viewport_size = this.wrapper.size()
+            let content_size = this.wrapper.get_children()[0].size()
+            if(this.vert) {
+                let fract = viewport_size.h / content_size.h
+                this.wrapper.yoff -= event.delta.y / fract
+            } else {
+                let fract = viewport_size.w / content_size.w
+                this.wrapper.xoff -= event.delta.x / fract
+            }
+            event.ctx.repaint()
+        }
+        if(event.type === 'wheel') {
             let viewport_size = this.wrapper.size()
             let content_size = this.wrapper.get_children()[0].size()
             if(this.vert) {
