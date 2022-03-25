@@ -14,10 +14,11 @@ import {
     VBox
 } from "./components";
 import {gen_id, Point, Size} from "./common";
-import {BaseView, CommonEvent} from "./core";
+import {BaseParentView, BaseView, CommonEvent, View} from "./core";
 // @ts-ignore
 import basefont_data from "./base_font.json";
 import {DebugLayer} from "./debug";
+import {randi} from "../../common/util";
 
 class FixedGridPanel extends BaseView {
     private sw: number;
@@ -124,26 +125,8 @@ class FontIcon extends BaseView {
     }
 }
 
-function make_toolbar(surf:CanvasSurface) {
-    let toolbar = new HBox()
-    toolbar.fill = '#aaa'
-    toolbar._name = 'toolbar'
-    toolbar.valign = 'center'
-
-
-    toolbar.add(new ActionButton(`⏪`))
-    toolbar.add(new ActionButton(`▶`))
-    toolbar.add(new ActionButton(`⏩`))
-    toolbar.add(new FontIcon(0x1D160))
-
-    toolbar.add(new HSpacer())
-    toolbar.add(new LCDView())
-    toolbar.add(new HSpacer())
-    let data = ['zero','mid','loud','bleeding ears']
-    let volume = new DropdownButton(data,0,(v)=>v.toString())
-    toolbar.add(volume)
-    let add_songs = new ActionButton('add songs')
-    add_songs.on('action',()=>{
+function open_songs_dialog(surf:CanvasSurface) {
+    return ()=>{
         let dialog = new DialogContainer()
         let box = new VBox()
         box.vflex = true
@@ -174,7 +157,29 @@ function make_toolbar(surf:CanvasSurface) {
         let dialog_layer = surf.find_by_name('dialog-layer')
         // @ts-ignore
         dialog_layer.add(dialog)
-    })
+    }
+}
+
+function make_toolbar(surf:CanvasSurface) {
+    let toolbar = new HBox()
+    toolbar.fill = '#aaa'
+    toolbar._name = 'toolbar'
+    toolbar.valign = 'center'
+
+
+    toolbar.add(new ActionButton(`⏪`))
+    toolbar.add(new ActionButton(`▶`))
+    toolbar.add(new ActionButton(`⏩`))
+    toolbar.add(new FontIcon(0x1D160))
+
+    toolbar.add(new HSpacer())
+    toolbar.add(new LCDView())
+    toolbar.add(new HSpacer())
+    let data = ['zero','mid','loud','bleeding ears']
+    let volume = new DropdownButton(data,0,(v)=>v.toString())
+    toolbar.add(volume)
+    let add_songs = new ActionButton('add songs')
+    add_songs.on('action',open_songs_dialog(surf))
     toolbar.add(add_songs)
 
     toolbar.add(new FontIcon(2764))
@@ -192,6 +197,94 @@ function make_statusbar() {
     status_bar.add(new HSpacer())
     status_bar.add(new ActionButton("blah"))
     return status_bar
+}
+
+function make_random_word(min,max) {
+    let len = randi(min,max)
+    var result           = '';
+    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.toLowerCase();
+    var charactersLength = characters.length;
+    for ( let i = 0; i < len; i++ ) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        if(i === 0) {
+            result = result.toUpperCase()
+        }
+    }
+    return result;
+}
+function make_random_words(min,max) {
+    let count = randi(min,max)
+    let res = ''
+    for(let i=0; i<count; i++) {
+        res += make_random_word(3,12) + ' '
+    }
+    return res
+}
+
+class TableHeaderView extends BaseView {
+    constructor() {
+        super(gen_id('table-header-view'));
+    }
+    draw(g: CanvasSurface): void {
+        g.fillBackgroundSize(this.size(),'aqua')
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        this.set_size(new Size(available.w,20))
+        return this.size()
+    }
+}
+class TableGridView extends BaseView {
+    constructor(data: any[]) {
+        super(gen_id('table-grid-view'));
+    }
+    draw(g: CanvasSurface): void {
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        return undefined;
+    }
+
+}
+
+class TableView extends BaseParentView {
+    private data: any[];
+    private header: View;
+    private scroll: ScrollView;
+    private grid: TableGridView;
+    constructor(songs: any[]) {
+        super(gen_id('table-view'))
+        this.data = songs
+        this.header = new TableHeaderView()
+        this.add(this.header)
+        this.scroll = new ScrollView()
+        this.add(this.scroll)
+        this.grid = new TableGridView(this.data)
+        this.hflex = true
+        this.vflex = true
+    }
+
+    layout2(g: CanvasSurface, available: Size): Size {
+        this.set_size(new Size(200,200))
+        return this.size()
+    }
+}
+
+function make_song_list(surface: CanvasSurface) {
+    let songs = []
+    for(let i=0; i<100; i++) {
+        songs.push({
+            type:'song',
+            artist:make_random_words(1,3),
+            title: make_random_word(2,8),
+            album: make_random_word(5,15),
+        })
+    }
+    let song_list = new TableView(songs);
+    // let song_list = new SelectList(songs,(s)=>`${s.artist} - ${s.title} - ${s.album}`)
+    song_list._name = 'song-list'
+    song_list.hflex = true
+    return song_list
 }
 
 export function start() {
@@ -228,10 +321,7 @@ export function start() {
     scroll.vflex = true
     middle_layer.add(scroll)
 
-    let song_list = new SelectList(['X,Y,Z'],()=>"cool song")
-    song_list._name = 'song-list'
-    song_list.hflex = true
-    middle_layer.add(song_list)
+    middle_layer.add(make_song_list(surface))
     root.add(middle_layer)
     root.add(make_statusbar())
 
