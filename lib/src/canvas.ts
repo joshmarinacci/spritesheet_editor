@@ -1,7 +1,7 @@
 import {Callback, Point, Rect, Size} from "./common";
 import {StandardTextColor, StandardTextHeight, StandardTextStyle} from "./style";
 import {
-    CommonEvent,
+    CommonEvent, KEYBOARD_CATEGORY, KEYBOARD_DOWN, KeyboardEvent,
     ParentView,
     POINTER_CATEGORY,
     POINTER_DOWN,
@@ -142,6 +142,48 @@ class MouseInputService {
     }
 }
 
+class KeyboardInputService {
+    private surface: CanvasSurface;
+    private log(...args) {
+        console.log('KeyboardService:',...args)
+    }
+    constructor(surface:CanvasSurface) {
+        this.surface = surface
+        document.addEventListener('keydown', (e) => {
+            let evt = new KeyboardEvent()
+            evt.category = KEYBOARD_CATEGORY
+            evt.type = KEYBOARD_DOWN
+            evt.key = e.key
+            evt.code = e.code
+            evt.modifiers = {
+                alt: e.altKey,
+                ctrl: e.ctrlKey,
+                meta: e.metaKey,
+                shift: e.shiftKey
+            }
+            evt.ctx = this.surface
+
+            evt.details = {
+                key:e.key,
+                code:e.code,
+                shift:e.shiftKey,
+                alt:e.altKey,
+                ctrl:e.ctrlKey,
+            }
+            this.surface.dispatch_keyboard_event(evt)
+            this.surface.repaint()
+            if(!e.altKey && !e.metaKey) e.preventDefault()
+            // if (e.key === 'ArrowLeft') KBD.fire(EVENTS.LEFT, {});
+            // if (e.key === 'ArrowRight') KBD.fire(EVENTS.RIGHT, {});
+            // if (e.key === 'ArrowDown') KBD.fire(EVENTS.DOWN, {});
+            // if (e.key === 'ArrowUp') KBD.fire(EVENTS.UP, {});
+            // KBD.fire(EVENTS.KEYDOWN,e)
+            // e.preventDefault()
+        })
+    }
+
+}
+
 export class CanvasSurface {
     w: number;
     h: number;
@@ -157,6 +199,7 @@ export class CanvasSurface {
     private _pointer_target: View|null;
     private last_point: Point;
     private mouse: MouseInputService;
+    private keyboard: KeyboardInputService;
 
     constructor(w: number, h: number, scale?:number) {
         this.log("making canvas ",w,h)
@@ -329,70 +372,14 @@ export class CanvasSurface {
         return pt
     }
     setup_keyboard_input() {
-        // let KBD = new Observable()
-        document.addEventListener('keydown', (e) => {
-            let evt = new CommonEvent('keydown',new Point(0,0,),this)
-            evt.details = {
-                key:e.key,
-                code:e.code,
-                shift:e.shiftKey,
-                alt:e.altKey,
-                ctrl:e.ctrlKey,
-            }
-            this.dispatch_keyboard_event(evt)
-            if(this._input_callback) this._input_callback(e)
-            this.repaint()
-            if(!e.altKey && !e.metaKey) e.preventDefault()
-            // if (e.key === 'ArrowLeft') KBD.fire(EVENTS.LEFT, {});
-            // if (e.key === 'ArrowRight') KBD.fire(EVENTS.RIGHT, {});
-            // if (e.key === 'ArrowDown') KBD.fire(EVENTS.DOWN, {});
-            // if (e.key === 'ArrowUp') KBD.fire(EVENTS.UP, {});
-            // KBD.fire(EVENTS.KEYDOWN,e)
-            // e.preventDefault()
-        })
-        // return KBD
+        this.keyboard = new KeyboardInputService(this)
     }
     setup_mouse_input() {
         this.mouse = new MouseInputService(this)
         /*
-        let down = false
-        let button = -1
         this.canvas.addEventListener('contextmenu',(e)=>{
             e.preventDefault();
             return false;
-        })
-        this.canvas.addEventListener('mousedown',(evt)=>{
-            down = true;
-            let pt = this.screen_to_local(evt)
-            this.last_point = pt.clone()
-            button = evt.button as any
-            let e = new CommonEvent('mousedown', pt, this)
-            e.button = evt.button
-            this.dispatch_pointer_event(this.root,e);
-            if(this._input_callback) this._input_callback(e)
-            this.repaint()
-        })
-        this.canvas.addEventListener('mousemove',(evt)=>{
-            if(down && this._pointer_target) {
-                let pt = this.screen_to_local(evt)
-                let delta = pt.subtract(this.last_point)
-                this.last_point = pt.clone()
-                pt = this.local_to_view(pt,this._pointer_target)
-                let e = new CommonEvent('mousedrag', pt, this)
-                e.button = evt.button
-                e.delta = delta
-                this._pointer_target.input(e)
-                if(this._input_callback) this._input_callback(e)
-            }
-        })
-        this.canvas.addEventListener('mouseup',(evt)=>{
-            down = false;
-            let pt = this.screen_to_local(evt)
-            pt = this.local_to_view(pt,this._pointer_target)
-            let e = new CommonEvent('mouseup', pt, this)
-            e.button = evt.button
-            this._pointer_target.input(e)
-            if(this._input_callback) this._input_callback(e)
         })
         this.canvas.addEventListener('wheel',(evt)=>{
             let pt = this.screen_to_local(evt)
@@ -405,7 +392,7 @@ export class CanvasSurface {
          */
     }
 
-    private dispatch_keyboard_event(evt: CommonEvent) {
+    dispatch_keyboard_event(evt: KeyboardEvent) {
         // this.log("dispatching keyboard event",evt.details)
         // this.log('target is',this._keyboard_focus)
         if(this._keyboard_focus) this._keyboard_focus.input(evt)
@@ -422,36 +409,6 @@ export class CanvasSurface {
     release_keyboard_focus(view:View) {
         this._keyboard_focus = null
     }
-    /*
-    private dispatch_pointer_event(view: View, e:CommonEvent): View | null {
-        if(this.debug) log("dispatching",e.type,e.pt,view.name(),view.position(),view.size());
-        if (!view.visible()) return null
-        let bounds = rect_from_pos_size(view.position(),view.size())
-        if(this.debug) log('bounds',bounds)
-        if (bounds.contains(e.pt)) {
-            // @ts-ignore
-            if (view.is_parent_view && view.is_parent_view()) {
-                let parent = view as unknown as ParentView;
-                // go in reverse order to the top drawn children are picked first
-                for (let i = parent.get_children().length-1; i >= 0; i--) {
-                    let ch = parent.get_children()[i]
-                    let e2 = e.translate(view.position().x,view.position().y);
-                    let picked = this.dispatch_pointer_event(ch, e2)
-                    if (picked) return picked;
-                }
-            }
-            // @ts-ignore
-            if (view._type === 'layer-view') {
-                // log("its a layer view. don't capture it, go up instead")
-            } else {
-                let e2 = e.translate(view.position().x, view.position().y)
-                view.input(e2);
-                this._pointer_target = view
-                return view;
-            }
-        }
-        return null;
-    }*/
 
     on_input(cb: Callback) {
         this._input_callback = cb

@@ -47,7 +47,7 @@ import {
     CoolEvent,
     POINTER_CATEGORY,
     PointerEvent,
-    POINTER_DOWN, POINTER_DRAG
+    POINTER_DOWN, POINTER_DRAG, KEYBOARD_DOWN
 } from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
@@ -547,7 +547,7 @@ class TextLine extends BaseView {
         if(event.type === POINTER_DOWN) {
             event.ctx.set_keyboard_focus(this)
         }
-        if(event.type === 'keydown') {
+        if(event.type === KEYBOARD_DOWN) {
             let code = event.details.code
             let key = event.details.key
             // this.log("got a keypress",event.details)
