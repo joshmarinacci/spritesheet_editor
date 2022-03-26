@@ -101,7 +101,7 @@ export interface View {
     set_size(size:Size)
     position():Point
     set_position(point:Point)
-    layout2(g: CanvasSurface, available: Size): Size
+    layout(g: CanvasSurface, available: Size): Size
     draw(g: CanvasSurface): void
     visible(): boolean
     input(event: CoolEvent): void
@@ -202,7 +202,7 @@ export abstract class BaseParentView implements View, ParentView {
         return this._visible
     }
 
-    abstract layout2(g: CanvasSurface, available: Size): Size
+    abstract layout(g: CanvasSurface, available: Size): Size
 
     private _get_listeners(type: string) {
         if (!this._listeners.has(type)) this._listeners.set(type, [])
@@ -274,7 +274,7 @@ export abstract class BaseView implements View {
         return this._visible
     }
 
-    abstract layout2(g: CanvasSurface, available: Size): Size
+    abstract layout(g: CanvasSurface, available: Size): Size
 
     abstract draw(g: CanvasSurface): void
 }

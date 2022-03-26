@@ -135,7 +135,7 @@ class GridView extends BaseParentView {
     input(event: CoolEvent): void {
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(new Size(this.model.w*8*SCALE,this.model.h*8*SCALE))
         return this.size()
     }
@@ -161,7 +161,7 @@ class SnakeView extends BaseView {
         )
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         return this.size()
     }
 }
@@ -192,7 +192,7 @@ class ScoreView extends BaseView{
         })
         g.ctx.restore()
     }
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         return this.size()
     }
 }
@@ -222,7 +222,7 @@ class SplashView extends BaseView {
         // g.fillStandardText('press any key to play',x,260,'base',1)
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(available)
         return this.size()
     }
@@ -252,7 +252,7 @@ class DialogView extends BaseView {
         g.draw_tilemap(this.map,this.sheet,map_x,16,map_scale)
         g.fillStandardText(this.text, text_x,150,'base',2)
     }
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(available)
         return this.size()
     }

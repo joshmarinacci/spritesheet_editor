@@ -34,7 +34,7 @@ export class Label extends BaseView {
         g.fillStandardText(this.caption, StandardLeftPadding, StandardTextHeight,'base');
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(g.measureText(this.caption,'base').grow(StandardLeftPadding))
         return this.size()
     }
@@ -85,7 +85,7 @@ export class ActionButton extends BaseView {
             this.fire(ae.type, ae)
         }
     }
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(g.measureText(this.caption,'base').grow(StandardLeftPadding))
         return this.size()
     }
@@ -128,7 +128,7 @@ export class ToggleButton extends BaseView {
         }
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         let size = g.measureText(this.title,'base').grow(StandardLeftPadding)
         this.set_size(size)
         return size
@@ -171,7 +171,7 @@ export class SelectList extends BaseView {
     set_data(data: any[]) {
         this.data = data
     }
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         if(this.hflex) {
             this.set_size(new Size(available.w, available.h))
         } else {
@@ -192,8 +192,8 @@ export class LayerView extends BaseParentView {
     }
     draw(g: CanvasSurface): void {
     }
-    layout2(g:CanvasSurface, available:Size):Size {
-        this._children.forEach(ch => ch.layout2(g,available))
+    layout(g:CanvasSurface, available:Size):Size {
+        this._children.forEach(ch => ch.layout(g,available))
         this.set_size(available)
         return available
     }
@@ -220,7 +220,7 @@ export class Header extends BaseView {
         let x = (this.size().w - size.w) / 2
         g.fillStandardText(this.caption, x, StandardTextHeight,'base');
     }
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         let text_size = g.measureText(this.caption,'base').grow(StandardLeftPadding)
         this.set_size(new Size(available.w, text_size.h))
         return this.size()
@@ -242,7 +242,7 @@ export class HBox extends BaseParentView {
         this.fill = null
     }
 
-    layout2(g: CanvasSurface, real_available: Size): Size {
+    layout(g: CanvasSurface, real_available: Size): Size {
         let available = real_available.shrink(this.pad);
         //split out flex and non-flex children
         let yes_flex = this._children.filter(ch => ch.hflex)
@@ -251,7 +251,7 @@ export class HBox extends BaseParentView {
         let total_w = 0
         let leftover_w = available.w
         non_flex.map((ch:View) => {
-            let size = ch.layout2(g, new Size(leftover_w,available.h))
+            let size = ch.layout(g, new Size(leftover_w,available.h))
             total_w += size.w
             leftover_w -= size.w
         })
@@ -260,7 +260,7 @@ export class HBox extends BaseParentView {
             let flex_avail = new Size((available.w - total_w) / yes_flex.length, available.h)
             //call layout on the flex children
             yes_flex.map((ch:View) => {
-                let size = ch.layout2(g, flex_avail)
+                let size = ch.layout(g, flex_avail)
                 total_w += size.w
             })
         }
@@ -307,7 +307,7 @@ export class VBox extends BaseParentView {
         this.pad = 0
     }
 
-    layout2(g: CanvasSurface, real_available: Size): Size {
+    layout(g: CanvasSurface, real_available: Size): Size {
         let available = real_available.shrink(this.pad);
 
         let yes_flex = this.get_children().filter(ch =>  ch.vflex)
@@ -316,7 +316,7 @@ export class VBox extends BaseParentView {
         let total_h = 0
         let leftover_h = available.h
         non_flex.map(ch => {
-            let size = ch.layout2(g, new Size(available.w,leftover_h))
+            let size = ch.layout(g, new Size(available.w,leftover_h))
             total_h += size.h
             leftover_h -= size.h
         })
@@ -325,7 +325,7 @@ export class VBox extends BaseParentView {
             let flex_avail = new Size(available.w, (available.h - total_h) / yes_flex.length)
             //call layout on the flex children
             yes_flex.map((ch:View) => {
-                let size = ch.layout2(g, flex_avail)
+                let size = ch.layout(g, flex_avail)
                 total_h += size.h
             })
         }
@@ -369,7 +369,7 @@ export class HSpacer extends BaseView {
         this._name = 'h-spacer'
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(new Size(available.w, 0))
         return this.size()
     }
@@ -388,7 +388,7 @@ export class GrowPanel extends BaseParentView {
         this.vflex = true
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(available)
         return this.size()
     }
@@ -415,13 +415,13 @@ class ScrollWrapper extends BaseParentView {
     clip_children(): boolean {
         return true
     }
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         if(this.yoff > 0) this.yoff = 0
         if(this.xoff > 0) this.xoff = 0
         this.set_size(available)
 
         this.get_children().forEach(ch => {
-            let size = ch.layout2(g,available)
+            let size = ch.layout(g,available)
             if(size.w+this.xoff < available.w) {
                 this.xoff = available.w - size.w
             }
@@ -548,7 +548,7 @@ class ScrollBar extends BaseView {
             event.ctx.repaint()
         }
     }
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         return this.size()
     }
 }
@@ -588,7 +588,7 @@ export class ScrollView extends BaseParentView {
         this._pref_width = num
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(new Size(this._pref_width,300))
         if(this.hflex) {
             this.size().w = available.w
@@ -599,9 +599,9 @@ export class ScrollView extends BaseParentView {
         let ws = this.size().shrink(10)
         this.get_children().forEach(ch => {
             if(ch == this.wrapper) {
-                ch.layout2(g,ws)
+                ch.layout(g,ws)
             } else {
-                ch.layout2(g, available)
+                ch.layout(g, available)
             }
         })
         this.hbar.set_size(new Size(this.size().w-20,20))
@@ -627,9 +627,9 @@ export class PopupContainer extends BaseParentView {
         g.fillBackgroundSize(this.size(), 'gray')
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         let box = this._children[0]
-        let size = box.layout2(g, new Size(1000, 1000))
+        let size = box.layout(g, new Size(1000, 1000))
         this.set_size(size)
         return new Size(size.w, size.h)
     }
@@ -676,9 +676,9 @@ export class DialogContainer extends BaseParentView {
         g.fillBackgroundSize(this.size(), 'gray')
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         let box = this._children[0]
-        let size = box.layout2(g, new Size(300, 300))
+        let size = box.layout(g, new Size(300, 300))
         this.set_size(size)
         this.set_position(new Point(
             (g.w - size.w) / 2,

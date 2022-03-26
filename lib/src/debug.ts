@@ -25,7 +25,7 @@ export class DebugLensGlass extends BaseView {
         this.set_size(size)
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         return this.size()
     }
 
@@ -161,7 +161,7 @@ export class ResizeHandle extends BaseView {
         g.draw_glyph(2921, 2, 0, 'base', 'black')
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         return this.size()
     }
 
@@ -231,9 +231,9 @@ export class DebugLens extends BaseParentView {
         // g.fillBackgroundSize(this.size(),'#ccc')
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.get_children().forEach(ch => {
-            ch.layout2(g, available)
+            ch.layout(g, available)
         })
         let s = this.size()
         this.vbox.set_position(new Point(0, 20))

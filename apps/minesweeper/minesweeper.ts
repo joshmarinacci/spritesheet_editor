@@ -124,7 +124,7 @@ class MinesweeperView extends BaseView {
         }
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         return this.size()
     }
 }

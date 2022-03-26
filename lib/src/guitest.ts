@@ -42,7 +42,7 @@ class FixedGridPanel extends BaseView {
         }
         g.ctx.stroke()
     }
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(new Size(this.sw,this.sh))
         return this.size()
     }
@@ -63,7 +63,7 @@ class LCDView extends BaseView {
         g.fillStandardText(text,x,y+size.h,'base')
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(new Size(200,60))
         return this.size()
     }
@@ -119,7 +119,7 @@ class FontIcon extends BaseView {
         g.draw_glyph(this.codepoint,0,0,'base','black')
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(new Size(16,16))
         return this.size()
     }
@@ -229,7 +229,7 @@ class TableHeaderView extends BaseView {
         g.fillBackgroundSize(this.size(),'aqua')
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(new Size(available.w,20))
         return this.size()
     }
@@ -241,7 +241,7 @@ class TableGridView extends BaseView {
     draw(g: CanvasSurface): void {
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         return undefined;
     }
 
@@ -264,7 +264,7 @@ class TableView extends BaseParentView {
         this.vflex = true
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(new Size(200,200))
         return this.size()
     }

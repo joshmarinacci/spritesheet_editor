@@ -253,7 +253,7 @@ export class CanvasSurface {
         } else {
             let available_size = new Size(this.w,this.h)
             // this.log("layout_stack with size",available_size)
-            let size = this.root.layout2(this, available_size)
+            let size = this.root.layout(this, available_size)
             // console.log("canvas, root requested",size)
         }
     }

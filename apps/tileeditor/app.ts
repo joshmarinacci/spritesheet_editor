@@ -111,7 +111,7 @@ class TileEditor extends BaseView {
         this.doc.fire('change', "tile edited");
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(new Size(32*8+1,32*8+1))
         return this.size()
     }
@@ -173,7 +173,7 @@ class TileSelector extends BaseView {
             }
         }
     }
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(new Size(8*this.scale,8*this.scale))
         return this.size()
     }
@@ -236,7 +236,7 @@ class MapEditor extends BaseView {
         }
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         if(!this.tilemap) {
             this.set_size(new Size(100,100))
         } else {
@@ -287,7 +287,7 @@ class PaletteChooser extends BaseView{
         }
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         let size = new Size(this.scale*this.palette.length,this.scale)
         this.set_size(size)
         return size
@@ -481,10 +481,10 @@ class SinglePanel extends BaseParentView {
         g.fillBackgroundSize(this.size(),StandardPanelBackgroundColor)
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         let av = available.shrink(this.pad)
         this._children.forEach(ch => {
-            ch.layout2(g,av)
+            ch.layout(g,av)
             ch.set_position(new Point(this.pad,this.pad))
         })
         let item = this.doc.selected_tree_item
@@ -563,7 +563,7 @@ class TextLine extends BaseView {
             if(key && key.length === 1) this.insert(key)
         }
     }
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(new Size(this.pref_width,26))
         if(this.hflex) {
             this.size().w = available.w
@@ -796,7 +796,7 @@ class GlyphChooser extends BaseView {
             }
         }
     }
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(new Size(this.wrap*this.scale,6*this.scale))
         return this.size()
     }
@@ -846,7 +846,7 @@ class FontPreview extends BaseView {
         }
     }
 
-    layout2(g: CanvasSurface, available: Size): Size {
+    layout(g: CanvasSurface, available: Size): Size {
         this.set_size(new Size(500,100))
         return this.size()
     }
