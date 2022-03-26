@@ -2,7 +2,7 @@ import {CanvasSurface, EVENTS} from "../../lib/src/canvas";
 import {GridModel} from "../../common/models";
 import {LayerView} from "../../lib/src/components";
 import {Callback, Rect, Size} from "../../lib/src/common";
-import {CommonEvent, BaseView, View} from "../../lib/src/core";
+import {CommonEvent, BaseView, View, CoolEvent, POINTER_DOWN, PointerEvent} from "../../lib/src/core";
 
 /*
 
@@ -111,9 +111,10 @@ class MinesweeperView extends BaseView {
         })
         g.strokeBackgroundSize(this.size(),'black')
     }
-    input(e: CommonEvent): void {
-        if(e.type === 'mousedown') {
-            let pt = e.pt.divide_floor(this.scale);
+    input(evt: CoolEvent): void {
+        if(evt.type === POINTER_DOWN) {
+            let e = evt as PointerEvent
+            let pt = e.position.divide_floor(this.scale);
             let cell = this.model.grid.get_at(pt);
             console.log('cell is',cell);
             if (cell.covered === true) {
