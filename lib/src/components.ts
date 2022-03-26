@@ -71,7 +71,7 @@ export class ActionButton extends BaseView {
         g.strokeBackgroundSize(this.size(), ButtonBorderColor)
         g.fillStandardText(this.caption, StandardLeftPadding, StandardTextHeight, 'base');
     }
-    input2(event:CoolEvent) {
+    input(event:CoolEvent) {
         if(event.category !== POINTER_CATEGORY) return
         if(event.type === POINTER_DOWN) {
             this.active = true
@@ -113,7 +113,7 @@ export class ToggleButton extends BaseView {
         ctx.fillStandardText(this.title, StandardLeftPadding, StandardTextHeight, 'base')
     }
 
-    input2(event: CoolEvent): void {
+    input(event: CoolEvent): void {
         if (event.type === POINTER_DOWN) {//} "mousedown") {
             this.active = true
         }
@@ -157,7 +157,7 @@ export class SelectList extends BaseView {
             g.fillStandardText(str,StandardLeftPadding,i*30 + 20, 'base')
         })
     }
-    input2(event:CoolEvent) {
+    input(event:CoolEvent) {
         if(event.category !== POINTER_CATEGORY) return
         if(event.type === POINTER_DOWN) {
             let evt = event as PointerEvent
@@ -438,7 +438,7 @@ class ScrollWrapper extends BaseParentView {
         })
         return available
     }
-    input(event: CommonEvent) {
+    input(event: CoolEvent) {
         if(event.type === 'wheel') {
             this.log(event)
         }
@@ -503,7 +503,7 @@ class ScrollBar extends BaseView {
             g.draw_glyph(8594,this.size().w-20,0,'base','black',1)
         }
     }
-    input2(e: CoolEvent) {
+    input(e: CoolEvent) {
         if(e.category !== POINTER_CATEGORY) return
         let event = e as PointerEvent
         if(event.type === POINTER_DOWN) {

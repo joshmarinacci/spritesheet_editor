@@ -40,7 +40,15 @@ import {
     StandardTextHeight, StandardTextStyle
 } from "../../lib/src/style";
 import {gen_id, Point, Rect, Size} from "../../lib/src/common";
-import {CommonEvent, BaseView, BaseParentView} from "../../lib/src/core";
+import {
+    CommonEvent,
+    BaseView,
+    BaseParentView,
+    CoolEvent,
+    POINTER_CATEGORY,
+    PointerEvent,
+    POINTER_DOWN, POINTER_DRAG
+} from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
 
@@ -76,12 +84,14 @@ class TileEditor extends BaseView {
         draw_grid(g, this.size(), this.scale)
     }
 
-    input(e: CommonEvent): void {
-        let pt = e.pt.divide_floor(this.scale);
+    input(event: CoolEvent): void {
+        if(event.category !== POINTER_CATEGORY) return
+        let e = event as PointerEvent
+        let pt = e.position.divide_floor(this.scale);
         if(!this.sprite) return
         let tile = this.sprite
         if (e.button == 2) {
-            if (e.type === "mousedown") {
+            if (e.type === POINTER_DOWN) {
                 let value = tile.get_pixel(pt.x, pt.y);
                 if (typeof value === 'number') {
                     this.doc.selected_color = value
@@ -90,7 +100,7 @@ class TileEditor extends BaseView {
             }
             return
         }
-        if(this._next_click_fill && e.type === 'mousedown') {
+        if(this._next_click_fill && e.type === POINTER_DOWN) {
             let v = tile.get_pixel(pt.x,pt.y)
             this.bucket_fill(tile,v,this.doc.selected_color,pt)
             this._next_click_fill = false
@@ -151,13 +161,16 @@ class TileSelector extends BaseView {
         let pt = wrap_number(this.doc.selected_tile,8);
         draw_selection_rect(g,new Rect(pt.x*this.scale,pt.y*this.scale,this.scale,this.scale));
     }
-    input(e: CommonEvent): void {
-        let pt = e.pt.divide_floor(this.scale);
-        let val = pt.x + pt.y * 8;
-        let sheet = this.doc.get_selected_sheet()
-        if(val >= 0 && val < sheet.sprites.length) {
-            this.doc.selected_tile = val;
-            this.doc.fire('change', this.doc.selected_color)
+    input(evt: CoolEvent): void {
+        if(evt.type === POINTER_DOWN) {
+            let e = evt as PointerEvent
+            let pt = e.position.divide_floor(this.scale);
+            let val = pt.x + pt.y * 8;
+            let sheet = this.doc.get_selected_sheet()
+            if (val >= 0 && val < sheet.sprites.length) {
+                this.doc.selected_tile = val;
+                this.doc.fire('change', this.doc.selected_color)
+            }
         }
     }
     layout2(g: CanvasSurface, available: Size): Size {
@@ -208,9 +221,10 @@ class MapEditor extends BaseView {
         if(this.doc.map_grid_visible) draw_grid(ctx,this.size(),this._scale)
     }
 
-    input(e: CommonEvent): void {
-        if(e.type === "mousedown" || e.type === "mousedrag") {
-            let pt = e.pt.divide_floor(this._scale);
+    input(evt: CoolEvent): void {
+        if(evt.type === POINTER_DOWN || evt.type === POINTER_DRAG) {
+            let e = evt as PointerEvent
+            let pt = e.position.divide_floor(this._scale);
             if(!this.tilemap) return
             let sheet = this.doc.get_selected_sheet()
             let tile = this.doc.get_selected_tile();
@@ -261,12 +275,15 @@ class PaletteChooser extends BaseView{
         }
     }
 
-    input(e: CommonEvent): void {
-        let val = e.pt.divide_floor(this.scale).x
-        if (val >= 0 && val < this.palette.length) {
-            this.doc.selected_color = val;
-            this.doc.fire('change',this.doc.selected_color)
-            e.ctx.repaint()
+    input(evt: CoolEvent): void {
+        if(evt.type === POINTER_DOWN) {
+            let e = evt as PointerEvent
+            let val = e.position.divide_floor(this.scale).x
+            if (val >= 0 && val < this.palette.length) {
+                this.doc.selected_color = val;
+                this.doc.fire('change', this.doc.selected_color)
+                e.ctx.repaint()
+            }
         }
     }
 
@@ -526,8 +543,8 @@ class TextLine extends BaseView {
             g.fillStandardText(this.text, 5, 20,'base');
         }
     }
-    override input(event: CommonEvent) {
-        if(event.type === 'mousedown') {
+    input(event: CoolEvent) {
+        if(event.type === POINTER_DOWN) {
             event.ctx.set_keyboard_focus(this)
         }
         if(event.type === 'keydown') {
@@ -767,13 +784,16 @@ class GlyphChooser extends BaseView {
         let pt = wrap_number(this.doc.selected_glyph,this.wrap);
         draw_selection_rect(g,new Rect(pt.x*this.scale,pt.y*this.scale,this.scale,this.scale));
     }
-    input(e: CommonEvent): void {
-        let pt = e.pt.divide_floor(this.scale);
-        let val = pt.x + pt.y * this.wrap;
-        let font = this.doc.get_selected_font()
-        if(val >= 0 && val < font.glyphs.length) {
-            this.doc.selected_glyph = val;
-            this.doc.fire('change', this.doc.selected_glyph)
+    input(evt: CoolEvent): void {
+        if(evt.type === POINTER_DOWN) {
+            let e = evt as PointerEvent
+            let pt = e.position.divide_floor(this.scale);
+            let val = pt.x + pt.y * this.wrap;
+            let font = this.doc.get_selected_font()
+            if (val >= 0 && val < font.glyphs.length) {
+                this.doc.selected_glyph = val;
+                this.doc.fire('change', this.doc.selected_glyph)
+            }
         }
     }
     layout2(g: CanvasSurface, available: Size): Size {

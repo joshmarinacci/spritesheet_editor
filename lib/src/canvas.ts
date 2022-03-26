@@ -134,13 +134,9 @@ class MouseInputService {
             }
             // this.log("down: view",view.name())
             evt.position = evt.position.subtract(view.position())
-            // @ts-ignore
-            if (view.input2) {
-                // @ts-ignore
-                view.input2(evt)
-                if(evt.stopped) {
-                    stopped = true
-                }
+            view.input(evt)
+            if(evt.stopped) {
+                stopped = true
             }
         })
     }
@@ -426,7 +422,7 @@ export class CanvasSurface {
     release_keyboard_focus(view:View) {
         this._keyboard_focus = null
     }
-
+    /*
     private dispatch_pointer_event(view: View, e:CommonEvent): View | null {
         if(this.debug) log("dispatching",e.type,e.pt,view.name(),view.position(),view.size());
         if (!view.visible()) return null
@@ -455,7 +451,7 @@ export class CanvasSurface {
             }
         }
         return null;
-    }
+    }*/
 
     on_input(cb: Callback) {
         this._input_callback = cb
@@ -504,7 +500,7 @@ export class CanvasSurface {
     dispatch_fake_mouse_event(type: string, pos: Point) {
         let e = new CommonEvent('mousedown',pos,this)
         e.button = 0;
-        this.dispatch_pointer_event(this.root,e)
+        // this.dispatch_pointer_event(this.root,e)
     }
 
     private log(...args) {

@@ -104,7 +104,7 @@ export interface View {
     layout2(g: CanvasSurface, available: Size): Size
     draw(g: CanvasSurface): void
     visible(): boolean
-    input(event: CommonEvent): void
+    input(event: CoolEvent): void
     on(type: string, cb: Callback): void
     off(type: string, cb: Callback): void
     name(): string
@@ -175,7 +175,7 @@ export abstract class BaseParentView implements View, ParentView {
         this._children = this._children.filter(ch => ch !== view)
     }
 
-    input(event: CommonEvent): void {
+    input(event: CoolEvent): void {
     }
 
     is_parent_view(): boolean {
@@ -263,7 +263,7 @@ export abstract class BaseView implements View {
         this._position = point
     }
 
-    input(event: CommonEvent): void {
+    input(event: CoolEvent): void {
     }
 
     name(): string {
