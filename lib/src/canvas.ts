@@ -139,6 +139,7 @@ class MouseInputService {
                 stopped = true
             }
         })
+        if(this.surface._input_callback) this.surface._input_callback(evt)
     }
 }
 
@@ -192,7 +193,7 @@ export class CanvasSurface {
     ctx: CanvasRenderingContext2D;
     debug: boolean;
     private scale: number;
-    private _input_callback: Callback;
+    _input_callback: Callback;
     private _keyboard_focus: View;
     private fonts:Map<string,CanvasFont>
     private global_smoothing = true
@@ -396,6 +397,7 @@ export class CanvasSurface {
         // this.log("dispatching keyboard event",evt.details)
         // this.log('target is',this._keyboard_focus)
         if(this._keyboard_focus) this._keyboard_focus.input(evt)
+        if(this._input_callback) this._input_callback(evt)
     }
 
     set_keyboard_focus(view:View) {

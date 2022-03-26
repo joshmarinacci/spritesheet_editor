@@ -9,7 +9,7 @@ import {
 import {GridModel} from "../../common/models";
 import {LayerView} from "../../lib/src/components";
 import {Point, Rect, Size, SuperArray} from "../../lib/src/common";
-import {CommonEvent, BaseView, BaseParentView} from "../../lib/src/core";
+import {CoolEvent, BaseView, BaseParentView, KEYBOARD_DOWN, KeyboardEvent} from "../../lib/src/core";
 import {
     CHERRY_BLOSSOM,
     DEMI_CHROME,
@@ -132,7 +132,7 @@ class GridView extends BaseParentView {
 
         })
     }
-    input(event: CommonEvent): void {
+    input(event: CoolEvent): void {
     }
 
     layout2(g: CanvasSurface, available: Size): Size {
@@ -324,14 +324,15 @@ export async function start() {
         doc.set_palette(COLOR_PALETTES[current_palette])
     }
 
-    surface.on_input((e) => {
+    surface.on_input((evt) => {
         if(gameover) {
             splash_layer.set_visible(false)
             gameover = false
             playing = true
             nextLevel()
         }
-        if(e.type === 'keydown') {
+        if(evt.type === KEYBOARD_DOWN) {
+            let e = evt as KeyboardEvent
             if(e.key === 'ArrowLeft')  turn_to(new Point(-1,0));
             if(e.key === 'ArrowRight') turn_to(new Point(+1,0));
             if(e.key === 'ArrowUp')    turn_to(new Point(+0,-1));
