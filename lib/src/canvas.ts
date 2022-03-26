@@ -1,6 +1,15 @@
 import {Callback, Point, Rect, Size} from "./common";
 import {StandardTextColor, StandardTextHeight, StandardTextStyle} from "./style";
-import {CommonEvent, ParentView, POINTER_CATEGORY, POINTER_DOWN, POINTER_UP, PointerEvent, View} from "./core";
+import {
+    CommonEvent,
+    ParentView,
+    POINTER_CATEGORY,
+    POINTER_DOWN,
+    POINTER_DRAG,
+    POINTER_UP,
+    PointerEvent,
+    View
+} from "./core";
 import {Sheet, Sprite, SpriteGlyph, Tilemap} from "../../apps/tileeditor/app-model";
 
 export function log(...args) {
@@ -22,22 +31,44 @@ class MouseInputService {
     private surface: CanvasSurface;
     private down: boolean;
     private path: [];
+    private last_point: Point;
+    private target: never;
     constructor(surface: CanvasSurface) {
         this.surface = surface
         this.down = false
         this.surface.canvas.addEventListener('mousedown',(domEvent)=>{
             this.down = true;
             let position = this.surface.screen_to_local(domEvent)
+            this.last_point = position
             this.path = this.scan_path(position)
+            this.target = this.path[this.path.length-1] // last
             let evt = new PointerEvent()
             evt.type = POINTER_DOWN
             evt.category = POINTER_CATEGORY
             evt.position = position
             evt.ctx = this.surface
-            evt.target = this.path[this.path.length-1] // last
             evt.direction = "down"
+            evt.target = this.target
             this.propagate(evt,this.path)
             this.surface.repaint()
+        })
+        this.surface.canvas.addEventListener('mousemove',(domEvent)=>{
+            if(this.down) {
+                let position = this.surface.screen_to_local(domEvent)
+                let delta = position.subtract(this.last_point)
+                this.last_point = position.clone()
+
+                let evt = new PointerEvent()
+                evt.type = POINTER_DRAG
+                evt.category = POINTER_CATEGORY
+                evt.position = position
+                evt.ctx = this.surface
+                evt.target = this.path[this.path.length - 1] // last
+                evt.direction = "down"
+                evt.delta = delta
+                this.propagate(evt, this.path)
+                this.surface.repaint()
+            }
         })
         this.surface.canvas.addEventListener('mouseup',(domEvent)=>{
             this.down = false
@@ -56,7 +87,7 @@ class MouseInputService {
     }
 
     private calculate_path_to_cursor(view: View, position: Point, path:View[]):boolean {
-        this.log('searching for',position,'on',view.name())
+        // this.log('searching for',position,'on',view.name())
         if(!view) return false
         if (!view.visible()) return false
         let bounds = rect_from_pos_size(view.position(),view.size())
@@ -101,7 +132,7 @@ class MouseInputService {
                 this.log("done")
                 return
             }
-            this.log("down: view",view.name())
+            // this.log("down: view",view.name())
             evt.position = evt.position.subtract(view.position())
             // @ts-ignore
             if (view.input2) {

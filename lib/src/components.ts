@@ -14,7 +14,7 @@ import {
     CommonEvent,
     CoolEvent,
     POINTER_CATEGORY,
-    POINTER_DOWN,
+    POINTER_DOWN, POINTER_DRAG,
     POINTER_UP, PointerEvent,
     View
 } from "./core";
@@ -71,17 +71,6 @@ export class ActionButton extends BaseView {
         g.strokeBackgroundSize(this.size(), ButtonBorderColor)
         g.fillStandardText(this.caption, StandardLeftPadding, StandardTextHeight, 'base');
     }
-    input(event: CommonEvent): void {
-        if (event.type === "mousedown") {
-            let evt2 = new CommonEvent('action',event.pt,event.ctx)
-            this.fire('action', evt2)
-            this.active = true
-        }
-        if (event.type === 'mouseup') {
-            this.active = false
-            event.ctx.repaint()
-        }
-    }
     input2(event:CoolEvent) {
         if(event.category !== POINTER_CATEGORY) return
         if(event.type === POINTER_DOWN) {
@@ -89,12 +78,12 @@ export class ActionButton extends BaseView {
         }
         if(event.type === POINTER_UP) {
             this.active = false
+            let ae = new CommandEvent()
+            ae.type = COMMAND_ACTION
+            ae.category = COMMAND_CATEGORY
+            ae.target = this
+            this.fire(ae.type, ae)
         }
-        let ae = new CommandEvent()
-        ae.type = COMMAND_ACTION
-        ae.category = COMMAND_CATEGORY
-        ae.target = this
-        this.fire(ae.type, ae)
     }
     layout2(g: CanvasSurface, available: Size): Size {
         this.set_size(g.measureText(this.caption,'base').grow(StandardLeftPadding))
@@ -124,16 +113,18 @@ export class ToggleButton extends BaseView {
         ctx.fillStandardText(this.title, StandardLeftPadding, StandardTextHeight, 'base')
     }
 
-    input(event: CommonEvent): void {
-        if (event.type === "mousedown") {
+    input2(event: CoolEvent): void {
+        if (event.type === POINTER_DOWN) {//} "mousedown") {
             this.active = true
         }
-        if (event.type === 'mouseup') {
+        if (event.type === POINTER_UP) { //'mouseup') {
             this.selected = !this.selected
             this.active = false
-            let evt2 = new CommonEvent('action',event.pt,event.ctx)
-            this.fire('action', evt2)
-            event.ctx.repaint()
+            let ae = new CommandEvent()
+            ae.type = COMMAND_ACTION
+            ae.category = COMMAND_CATEGORY
+            ae.target = this
+            this.fire(ae.type, ae)
         }
     }
 
@@ -166,21 +157,10 @@ export class SelectList extends BaseView {
             g.fillStandardText(str,StandardLeftPadding,i*30 + 20, 'base')
         })
     }
-    input(event: CommonEvent): void {
-        if(event.type === 'mousedown') {
-            let pt = event.pt;
-            let y = Math.floor(pt.y / 30)
-            let item = this.data[y]
-            this.selected_index = y
-            this.fire('change',{item:item,y:y})
-            event.ctx.repaint()
-        }
-    }
     input2(event:CoolEvent) {
         if(event.category !== POINTER_CATEGORY) return
         if(event.type === POINTER_DOWN) {
             let evt = event as PointerEvent
-            this.log("down at",evt.position)
             let pt = evt.position
             let y = Math.floor(pt.y / 30)
             let item = this.data[y]
@@ -523,25 +503,27 @@ class ScrollBar extends BaseView {
             g.draw_glyph(8594,this.size().w-20,0,'base','black',1)
         }
     }
-    override input(event: CommonEvent) {
-        if(event.type === 'mousedown') {
+    input2(e: CoolEvent) {
+        if(e.category !== POINTER_CATEGORY) return
+        let event = e as PointerEvent
+        if(event.type === POINTER_DOWN) {
             if(this.vert) {
-                if(event.pt.y < 20) {
+                if(event.position.y < 20) {
                     this.wrapper.yoff += 20
                 }
-                if(event.pt.y > this.size().h-20) {
+                if(event.position.y > this.size().h-20) {
                     this.wrapper.yoff -= 20
                 }
             } else {
-                if(event.pt.x < 20) {
+                if(event.position.x < 20) {
                     this.wrapper.xoff += 20
                 }
-                if(event.pt.x > this.size().w - 20) {
+                if(event.position.x > this.size().w - 20) {
                     this.wrapper.xoff -= 20
                 }
             }
         }
-        if(event.type === 'mousedrag') {
+        if(event.type === POINTER_DRAG) {
             let viewport_size = this.wrapper.size()
             let content_size = this.wrapper.get_children()[0].size()
             if(this.vert) {
