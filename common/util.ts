@@ -1,8 +1,4 @@
-import {Callback, Observable} from "../lib/src/common";
-
-export function on(target: Observable, event_type: string, cb: Callback) {
-    target.addEventListener(event_type, cb);
-}
+import {Callback} from "../lib/src/common";
 
 function wait(msec: number, cb: Callback) {
     setTimeout(() => {

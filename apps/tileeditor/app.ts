@@ -12,8 +12,7 @@ import {
 import {
     canvasToPNGBlob, fileToJSON,
     forceDownloadBlob,
-    jsonObjToBlob,
-    on
+    jsonObjToBlob
 } from "../../common/util";
 import {
     CHERRY_BLOSSOM,
@@ -40,7 +39,7 @@ import {
     StandardTextColor,
     StandardTextHeight, StandardTextStyle
 } from "../../lib/src/style";
-import {gen_id, Observable, Point, Rect, Size} from "../../lib/src/common";
+import {gen_id, Point, Rect, Size} from "../../lib/src/common";
 import {CommonEvent, BaseView, BaseParentView} from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
@@ -1021,7 +1020,6 @@ export function start() {
     let popup_layer = new LayerView('popup-layer')
 
     log("starting")
-    let All = new Observable();
 
     let surface = new CanvasSurface(1200,700);
     surface.debug = false

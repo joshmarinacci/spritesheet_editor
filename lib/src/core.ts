@@ -1,17 +1,75 @@
-//Padding: a simple wrapper view that mirrors the hbox,vbox of the child?
-//Border: the same but w/ drawing a border
-/*
-- [ ] Unit test that button receives clicks correctly and repaints
-- [ ] Move all code back to canvas and components and common
-- [ ] Add tabbed panel layout. Unit tests.
-- [ ] Add drop down button. Requires tracking the current transform
-- [ ] Add text box stub. Insert only.
-- [ ] Always repaint after any input
-- [ ] Think about baseline alignment
-- [ ] Add resizable window container
- */
 import {CanvasSurface} from "./canvas";
 import {Callback, Point, Rect, Size} from "./common";
+
+type EventCategory = string
+type EventType = string
+type EventDirection = "down" | "up"
+
+
+
+export class CoolEvent {
+    type:EventType
+    category:EventCategory
+    timestamp:number
+    details:any
+    ctx:CanvasSurface
+    target:any
+    direction:EventDirection
+    stopped: any;
+}
+
+type Modifiers = {
+    shift:boolean
+    alt:boolean
+    ctrl:boolean
+    meta:boolean
+}
+
+export const POINTER_CATEGORY:EventCategory = "POINTER_CATEGORY"
+export const POINTER_MOVE:EventType = "POINTER_MOVE"
+export const POINTER_DRAG:EventType = "POINTER_DRAG"
+export const POINTER_DOWN:EventType = "POINTER_DOWN"
+export const POINTER_UP:EventType = "POINTER_UP"
+export class PointerEvent extends CoolEvent {
+    position:Point
+    delta:Point
+    modifiers:Modifiers
+}
+
+export const KEYBOARD_CATEGORY:EventCategory = "KEYBOARD_CATEGORY"
+export const KEYBOARD_DOWN:EventType = 'KEYBOARD_DOWN'
+export const KEYBOARD_UP:EventType = 'KEYBOARD_UP'
+export class KeyboardEvent extends CoolEvent {
+    key:string
+    code:string
+    modifiers:Modifiers
+}
+
+export const SCROLL_CATEGORY:EventCategory = "SCROLL_CATEGORY"
+export const SCROLL_EVENT:EventType = "SCROLL_EVENT"
+export class ScrollEvent extends CoolEvent {
+    delta:Point
+}
+
+export const FOCUS_CATEGORY:EventCategory = "FOCUS_CATEGORY"
+export const FOCUS_GAINED:EventType = "FOCUS_GAINED"
+export const FOCUS_LOST:EventType = "FOCUS_LOST"
+export class FocusEvent extends CoolEvent {
+}
+
+export const COMMAND_CATEGORY:EventCategory = "COMMAND_CATEGORY"
+export const COMMAND_ACTION:EventType = "action"
+export class CommandEvent extends CoolEvent {
+}
+
+export const CLIPBOARD_CATEGORY:EventCategory = "CLIPBOARD_CATEGORY"
+export const ClipboardCopy:EventType = "ClipboardCopy"
+export const ClipboardCut:EventType = "ClipboardCut"
+export const ClipboardPaste:EventType = "ClipboardPaste"
+export class ClipboardEvent extends CoolEvent {
+    content:any
+    mimetype:string
+}
 
 export class CommonEvent {
     type: string

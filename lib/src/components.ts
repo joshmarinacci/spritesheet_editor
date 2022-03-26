@@ -8,7 +8,16 @@ import {
     StandardTextHeight
 } from "./style";
 import {Callback, gen_id, Point, Rect, Size} from "./common";
-import {BaseParentView, BaseView, CommonEvent, View} from "./core";
+import {
+    BaseParentView,
+    BaseView, COMMAND_ACTION, COMMAND_CATEGORY, CommandEvent,
+    CommonEvent,
+    CoolEvent,
+    POINTER_CATEGORY,
+    POINTER_DOWN,
+    POINTER_UP, PointerEvent,
+    View
+} from "./core";
 
 export class Label extends BaseView {
     protected caption: string
@@ -72,6 +81,20 @@ export class ActionButton extends BaseView {
             this.active = false
             event.ctx.repaint()
         }
+    }
+    input2(event:CoolEvent) {
+        if(event.category !== POINTER_CATEGORY) return
+        if(event.type === POINTER_DOWN) {
+            this.active = true
+        }
+        if(event.type === POINTER_UP) {
+            this.active = false
+        }
+        let ae = new CommandEvent()
+        ae.type = COMMAND_ACTION
+        ae.category = COMMAND_CATEGORY
+        ae.target = this
+        this.fire(ae.type, ae)
     }
     layout2(g: CanvasSurface, available: Size): Size {
         this.set_size(g.measureText(this.caption,'base').grow(StandardLeftPadding))
@@ -151,6 +174,18 @@ export class SelectList extends BaseView {
             this.selected_index = y
             this.fire('change',{item:item,y:y})
             event.ctx.repaint()
+        }
+    }
+    input2(event:CoolEvent) {
+        if(event.category !== POINTER_CATEGORY) return
+        if(event.type === POINTER_DOWN) {
+            let evt = event as PointerEvent
+            this.log("down at",evt.position)
+            let pt = evt.position
+            let y = Math.floor(pt.y / 30)
+            let item = this.data[y]
+            this.selected_index = y
+            this.fire('change',{item:item,y:y})
         }
     }
     set_data(data: any[]) {

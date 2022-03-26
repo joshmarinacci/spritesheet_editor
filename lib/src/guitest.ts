@@ -14,7 +14,7 @@ import {
     VBox
 } from "./components";
 import {gen_id, Point, Size} from "./common";
-import {BaseParentView, BaseView, CommonEvent, View} from "./core";
+import {BaseParentView, BaseView, COMMAND_ACTION, CommonEvent, View} from "./core";
 // @ts-ignore
 import basefont_data from "./base_font.json";
 import {DebugLayer} from "./debug";
@@ -179,7 +179,7 @@ function make_toolbar(surf:CanvasSurface) {
     let volume = new DropdownButton(data,0,(v)=>v.toString())
     toolbar.add(volume)
     let add_songs = new ActionButton('add songs')
-    add_songs.on('action',open_songs_dialog(surf))
+    add_songs.on(COMMAND_ACTION,open_songs_dialog(surf))
     toolbar.add(add_songs)
 
     toolbar.add(new FontIcon(2764))

@@ -1,4 +1,4 @@
-import {on, randi} from "../../common/util";
+import {randi} from "../../common/util";
 // @ts-ignore
 import snake_json from "./snake.json";
 
@@ -8,7 +8,7 @@ import {
 } from "../../lib/src/canvas";
 import {GridModel} from "../../common/models";
 import {LayerView} from "../../lib/src/components";
-import {Observable, Point, Rect, Size, SuperArray} from "../../lib/src/common";
+import {Point, Rect, Size, SuperArray} from "../../lib/src/common";
 import {CommonEvent, BaseView, BaseParentView} from "../../lib/src/core";
 import {
     CHERRY_BLOSSOM,
@@ -283,7 +283,6 @@ export async function start() {
     let doc = new Doc()
     doc.reset_from_json(snake_json)
 
-    let All = new Observable();
 
     let surface = new CanvasSurface(CANVAS_SIZE.w*8*SCALE,CANVAS_SIZE.h*8*SCALE);
     surface.load_jsonfont(doc,'base','base')

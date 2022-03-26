@@ -33,24 +33,6 @@ export class SuperArray {
     }
 }
 
-export class Observable {
-    listeners: Map<string, Array<Callback>>
-
-    constructor() {
-        this.listeners = new Map();
-    }
-
-    addEventListener(etype: string, cb: Callback) {
-        if (!this.listeners.has(etype)) this.listeners.set(etype, new Array<Callback>());
-        this.listeners.get(etype).push(cb);
-    }
-
-    fire(etype: string, payload: any) {
-        if (!this.listeners.has(etype)) this.listeners.set(etype, new Array<Callback>());
-        this.listeners.get(etype).forEach(cb => cb(payload))
-    }
-}
-
 export class Point {
     x: number
     y: number

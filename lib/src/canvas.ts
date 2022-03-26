@@ -1,6 +1,6 @@
-import {Callback, Observable, Point, Rect, Size} from "./common";
+import {Callback, Point, Rect, Size} from "./common";
 import {StandardTextColor, StandardTextHeight, StandardTextStyle} from "./style";
-import {CommonEvent, ParentView, View} from "./core";
+import {CommonEvent, ParentView, POINTER_CATEGORY, POINTER_DOWN, POINTER_UP, PointerEvent, View} from "./core";
 import {Sheet, Sprite, SpriteGlyph, Tilemap} from "../../apps/tileeditor/app-model";
 
 export function log(...args) {
@@ -18,6 +18,103 @@ function rect_from_pos_size(point: Point, size: Size) {
     )
 }
 
+class MouseInputService {
+    private surface: CanvasSurface;
+    private down: boolean;
+    private path: [];
+    constructor(surface: CanvasSurface) {
+        this.surface = surface
+        this.down = false
+        this.surface.canvas.addEventListener('mousedown',(domEvent)=>{
+            this.down = true;
+            let position = this.surface.screen_to_local(domEvent)
+            this.path = this.scan_path(position)
+            let evt = new PointerEvent()
+            evt.type = POINTER_DOWN
+            evt.category = POINTER_CATEGORY
+            evt.position = position
+            evt.ctx = this.surface
+            evt.target = this.path[this.path.length-1] // last
+            evt.direction = "down"
+            this.propagate(evt,this.path)
+            this.surface.repaint()
+        })
+        this.surface.canvas.addEventListener('mouseup',(domEvent)=>{
+            this.down = false
+            let position = this.surface.screen_to_local(domEvent)
+            let evt = new PointerEvent()
+            evt.type = POINTER_UP
+            evt.category = POINTER_CATEGORY
+            evt.position = position
+            evt.ctx = this.surface
+            evt.target = this.path[this.path.length-1] // last
+            evt.direction = "down"
+            this.propagate(evt,this.path)
+            this.surface.repaint()
+        })
+
+    }
+
+    private calculate_path_to_cursor(view: View, position: Point, path:View[]):boolean {
+        this.log('searching for',position,'on',view.name())
+        if(!view) return false
+        if (!view.visible()) return false
+        let bounds = rect_from_pos_size(view.position(),view.size())
+        if (bounds.contains(position)) {
+            // @ts-ignore
+            if (view.is_parent_view && view.is_parent_view()) {
+                let parent = view as unknown as ParentView;
+                // go in reverse order to the top drawn children are picked first
+                for (let i = parent.get_children().length-1; i >= 0; i--) {
+                    let ch = parent.get_children()[i]
+                    let pos = position.subtract(view.position())
+                    let picked = this.calculate_path_to_cursor(ch,pos,path)
+                    if(picked) {
+                        path.unshift(ch)
+                        return true
+                    }
+                }
+            } else {
+                return true
+            }
+        }
+        return false
+    }
+
+    private log(...args) {
+        console.log('MouseService:',...args)
+    }
+
+    private scan_path(position: Point) {
+        let path:[] = []
+        this.calculate_path_to_cursor(this.surface.get_root(),position,path)
+        this.log("final path is",path)
+        return path
+    }
+
+    private propagate(evt: PointerEvent, path: []) {
+        let stopped = false
+        let pt = evt.position
+
+        path.forEach((view:View) => {
+            if(stopped) {
+                this.log("done")
+                return
+            }
+            this.log("down: view",view.name())
+            evt.position = evt.position.subtract(view.position())
+            // @ts-ignore
+            if (view.input2) {
+                // @ts-ignore
+                view.input2(evt)
+                if(evt.stopped) {
+                    stopped = true
+                }
+            }
+        })
+    }
+}
+
 export class CanvasSurface {
     w: number;
     h: number;
@@ -32,6 +129,7 @@ export class CanvasSurface {
     private global_smoothing = true
     private _pointer_target: View|null;
     private last_point: Point;
+    private mouse: MouseInputService;
 
     constructor(w: number, h: number, scale?:number) {
         this.log("making canvas ",w,h)
@@ -228,6 +326,8 @@ export class CanvasSurface {
         // return KBD
     }
     setup_mouse_input() {
+        this.mouse = new MouseInputService(this)
+        /*
         let down = false
         let button = -1
         this.canvas.addEventListener('contextmenu',(e)=>{
@@ -275,6 +375,7 @@ export class CanvasSurface {
             // evt.stopPropagation();
             evt.preventDefault()
         });
+         */
     }
 
     private dispatch_keyboard_event(evt: CommonEvent) {
