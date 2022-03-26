@@ -1,4 +1,14 @@
-import {BaseParentView, BaseView, CommonEvent, ParentView, View} from "./core";
+import {
+    BaseParentView,
+    BaseView,
+    CommonEvent,
+    CoolEvent,
+    ParentView,
+    POINTER_DOWN,
+    POINTER_DRAG,
+    PointerEvent,
+    View
+} from "./core";
 import {gen_id, Point, Size} from "./common";
 import {CanvasSurface} from "./canvas";
 import {LayerView, ToggleButton, VBox} from "./components";
@@ -139,9 +149,9 @@ export class ResizeHandle extends BaseView {
         this.set_size(new Size(20, 20))
     }
 
-    override input(event: CommonEvent) {
-        if (event.type === 'mousedrag') {
-            this.lens.set_size(this.lens.size().add(event.delta))
+    override input(event: CoolEvent) {
+        if (event.type === POINTER_DRAG) {
+            this.lens.set_size(this.lens.size().add((event as PointerEvent).delta))
             event.ctx.repaint()
         }
     }
@@ -192,12 +202,12 @@ export class DebugLens extends BaseParentView {
         this.add(this.resize_handle)
     }
 
-    input(event: CommonEvent) {
-        if (event.type === 'mousedown') {
+    override input(event: CoolEvent) {
+        if (event.type === POINTER_DOWN) {
             // console.log('starting at',event)
         }
-        if (event.type === 'mousedrag') {
-            this.set_position(this.position().add(event.delta))
+        if (event.type === POINTER_DRAG) {
+            this.set_position(this.position().add((event as PointerEvent).delta))
             event.ctx.repaint()
         }
     }

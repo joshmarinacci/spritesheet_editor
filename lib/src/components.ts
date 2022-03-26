@@ -114,10 +114,10 @@ export class ToggleButton extends BaseView {
     }
 
     input(event: CoolEvent): void {
-        if (event.type === POINTER_DOWN) {//} "mousedown") {
+        if (event.type === POINTER_DOWN) {
             this.active = true
         }
-        if (event.type === POINTER_UP) { //'mouseup') {
+        if (event.type === POINTER_UP) {
             this.selected = !this.selected
             this.active = false
             let ae = new CommandEvent()
