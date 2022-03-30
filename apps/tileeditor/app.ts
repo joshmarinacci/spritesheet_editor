@@ -47,7 +47,7 @@ import {
     CoolEvent,
     POINTER_CATEGORY,
     PointerEvent,
-    POINTER_DOWN, POINTER_DRAG, KEYBOARD_DOWN
+    POINTER_DOWN, POINTER_DRAG, KEYBOARD_DOWN, SECONDARY_BUTTON
 } from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
@@ -90,7 +90,7 @@ class TileEditor extends BaseView {
         let pt = e.position.divide_floor(this.scale);
         if(!this.sprite) return
         let tile = this.sprite
-        if (e.button == 2) {
+        if (e.button === SECONDARY_BUTTON) {
             if (e.type === POINTER_DOWN) {
                 let value = tile.get_pixel(pt.x, pt.y);
                 if (typeof value === 'number') {

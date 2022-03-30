@@ -30,9 +30,13 @@ export const POINTER_MOVE:EventType = "POINTER_MOVE"
 export const POINTER_DRAG:EventType = "POINTER_DRAG"
 export const POINTER_DOWN:EventType = "POINTER_DOWN"
 export const POINTER_UP:EventType = "POINTER_UP"
+export const PRIMARY_BUTTON:number = 0
+export const SECONDARY_BUTTON:number = 2
+
 export class PointerEvent extends CoolEvent {
     position:Point
     delta:Point
+    button:number
     modifiers:Modifiers
 }
 

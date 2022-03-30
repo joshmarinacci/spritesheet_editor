@@ -36,6 +36,10 @@ class MouseInputService {
     constructor(surface: CanvasSurface) {
         this.surface = surface
         this.down = false
+        this.surface.canvas.addEventListener('contextmenu',(e)=>{
+            e.preventDefault();
+            return false;
+        })
         this.surface.canvas.addEventListener('mousedown',(domEvent)=>{
             this.down = true;
             let position = this.surface.screen_to_local(domEvent)
@@ -43,6 +47,7 @@ class MouseInputService {
             this.path = this.scan_path(position)
             this.target = this.path[this.path.length-1] // last
             let evt = new PointerEvent()
+            evt.button = domEvent.button
             evt.type = POINTER_DOWN
             evt.category = POINTER_CATEGORY
             evt.position = position
@@ -51,6 +56,7 @@ class MouseInputService {
             evt.target = this.target
             this.propagate(evt,this.path)
             this.surface.repaint()
+            domEvent.preventDefault()
         })
         this.surface.canvas.addEventListener('mousemove',(domEvent)=>{
             if(this.down) {
@@ -60,6 +66,7 @@ class MouseInputService {
 
                 let evt = new PointerEvent()
                 evt.type = POINTER_DRAG
+                evt.button = domEvent.button
                 evt.category = POINTER_CATEGORY
                 evt.position = position
                 evt.ctx = this.surface
@@ -68,12 +75,14 @@ class MouseInputService {
                 evt.delta = delta
                 this.propagate(evt, this.path)
                 this.surface.repaint()
+                domEvent.preventDefault()
             }
         })
         this.surface.canvas.addEventListener('mouseup',(domEvent)=>{
             this.down = false
             let position = this.surface.screen_to_local(domEvent)
             let evt = new PointerEvent()
+            evt.button = domEvent.button
             evt.type = POINTER_UP
             evt.category = POINTER_CATEGORY
             evt.position = position
@@ -82,6 +91,7 @@ class MouseInputService {
             evt.direction = "down"
             this.propagate(evt,this.path)
             this.surface.repaint()
+            domEvent.preventDefault()
         })
 
     }
