@@ -208,6 +208,8 @@ class KeyboardInputService {
             evt.type = KEYBOARD_DOWN
             evt.key = e.key
             evt.code = e.code
+            // @ts-ignore
+            evt.domEvent = e
             evt.modifiers = {
                 alt: e.altKey,
                 ctrl: e.ctrlKey,
@@ -223,7 +225,8 @@ class KeyboardInputService {
                 alt:e.altKey,
                 ctrl:e.ctrlKey,
             }
-            this.surface.dispatch_keyboard_event(evt)
+            let path = this.calculate_path_to_keyboard_focus(this.surface.get_root(),this.surface._keyboard_focus) as View[]
+            this.surface.propagateKeyboardEvent(evt, path)
             this.surface.repaint()
             if(!e.altKey && !e.metaKey) e.preventDefault()
             // if (e.key === 'ArrowLeft') KBD.fire(EVENTS.LEFT, {});
@@ -250,6 +253,25 @@ class KeyboardInputService {
         if(new_focus) new_focus.input(e_new)
         //don't use a path, no one can intercept?
     }
+
+    private calculate_path_to_keyboard_focus(root:View, target: View): View[]|boolean {
+        if(!root) return false
+        if(!root.visible()) return false
+        if(root === target) return [root]
+        // @ts-ignore
+        if (root.is_parent_view && root.is_parent_view()) {
+            let parent = root as unknown as ParentView;
+            for (let i = parent.get_children().length-1; i >= 0; i--) {
+                let ch = parent.get_children()[i]
+                this.log('checking child',ch)
+                let res = this.calculate_path_to_keyboard_focus(ch,target)
+                if(res) {
+                    (res as View[]).unshift(root)
+                    return res as View[]
+                }
+            }
+        }
+    }
 }
 
 export class CanvasSurface {
@@ -261,7 +283,7 @@ export class CanvasSurface {
     debug: boolean;
     private scale: number;
     _input_callback: Callback;
-    private _keyboard_focus: View;
+    _keyboard_focus: View;
     private fonts:Map<string,CanvasFont>
     private global_smoothing = true
     private _pointer_target: View|null;
@@ -446,10 +468,25 @@ export class CanvasSurface {
         this.mouse = new MouseInputService(this)
     }
 
-    dispatch_keyboard_event(evt: KeyboardEvent) {
-        // this.log("dispatching keyboard event",evt.details)
-        // this.log('target is',this._keyboard_focus)
-        if(this._keyboard_focus) this._keyboard_focus.input(evt)
+    propagateKeyboardEvent(evt: KeyboardEvent, path:View[]) {
+        if(!path) {
+            this.log("no path, can't propagate")
+            return
+        }
+        this.log("dispatching keyboard event",evt)
+        this.log('to target,this._keyboard_focus')
+        this.log("along path",path)
+        this.log(path.map(p => p.name()))
+        let stopped = false
+        path.forEach((view:View) => {
+            if(stopped) {
+                this.log("bailing out early")
+                return
+            }
+            view.input(evt)
+            if(evt.stopped) stopped = true
+        })
+        // if(this._keyboard_focus) this._keyboard_focus.input(evt)
         if(this._input_callback) this._input_callback(evt)
     }
 

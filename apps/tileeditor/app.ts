@@ -47,7 +47,7 @@ import {
     CoolEvent,
     POINTER_CATEGORY,
     PointerEvent,
-    POINTER_DOWN, POINTER_DRAG, KEYBOARD_DOWN, SECONDARY_BUTTON, FOCUS_CATEGORY
+    POINTER_DOWN, POINTER_DRAG, KEYBOARD_DOWN, SECONDARY_BUTTON, FOCUS_CATEGORY, KEYBOARD_CATEGORY, KeyboardEvent
 } from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
@@ -1038,6 +1038,27 @@ function make_font_view(doc: Doc) {
 }
 
 
+class KeystrokeCaptureView extends LayerView {
+    constructor(main_view: VBox) {
+        super(gen_id("keystroke_capture_view"))
+        this._name = 'keystroke-capture-view'
+        this.add(main_view)
+    }
+    override input(event: CoolEvent) {
+        if(event.category === KEYBOARD_CATEGORY) {
+            let kb = event as KeyboardEvent
+            this.log("got kb",kb)
+            if(kb.key === 's' && kb.modifiers.meta === true) {
+                console.log("intercepting save")
+                // @ts-ignore
+                event.domEvent.preventDefault()
+                kb.stopped = true
+            }
+        }
+        super.input(event);
+    }
+}
+
 export function start() {
     let root = new LayerView('root-layer')
     let popup_layer = new LayerView('popup-layer')
@@ -1152,7 +1173,7 @@ export function start() {
         console.log("main selection changed. refresh the view")
     })
 
-    root.add(main_view)
+    root.add(new KeystrokeCaptureView(main_view))
     root.add(popup_layer)
     surface.set_root(root)
     surface.load_jsonfont(basefont_data,'somefont','base')
