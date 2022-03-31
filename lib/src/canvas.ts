@@ -7,7 +7,7 @@ import {
     POINTER_DOWN,
     POINTER_DRAG,
     POINTER_UP,
-    PointerEvent,
+    PointerEvent, SCROLL_CATEGORY, SCROLL_EVENT, ScrollEvent,
     View
 } from "./core";
 import {Sheet, Sprite, SpriteGlyph, Tilemap} from "../../apps/tileeditor/app-model";
@@ -54,7 +54,7 @@ class MouseInputService {
             evt.ctx = this.surface
             evt.direction = "down"
             evt.target = this.target
-            this.propagate(evt,this.path)
+            this.propagatePointerEvent(evt,this.path)
             this.surface.repaint()
             domEvent.preventDefault()
         })
@@ -73,7 +73,7 @@ class MouseInputService {
                 evt.target = this.path[this.path.length - 1] // last
                 evt.direction = "down"
                 evt.delta = delta
-                this.propagate(evt, this.path)
+                this.propagatePointerEvent(evt, this.path)
                 this.surface.repaint()
                 domEvent.preventDefault()
             }
@@ -89,10 +89,22 @@ class MouseInputService {
             evt.ctx = this.surface
             evt.target = this.path[this.path.length-1] // last
             evt.direction = "down"
-            this.propagate(evt,this.path)
+            this.propagatePointerEvent(evt,this.path)
             this.surface.repaint()
             domEvent.preventDefault()
         })
+        this.surface.canvas.addEventListener('wheel',(domEvent)=>{
+            let position = this.surface.screen_to_local(domEvent)
+            this.path = this.scan_path(position)
+            let evt = new ScrollEvent()
+            evt.type = SCROLL_EVENT
+            evt.category = SCROLL_CATEGORY
+            evt.position = position
+            evt.delta = new Point(domEvent.deltaX, domEvent.deltaY)
+            evt.ctx = this.surface
+            this.propagateScrollEvent(evt,this.path)
+            domEvent.preventDefault()
+        });
 
     }
 
@@ -129,11 +141,11 @@ class MouseInputService {
     private scan_path(position: Point) {
         let path:[] = []
         this.calculate_path_to_cursor(this.surface.get_root(),position,path)
-        this.log("final path is",path)
+        // this.log("final path is",path)
         return path
     }
 
-    private propagate(evt: PointerEvent, path: []) {
+    private propagatePointerEvent(evt: PointerEvent, path: []) {
         let stopped = false
         let pt = evt.position
 
@@ -150,6 +162,36 @@ class MouseInputService {
             }
         })
         if(this.surface._input_callback) this.surface._input_callback(evt)
+    }
+
+    private propagateScrollEvent(evt: ScrollEvent, path: []) {
+        let stopped = false
+        let pt = evt.position.clone()
+        evt.direction = "down"
+        path.forEach((view:View) => {
+            if(stopped) {
+                return
+            }
+            evt.position = evt.position.subtract(view.position())
+            view.input(evt)
+            if(evt.stopped) {
+                stopped = true
+            }
+        })
+        if(stopped) return;
+        path.reverse()
+        evt.direction = "up"
+        path.forEach((view:View) => {
+            if(stopped) {
+                // this.log("done")
+                return
+            }
+            evt.position = evt.position.add(view.position())
+            view.input(evt)
+            if(evt.stopped) {
+                stopped = true
+            }
+        })
     }
 }
 
@@ -387,20 +429,6 @@ export class CanvasSurface {
     }
     setup_mouse_input() {
         this.mouse = new MouseInputService(this)
-        /*
-        this.canvas.addEventListener('contextmenu',(e)=>{
-            e.preventDefault();
-            return false;
-        })
-        this.canvas.addEventListener('wheel',(evt)=>{
-            let pt = this.screen_to_local(evt)
-            let e = new CommonEvent('wheel',pt,this)
-            e.delta = new Point(evt.deltaX, evt.deltaY)
-            this.dispatch_pointer_event(this.root,e);
-            // evt.stopPropagation();
-            evt.preventDefault()
-        });
-         */
     }
 
     dispatch_keyboard_event(evt: KeyboardEvent) {

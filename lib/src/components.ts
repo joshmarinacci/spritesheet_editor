@@ -15,7 +15,7 @@ import {
     CoolEvent,
     POINTER_CATEGORY,
     POINTER_DOWN, POINTER_DRAG,
-    POINTER_UP, PointerEvent,
+    POINTER_UP, PointerEvent, SCROLL_EVENT, ScrollEvent,
     View
 } from "./core";
 
@@ -439,8 +439,12 @@ class ScrollWrapper extends BaseParentView {
         return available
     }
     input(event: CoolEvent) {
-        if(event.type === 'wheel') {
-            this.log(event)
+        if(event.type === SCROLL_EVENT && event.direction === "up") {
+            let e = event as ScrollEvent
+            this.xoff -= e.delta.x
+            this.yoff -= e.delta.y
+            e.stopped = true
+            e.ctx.repaint()
         }
     }
 

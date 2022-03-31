@@ -53,6 +53,8 @@ export const SCROLL_CATEGORY:EventCategory = "SCROLL_CATEGORY"
 export const SCROLL_EVENT:EventType = "SCROLL_EVENT"
 export class ScrollEvent extends CoolEvent {
     delta:Point
+    position:Point
+    modifiers:Modifiers
 }
 
 export const FOCUS_CATEGORY:EventCategory = "FOCUS_CATEGORY"
