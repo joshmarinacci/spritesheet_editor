@@ -47,7 +47,7 @@ import {
     CoolEvent,
     POINTER_CATEGORY,
     PointerEvent,
-    POINTER_DOWN, POINTER_DRAG, KEYBOARD_DOWN, SECONDARY_BUTTON
+    POINTER_DOWN, POINTER_DRAG, KEYBOARD_DOWN, SECONDARY_BUTTON, FOCUS_CATEGORY
 } from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
@@ -544,6 +544,9 @@ class TextLine extends BaseView {
         }
     }
     input(event: CoolEvent) {
+        if(event.category === FOCUS_CATEGORY) {
+            // this.log("got keyboard focus change",event.category)
+        }
         if(event.type === POINTER_DOWN) {
             event.ctx.set_keyboard_focus(this)
         }

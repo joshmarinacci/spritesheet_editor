@@ -1,7 +1,7 @@
 import {Callback, Point, Rect, Size} from "./common";
 import {StandardTextColor, StandardTextHeight, StandardTextStyle} from "./style";
 import {
-    CommonEvent, KEYBOARD_CATEGORY, KEYBOARD_DOWN, KeyboardEvent,
+    CommonEvent, FOCUS_CATEGORY, FOCUS_GAINED, FOCUS_LOST, FocusEvent, KEYBOARD_CATEGORY, KEYBOARD_DOWN, KeyboardEvent,
     ParentView,
     POINTER_CATEGORY,
     POINTER_DOWN,
@@ -235,6 +235,21 @@ class KeyboardInputService {
         })
     }
 
+    dispatch_keyboard_focus_change(old_focus: View, new_focus: View) {
+        let e_old = new FocusEvent()
+        e_old.type = FOCUS_LOST
+        e_old.category = FOCUS_CATEGORY
+        e_old.ctx = this.surface
+        //send focus lost to old focus
+        if(old_focus) old_focus.input(e_old)
+        //send focus gained to new focus
+        let e_new = new FocusEvent()
+        e_new.type = FOCUS_GAINED
+        e_new.category = FOCUS_CATEGORY
+        e_new.ctx = this.surface
+        if(new_focus) new_focus.input(e_new)
+        //don't use a path, no one can intercept?
+    }
 }
 
 export class CanvasSurface {
@@ -439,7 +454,9 @@ export class CanvasSurface {
     }
 
     set_keyboard_focus(view:View) {
+        let old = this._keyboard_focus
         this._keyboard_focus = view
+        this.keyboard.dispatch_keyboard_focus_change(old,this._keyboard_focus)
         // this.log("set keyboard focus to",this._keyboard_focus)
     }
     is_keyboard_focus(view:View) {
