@@ -222,11 +222,23 @@ function make_random_words(min,max) {
 }
 
 class TableHeaderView extends BaseView {
-    constructor() {
+    private table: TableView;
+    constructor(table:TableView) {
         super(gen_id('table-header-view'));
+        this.table = table
+        this._name = 'table-header-view'
     }
     draw(g: CanvasSurface): void {
-        g.fillBackgroundSize(this.size(),'aqua')
+        g.fillBackgroundSize(this.size(),'#f0f0f0')
+        this.log("drawing",this.size())
+        let x = 0
+        let y = 20
+        this.table.columns_keys.forEach((key,k)=>{
+            let tx = x + 0
+            g.fillRect(tx,0,1,20,'black')
+            g.fillStandardText(key,tx+5,y,'base')
+            x += this.table.columns_widths[k]
+        })
     }
 
     layout(g: CanvasSurface, available: Size): Size {
@@ -235,37 +247,85 @@ class TableHeaderView extends BaseView {
     }
 }
 class TableGridView extends BaseView {
-    constructor(data: any[]) {
+    private table: TableView;
+    constructor(table:TableView) {
         super(gen_id('table-grid-view'));
+        this._name = 'table-grid-view'
+        this.table = table
     }
     draw(g: CanvasSurface): void {
+        let h = 20
+        let gw = this.size().w
+        for(let i=0; i<this.table.data.length; i++) {
+            let row = this.table.data[i]
+            let y = i*h
+            let x = 0
+            this.table.columns_keys.forEach((key,k)=>{
+                let col_width = this.table.columns_widths[k]
+                let tx = x
+                g.fillRect(tx,y,1,20,'black')
+                g.fillRect(tx,y,gw,1,'black')
+                let txt = row[key]
+                let m = g.measureText(txt,'base')
+                if(m.w > col_width) {
+                    g.fillRect(tx, y, col_width, 20, 'red')
+                }
+                g.fillStandardText(txt, tx + 5, y+20, 'base')
+                x += col_width
+            })
+        }
     }
 
     layout(g: CanvasSurface, available: Size): Size {
-        return undefined;
+        this.set_size(new Size(available.w,this.table.data.length*20))
+        return this.size()
     }
 
 }
 
 class TableView extends BaseParentView {
-    private data: any[];
+    data: any[];
     private header: View;
     private scroll: ScrollView;
     private grid: TableGridView;
-    constructor(songs: any[]) {
+    columns_keys: string[];
+    columns_widths: number[];
+
+
+    constructor(songs: any[], columns_keys: string[], columns_widths: number[]) {
         super(gen_id('table-view'))
         this.data = songs
-        this.header = new TableHeaderView()
+        this.columns_keys = columns_keys
+        this.columns_widths = columns_widths
+        this.header = new TableHeaderView(this)
         this.add(this.header)
         this.scroll = new ScrollView()
+        this.scroll.hflex = true
+        this.scroll.vflex = true
         this.add(this.scroll)
-        this.grid = new TableGridView(this.data)
+        this.grid = new TableGridView(this)
+        this.scroll.set_content(this.grid)
         this.hflex = true
         this.vflex = true
     }
+    override draw(g: CanvasSurface) {
+        super.draw(g);
+    }
 
     layout(g: CanvasSurface, available: Size): Size {
-        this.set_size(new Size(200,200))
+        this.log('layout. avail',available)
+        if(this.hflex && this.vflex) {
+            this.set_size(available)
+        } else {
+            this.set_size(new Size(200, 200))
+        }
+        // layout header
+        this.header.layout(g,this.size())
+        let s2 = new Size(this.size().w,this.size().h-20)
+        this.scroll.layout(g,s2)
+        this.scroll.set_position(new Point(0,20))
+        // layout scroll view
+        // layout the grid?
         return this.size()
     }
 }
@@ -280,10 +340,10 @@ function make_song_list(surface: CanvasSurface) {
             album: make_random_word(5,15),
         })
     }
-    let song_list = new TableView(songs);
-    // let song_list = new SelectList(songs,(s)=>`${s.artist} - ${s.title} - ${s.album}`)
+    let song_list = new TableView(songs, ['artist','title','album'], [200,200,300] );
     song_list._name = 'song-list'
     song_list.hflex = true
+    song_list.vflex = true
     return song_list
 }
 
