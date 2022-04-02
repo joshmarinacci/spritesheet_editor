@@ -16,7 +16,7 @@ import {
     VBox
 } from "./components";
 import {gen_id, Point, Size} from "./common";
-import {BaseView, COMMAND_ACTION, CommonEvent, View} from "./core";
+import {BaseView, COMMAND_ACTION, CommonEvent, View, with_props} from "./core";
 // @ts-ignore
 import basefont_data from "./base_font.json";
 // @ts-ignore
@@ -90,7 +90,7 @@ class DropdownButton extends ActionButton {
         this.on('action',(evt:CommonEvent)=>{
             let popup = new PopupContainer();
             let popup_box = new VBox()
-            this.data.map(item => new ActionButton(this.renderer(item)))
+            this.data.map(item => with_props(new ActionButton(),{caption:this.renderer(item)}))
                 .forEach((btn,i) => {
                     btn.on('action',(evt2)=>{
                         let popup_layer = evt2.ctx.find_by_name('popup-layer') as PopupLayer
