@@ -11,17 +11,32 @@ Create a canvas surface, init the inputs, add some components, then go.
 
 ```typescript
     let surface = new CanvasSurface(1200,700);
-
 ```
 
 
 # the rules of making custom Views
 
 All Views must
-* have a constructor that takes a JSON object to set internal properties, 
-  using defaults if the desired field is not in the input object.
+* have a constructor that takes no arguments. the constructor should allocate all internal properties
 * use `propname()` and `set_propname()` for property getters and setters, when applicable
-* have an id and name field
+* have an id and name field with `name()` and `set_name()`
 
 In general you don't need to worry about these rules if you extend the BaseView or BaseParentView classes
 since they take care of most of the work. 
+
+
+The core principal is to have as little as possible in the widget tree. Most work doesn't need to be done
+by the View classes. Instead it can be done by functions that operate on the tree. For example, Views don't
+have a function to restore from JSON properties. Instead you can use the external `with_props()` function
+to assign properties from JSON or in code.
+
+Other features which are implemented by functions rather than in the View heirarchy include:
+* setting properties with automation
+* fetching theme values
+* attaching custom event handlers
+* picking views from within the rendered tree
+* dispatching mouse, keyboard, and other events
+
+This philosophy means Views themselves can be very lightweight with just the code they need to get
+work done, and the class heirarchy is very shallow. It is very possible to implement your own view without
+subclassing at all.  This also means the toolkit is easier to port to other languages.

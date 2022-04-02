@@ -17,7 +17,8 @@ import {
     CHERRY_BLOSSOM,
     DEMI_CHROME,
     Doc,
-    draw_sprite, DUNE,
+    draw_sprite,
+    DUNE,
     GRAYSCALE_PALETTE,
     INVERTED_PALETTE,
     Sheet,
@@ -39,7 +40,8 @@ import {
     POINTER_DOWN,
     POINTER_DRAG,
     PointerEvent,
-    SECONDARY_BUTTON
+    SECONDARY_BUTTON,
+    with_props
 } from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
@@ -139,6 +141,7 @@ class TileSelector extends BaseView {
         this.doc = doc
         this.scale = 32;
         this._name = 'tile-selector'
+        this._hflex = false
     }
     draw(g: CanvasSurface) {
         g.fillBackgroundSize(this.size(),EMPTY_COLOR);
@@ -289,9 +292,9 @@ class PaletteChooser extends BaseView{
 function setup_toolbar(doc: Doc, surface: CanvasSurface, popup_layer:LayerView):HBox {
     let toolbar = new HBox();
     toolbar.pad = 0
-    toolbar.fill = '#ccc'
+    toolbar.set_fill('#ccc')
 
-    let new_button = new ActionButton('new')
+    let new_button = new ActionButton({caption:'new'})
     new_button.on('action',()=>{
         let sheet = new Sheet("sheetx", "the sheet")
         let sprite = new Sprite(gen_id('sprite'),'spritex',8,8, doc)
@@ -310,14 +313,14 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface, popup_layer:LayerView):
         doc.reset_from_json(empty)
     })
     toolbar.add(new_button)
-    let save_button = new ActionButton("save")
+    let save_button = with_props(new ActionButton(),{caption:"save"})
     save_button.on('action',()=>{
         let blob = jsonObjToBlob(doc.toJsonObj())
         forceDownloadBlob(`${doc.name}.json`,blob)
     });
     toolbar.add(save_button);
 
-    let load_button = new ActionButton("load")
+    let load_button = with_props(new ActionButton(),{caption:"load"})
     load_button.on('action',()=>{
         console.log("trying to load")
         let input_element = document.createElement('input')
@@ -338,7 +341,7 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface, popup_layer:LayerView):
     });
     toolbar.add(load_button);
 
-    let export_button = new ActionButton("export")
+    let export_button = with_props(new ActionButton(),{caption:"export"})
     export_button.on('action',() => {
         let canvas = document.createElement('canvas')
         let map = doc.get_selected_map()
@@ -362,7 +365,7 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface, popup_layer:LayerView):
     })
     toolbar.add(export_button);
 
-    let add_font_button = new ActionButton('+ font')
+    let add_font_button = with_props(new ActionButton(),{caption:'+ font'})
     add_font_button.on('action',()=>{
         let font = new SpriteFont(gen_id('font'),'somefont',doc)
         let glyph = new SpriteGlyph(gen_id('glyph'),'a glyph',8,8,doc)
@@ -373,7 +376,7 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface, popup_layer:LayerView):
         doc.fire('structure',font)
     })
     toolbar.add(add_font_button)
-    let add_sheet_button = new ActionButton('+ sheet')
+    let add_sheet_button = with_props(new ActionButton(),{caption:'+ sheet'})
     add_sheet_button.on('action',()=>{
         let sheet = new Sheet("sheetx", "the sheet")
         let sprite = new Sprite(gen_id('sprite'),'spritex',8,8,doc)
@@ -384,7 +387,7 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface, popup_layer:LayerView):
     })
     toolbar.add(add_sheet_button)
 
-    let add_tilemap_button = new ActionButton('+ tilemap')
+    let add_tilemap_button = with_props(new ActionButton(),{caption:'+ tilemap'})
     add_tilemap_button.on('action',()=>{
         let tilemap = new Tilemap(gen_id('tilemap'),'mapx', 16, 16);
         doc.maps.push(tilemap)
@@ -397,12 +400,11 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface, popup_layer:LayerView):
     });
     toolbar.add(dirty_label)
 
-    let change_palette_button = new ActionButton('palette')
+    let change_palette_button = with_props(new ActionButton(),{caption:'palette'})
     change_palette_button.on('action',()=>{
-
         let popup = new PopupContainer();
         let popup_box = new VBox()
-        popup_box.vflex = false
+        popup_box.set_vflex(false)
         let grayscale_button = new ActionButton('grayscale')
         grayscale_button.on('action',()=>{
             doc.set_palette(GRAYSCALE_PALETTE)
@@ -560,7 +562,7 @@ class TextLine extends BaseView {
     }
     layout(g: CanvasSurface, available: Size): Size {
         this.set_size(new Size(this.pref_width,26))
-        if(this.hflex) {
+        if(this._hflex) {
             this.size().w = available.w
         }
         return this.size()
@@ -606,7 +608,7 @@ class TextLine extends BaseView {
 
 function make_sheet_editor_view(doc: Doc) {
     let sheet_editor = new HBox()
-    sheet_editor._name = 'sheet-editor-view'
+    sheet_editor.set_name('sheet-editor-view')
 
     let vb1 = new VBox()
     let palette_chooser = new PaletteChooser(doc,doc.palette());
@@ -631,15 +633,13 @@ function make_sheet_editor_view(doc: Doc) {
             tile_name_editor.set_text(tile.name)
         }
     })
-    let bucket_button = new ActionButton('fill once')
-    bucket_button.on('action',()=>{
-        tile_editor.next_click_fill()
-    })
+    let bucket_button = with_props(new ActionButton(),{caption:'fill once'})
+    bucket_button.on('action',()=>tile_editor.next_click_fill())
     vb1.add(bucket_button)
     sheet_editor.add(vb1)
 
     let vb2 = new VBox()
-    let add_tile_button = new ActionButton("add tile")
+    let add_tile_button = with_props(new ActionButton(),{caption:"add tile"})
     add_tile_button.on('action',()=>{
         let sheet = doc.get_selected_sheet()
         sheet.add(new Sprite(gen_id("tile"), 'tilename',8, 8, doc));
@@ -649,7 +649,7 @@ function make_sheet_editor_view(doc: Doc) {
 
 
     let tb = new HBox()
-    tb.hflex = false
+    tb.set_hflex(false)
     tb.add(add_tile_button)
     tb.add(new Label("   "))
     tb.add(new Label("name"))
@@ -685,20 +685,19 @@ function make_sheet_editor_view(doc: Doc) {
 
 function make_map_view(doc: Doc) {
     let map_view = new VBox()
-    map_view._name = 'map-editor-view'
-    map_view.hflex = true
-    map_view.vflex = true
+    map_view.set_name('map-editor-view')
+    map_view.set_hflex(true)
+    map_view.set_vflex(true)
 
     // lets you edit an entire tile map, using the currently selected tile
     let map_editor = new MapEditor(doc, 16);
     map_editor.set_tilemap(doc.get_selected_map())
 
     let selector = new TileSelector(doc)
-    selector.hflex = false
 
     let toolbar = new HBox()
-    toolbar.fill = '#ccc'
-    toolbar.hflex = true
+    toolbar.set_fill('#ccc')
+    toolbar.set_hflex(true)
     let grid_toggle = new ToggleButton("grid")
     grid_toggle.on('action',()=>{
         doc.map_grid_visible = !doc.map_grid_visible;
@@ -708,13 +707,13 @@ function make_map_view(doc: Doc) {
     toolbar.add(grid_toggle)
 
     let zoom = 6
-    let zoom_in = new ActionButton('+')
+    let zoom_in = with_props(new ActionButton(),{caption:'+'})
     zoom_in.on('action',()=>{
         zoom += 1
         map_editor.set_scale(Math.pow(2,zoom))
     })
     toolbar.add(zoom_in)
-    let zoom_out = new ActionButton('-')
+    let zoom_out = with_props(new ActionButton(),{caption:'-'})
     zoom_out.on('action',()=>{
         zoom -= 1
         map_editor.set_scale(Math.pow(2,zoom))
@@ -737,8 +736,8 @@ function make_map_view(doc: Doc) {
     map_view.add(toolbar)
     let hb = new HBox()
     let scroll = new ScrollView()
-    scroll.hflex = true
-    scroll.vflex = true
+    scroll.set_hflex(true)
+    scroll.set_vflex(true)
     scroll.set_content(map_editor)
     hb.add(scroll)
     hb.add(selector)
@@ -850,14 +849,14 @@ class FontPreview extends BaseView {
 
 function make_font_view(doc: Doc) {
     let panel = new HBox()
-    panel._name = 'font-editor-view'
-    panel.fill = StandardPanelBackgroundColor
-    panel.hflex = true
-    panel.vflex = true
+    panel.set_name('font-editor-view')
+    panel.set_fill(StandardPanelBackgroundColor)
+    panel.set_hflex(true)
+    panel.set_vflex(true)
 
     let col1 = new VBox()
-    col1.vflex = true
-    col1.hflex = false
+    col1.set_vflex(true)
+    col1.set_hflex(false)
     //show number of glyphs
     let glyph_count_label = new CustomLabel("",()=>{
         let font = doc.get_selected_font()
@@ -875,7 +874,7 @@ function make_font_view(doc: Doc) {
 
 
     let row1 = new HBox()
-    row1.hflex = false
+    row1.set_hflex(false)
     //show id of the glyph
     row1.add(new Label("id"))
     let id_label = new CustomLabel("id",()=>{
@@ -887,7 +886,7 @@ function make_font_view(doc: Doc) {
     col1.add(row1)
 
     let row2 = new HBox()
-    row2.hflex = false
+    row2.set_hflex(false)
     row2.add(new Label("name"))
     //edit name of the glyph
     let name_box = new TextLine()
@@ -899,7 +898,7 @@ function make_font_view(doc: Doc) {
     col1.add(row2)
 
     let row3 = new HBox()
-    row3.hflex = false
+    row3.set_hflex(false)
     //edit codepoint of the glyph
     row3.add(new Label("codepoint"))
     let codepoint_edit = new TextLine()
@@ -913,7 +912,7 @@ function make_font_view(doc: Doc) {
     col1.add(row3)
 
     let row4 = new HBox()
-    row4.hflex = false
+    row4.set_hflex(false)
     row4.add(new Label("left"))
     let left_edit = new TextLine()
     left_edit.on('action',(text)=>{
@@ -937,7 +936,7 @@ function make_font_view(doc: Doc) {
     col1.add(row4)
 
     let row5 = new HBox()
-    row5.hflex = false
+    row5.set_hflex(false)
     row5.add(new Label('baseline'))
     let baseline_text = new TextLine()
     baseline_text.on('action',(text)=>{
@@ -952,12 +951,12 @@ function make_font_view(doc: Doc) {
     panel.add(col1)
 
     let col2 = new VBox()
-    col2.vflex = true
-    col2.hflex = false
+    col2.set_vflex(true)
+    col2.set_hflex(false)
 
     let toolbar = new HBox()
-    toolbar.hflex = false
-    let add_glyph_button = new ActionButton("add glyph")
+    toolbar.set_hflex(false)
+    let add_glyph_button = with_props(new ActionButton(),{caption:"add glyph"})
     add_glyph_button.on('action',()=>{
         let font = doc.get_selected_font()
         let glyph = new SpriteGlyph(gen_id('glyph'),'glyphname',8,8, doc)
@@ -969,7 +968,7 @@ function make_font_view(doc: Doc) {
     })
     toolbar.add(add_glyph_button)
 
-    let sort_glyphs = new ActionButton('sort')
+    let sort_glyphs = with_props(new ActionButton(),{caption:'sort'})
     sort_glyphs.on('action',()=>{
         let font = doc.get_selected_font()
         font.glyphs.sort((a,b)=>{
@@ -1009,7 +1008,7 @@ function make_font_view(doc: Doc) {
 
     let preview_box = new TextLine()
     preview_box.set_text('abc123')
-    preview_box.hflex = false
+    // preview_box.hflex = false
     preview_box.set_pref_width(400)
     col2.add(preview_box)
     let preview_canvas = new FontPreview(doc)
@@ -1054,9 +1053,9 @@ export function start() {
     //draws border
     let main_view = new VBox()
     main_view.pad = 0
-    main_view._name = 'main-view'
-    main_view.hflex = true
-    main_view.vflex = true
+    main_view.set_name('main-view')
+    main_view.set_hflex(true)
+    main_view.set_vflex(true)
 
     //label at the top
     let main_label = new Header('Tile Map Editor')
@@ -1067,10 +1066,10 @@ export function start() {
     main_view.add(toolbar);
 
     let hb = new HBox()
-    hb._name = 'main-col'
-    hb.vflex = true
-    hb.hflex = true
-    hb.fill = 'red'
+    hb.set_name('main-col')
+    hb.set_vflex(true)
+    hb.set_hflex(true)
+    hb.set_fill('red')
     hb.pad = 0
     main_view.add(hb)
 
@@ -1114,7 +1113,7 @@ export function start() {
     hb.add(itemlist)
 
     let panel_view = new SinglePanel(doc);
-    panel_view._name = 'single panel'
+    panel_view.set_name('single panel')
     hb.add(panel_view)
 
     let sheet_editor = make_sheet_editor_view(doc);

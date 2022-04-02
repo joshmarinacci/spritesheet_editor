@@ -61,11 +61,15 @@ export class CustomLabel extends Label {
 export class ActionButton extends BaseView {
     protected caption: string
     private active: boolean
-    constructor(button1: string) {
+    constructor(props?:any) {
         super(gen_id("button2"))
         this._name = 'button2'
-        this.caption = button1
+        this.caption = 'no caption'
+        if(props && props.caption) this.caption = props.caption
         this.active = false
+    }
+    set_caption(caption:string) {
+        this.caption = caption
     }
     draw(g: CanvasSurface): void {
         if(this.active) {
@@ -234,17 +238,23 @@ export class Header extends BaseView {
 
 export type VAlign = "top"|"center"|"bottom"|"stretch"
 export class HBox extends BaseParentView {
-    fill: string;
+    private _fill: string;
     pad: number;
-    valign: VAlign;
+    private _valign: VAlign;
 
     constructor() {
         super(gen_id('hbox'));
-        this.valign = 'top'
+        this._valign = 'top'
         this.pad = 0
-        this.fill = null
+        this._fill = null
     }
 
+    set_fill(fill:string) {
+        this._fill = fill
+    }
+    set_valign(valign:VAlign) {
+        this._valign = valign
+    }
     layout(g: CanvasSurface, real_available: Size): Size {
         let available = real_available.shrink(this.pad);
         //split out flex and non-flex children
@@ -274,10 +284,10 @@ export class HBox extends BaseParentView {
         let ny = this.pad
         //place all children (they've already set their width and height)
         this._children.forEach(ch => {
-            if(this.valign === 'top')    ch.set_position(new Point(nx, ny))
-            if(this.valign === 'center') ch.set_position(new Point(nx, (maxh-ch.size().h)/2))
-            if(this.valign === 'bottom') ch.set_position(new Point(nx,  maxh-ch.size().h))
-            if(this.valign === 'stretch') {
+            if(this._valign === 'top')    ch.set_position(new Point(nx, ny))
+            if(this._valign === 'center') ch.set_position(new Point(nx, (maxh-ch.size().h)/2))
+            if(this._valign === 'bottom') ch.set_position(new Point(nx,  maxh-ch.size().h))
+            if(this._valign === 'stretch') {
                 ch.set_position(new Point(nx, ny))
                 ch.size().h = maxh
             }
@@ -291,7 +301,7 @@ export class HBox extends BaseParentView {
     }
 
     draw(g: CanvasSurface) {
-        if (this.fill) g.fillBackgroundSize(this.size(), this.fill)
+        if (this._fill) g.fillBackgroundSize(this.size(), this._fill)
     }
 }
 

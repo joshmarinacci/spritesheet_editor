@@ -155,23 +155,38 @@ function open_songs_dialog(surf:CanvasSurface) {
     }
 }
 
+function apply_props(json: any, comp: any):any {
+    if(!json) throw new Error("null json object")
+    if(!comp) throw new Error("null component")
+    Object.keys(json).forEach((key:string) => {
+        //already handled type
+        if(key === 'type') return
+        //handle children separately
+        if(key === 'children') return
+        //id is a property instead of a setter
+        if(key === 'id') {
+            comp.id = json.id
+            return
+        }
+        let setter = `set_${key}`
+        // console.log("setting",key,setter)
+        if(comp[setter]) {
+            comp[setter](json[key])
+        } else {
+            console.log("no setter",setter)
+        }
+    })
+    return comp
+}
+
 function build_component(json:any):View {
     if(!json) throw new Error(`empty json in build component`)
     if(!json.type) throw new Error(`json has no type`)
     let typ = json.type.toLowerCase()
-    if(typ === 'hbox') {
-        let comp = new HBox()
-        if(json.id) comp.id = json.id
-        if(json.fill) comp.fill = json.fill
-        if(json.valign) comp.valign = json.valign
-        return comp
-    }
+    if(typ === 'hbox') return apply_props(json,new HBox())
     if(typ === 'actionbutton') {
-        let comp = new ActionButton("some text")
-        // @ts-ignore
-        if(json.id) comp.id = json.id
-        // @ts-ignore
-        if(json.caption) comp.caption = json.caption
+        let comp = new ActionButton({caption:"some text"})
+        apply_props(json,comp)
         return comp
     }
     if(typ == 'fonticon') {
@@ -237,7 +252,7 @@ function make_toolbar(surf:CanvasSurface) {
 function make_statusbar() {
     let status_bar = new HBox()
     status_bar.set_name('statusbar')
-    status_bar.fill = '#aaa'
+    status_bar.set_fill('#aaa')
     status_bar.set_vflex(false)
     status_bar.set_hflex(true)
     status_bar.add(new Label("cool status bar"))

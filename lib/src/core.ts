@@ -1,5 +1,5 @@
 import {CanvasSurface} from "./canvas";
-import {Callback, Point, Rect, Size} from "./common";
+import {Callback, Point, Size} from "./common";
 
 type EventCategory = string
 type EventType = string
@@ -322,4 +322,29 @@ export abstract class BaseView implements View {
     abstract layout(g: CanvasSurface, available: Size): Size
 
     abstract draw(g: CanvasSurface): void
+}
+
+export function with_props(comp: View, json: any): View {
+    if (!json) throw new Error("null json object")
+    if (!comp) throw new Error("null component")
+    Object.keys(json).forEach((key: string) => {
+        //already handled type
+        if (key === 'type') return
+        //handle children separately
+        if (key === 'children') return
+        //id is a property instead of a setter
+        if (key === 'id') {
+            // @ts-ignore
+            comp.id = json.id
+            return
+        }
+        let setter = `set_${key}`
+        // console.log("setting",key,setter)
+        if (comp[setter]) {
+            comp[setter](json[key])
+        } else {
+            console.log("no setter", setter)
+        }
+    })
+    return comp
 }
