@@ -1,19 +1,18 @@
 import {
     ActionButton,
-    HBox,
-    Label,
-    ToggleButton,
-    SelectList,
     CustomLabel,
-    VBox,
+    HBox,
     Header,
-    ScrollView, LayerView, PopupContainer
+    KeystrokeCaptureView,
+    Label,
+    LayerView,
+    PopupContainer,
+    ScrollView,
+    SelectList,
+    ToggleButton,
+    VBox
 } from "../../lib/src/components";
-import {
-    canvasToPNGBlob, fileToJSON,
-    forceDownloadBlob,
-    jsonObjToBlob
-} from "../../common/util";
+import {canvasToPNGBlob, fileToJSON, forceDownloadBlob, jsonObjToBlob} from "../../common/util";
 import {
     CHERRY_BLOSSOM,
     DEMI_CHROME,
@@ -27,27 +26,20 @@ import {
     SpriteGlyph,
     Tilemap
 } from "./app-model";
-import {
-    CanvasSurface,
-    EVENTS,
-    log,
-} from "../../lib/src/canvas";
-import {
-    StandardLeftPadding,
-    StandardPanelBackgroundColor,
-    StandardSelectionColor,
-    StandardTextColor,
-    StandardTextHeight, StandardTextStyle
-} from "../../lib/src/style";
+import {CanvasSurface, log,} from "../../lib/src/canvas";
+import {StandardPanelBackgroundColor, StandardTextColor, StandardTextStyle} from "../../lib/src/style";
 import {gen_id, Point, Rect, Size} from "../../lib/src/common";
 import {
-    CommonEvent,
-    BaseView,
     BaseParentView,
+    BaseView,
     CoolEvent,
+    FOCUS_CATEGORY,
+    KEYBOARD_DOWN,
     POINTER_CATEGORY,
+    POINTER_DOWN,
+    POINTER_DRAG,
     PointerEvent,
-    POINTER_DOWN, POINTER_DRAG, KEYBOARD_DOWN, SECONDARY_BUTTON, FOCUS_CATEGORY, KEYBOARD_CATEGORY, KeyboardEvent
+    SECONDARY_BUTTON
 } from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
@@ -1037,27 +1029,6 @@ function make_font_view(doc: Doc) {
     return panel
 }
 
-
-class KeystrokeCaptureView extends LayerView {
-    constructor(main_view: VBox) {
-        super(gen_id("keystroke_capture_view"))
-        this._name = 'keystroke-capture-view'
-        this.add(main_view)
-    }
-    override input(event: CoolEvent) {
-        if(event.category === KEYBOARD_CATEGORY) {
-            let kb = event as KeyboardEvent
-            this.log("got kb",kb)
-            if(kb.key === 's' && kb.modifiers.meta === true) {
-                console.log("intercepting save")
-                // @ts-ignore
-                event.domEvent.preventDefault()
-                kb.stopped = true
-            }
-        }
-        super.input(event);
-    }
-}
 
 export function start() {
     let root = new LayerView('root-layer')

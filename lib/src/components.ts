@@ -1,7 +1,8 @@
 import {CanvasSurface} from "./canvas";
 import {
     ButtonBackgroundColor,
-    ButtonBackgroundColor_active, ButtonBackgroundColor_selected,
+    ButtonBackgroundColor_active,
+    ButtonBackgroundColor_selected,
     ButtonBorderColor,
     StandardLeftPadding,
     StandardSelectionColor,
@@ -10,12 +11,20 @@ import {
 import {Callback, gen_id, Point, Rect, Size} from "./common";
 import {
     BaseParentView,
-    BaseView, COMMAND_ACTION, COMMAND_CATEGORY, CommandEvent,
-    CommonEvent,
+    BaseView,
+    COMMAND_ACTION,
+    COMMAND_CATEGORY,
+    CommandEvent,
     CoolEvent,
+    KEYBOARD_CATEGORY,
+    KeyboardEvent,
     POINTER_CATEGORY,
-    POINTER_DOWN, POINTER_DRAG,
-    POINTER_UP, PointerEvent, SCROLL_EVENT, ScrollEvent,
+    POINTER_DOWN,
+    POINTER_DRAG,
+    POINTER_UP,
+    PointerEvent,
+    SCROLL_EVENT,
+    ScrollEvent,
     View
 } from "./core";
 
@@ -701,5 +710,48 @@ export class DialogContainer extends BaseParentView {
             (g.h - size.h) / 2
         ))
         return new Size(size.w, size.h)
+    }
+}
+
+export class KeystrokeCaptureView extends LayerView {
+    constructor(main_view: View) {
+        super(gen_id("keystroke_capture_view"))
+        this._name = 'keystroke-capture-view'
+        this.add(main_view)
+    }
+
+    override input(event: CoolEvent) {
+        if (event.category === KEYBOARD_CATEGORY) {
+            let kb = event as KeyboardEvent
+            this.log("got kb", kb)
+            if (kb.key === 's' && kb.modifiers.meta === true) {
+                console.log("intercepting save")
+                // @ts-ignore
+                event.domEvent.preventDefault()
+                kb.stopped = true
+            }
+            if (kb.key === 'd' && kb.modifiers.meta === true) {
+                console.log("toggling debug")
+            }
+        }
+        super.input(event);
+    }
+}
+
+export class FontIcon extends BaseView {
+    private codepoint: number
+
+    constructor(codepoint: number) {
+        super(gen_id('fonticon'))
+        this.codepoint = codepoint
+    }
+
+    draw(g: CanvasSurface): void {
+        g.draw_glyph(this.codepoint, 0, 0, 'base', 'black')
+    }
+
+    layout(g: CanvasSurface, available: Size): Size {
+        this.set_size(new Size(16, 16))
+        return this.size()
     }
 }

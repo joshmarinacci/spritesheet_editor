@@ -3,8 +3,10 @@ import {
     ActionButton,
     DialogContainer,
     DialogLayer,
+    FontIcon,
     HBox,
     HSpacer,
+    KeystrokeCaptureView,
     Label,
     LayerView,
     PopupContainer,
@@ -14,9 +16,11 @@ import {
     VBox
 } from "./components";
 import {gen_id, Point, Size} from "./common";
-import {BaseParentView, BaseView, COMMAND_ACTION, CommonEvent, View} from "./core";
+import {BaseParentView, BaseView, COMMAND_ACTION, CommonEvent, ParentView, View} from "./core";
 // @ts-ignore
 import basefont_data from "./base_font.json";
+// @ts-ignore
+import toolbar_json from "./toolbar.json"
 import {DebugLayer} from "./debug";
 import {randi} from "../../common/util";
 
@@ -70,7 +74,7 @@ class LCDView extends BaseView {
 }
 
 class DropdownButton extends ActionButton {
-    private data: any[];
+    data: any[];
     private renderer: (v:any) => string;
     private selected_index: number;
     constructor(data: string[], selected:number, param2: (v:any) => string) {
@@ -105,23 +109,14 @@ class DropdownButton extends ActionButton {
         })
     }
 
-}
-
-class FontIcon extends BaseView {
-    private codepoint: number
-
-    constructor(codepoint: number) {
-        super(gen_id('fonticon'))
-        this.codepoint = codepoint
+    set_selected_index(number: number) {
+        this.selected_index = number
+        if(this.selected_index >= 0 && this.selected_index < this.data.length) {
+            this.caption = this.renderer(this.data[this.selected_index])
+        }
     }
-
-    draw(g: CanvasSurface): void {
-        g.draw_glyph(this.codepoint,0,0,'base','black')
-    }
-
-    layout(g: CanvasSurface, available: Size): Size {
-        this.set_size(new Size(16,16))
-        return this.size()
+    set_renderer(rend:(v:any)=>string) {
+        this.renderer = rend
     }
 }
 
@@ -160,30 +155,84 @@ function open_songs_dialog(surf:CanvasSurface) {
     }
 }
 
+function build_component(json:any):View {
+    if(!json) throw new Error(`empty json in build component`)
+    if(!json.type) throw new Error(`json has no type`)
+    let typ = json.type.toLowerCase()
+    if(typ === 'hbox') {
+        let comp = new HBox()
+        if(json.id) comp.id = json.id
+        if(json.fill) comp.fill = json.fill
+        if(json.valign) comp.valign = json.valign
+        return comp
+    }
+    if(typ === 'actionbutton') {
+        let comp = new ActionButton("some text")
+        // @ts-ignore
+        if(json.id) comp.id = json.id
+        // @ts-ignore
+        if(json.caption) comp.caption = json.caption
+        return comp
+    }
+    if(typ == 'fonticon') {
+        let cp = parseInt(json.codepoint,16)
+        let comp = new FontIcon(cp)
+        // @ts-ignore
+        if(json.id) comp.id = json.id
+        return comp
+    }
+    if(typ === 'hspacer') {
+        let comp = new HSpacer()
+        // @ts-ignore
+        if(json.id) comp.id = json.id
+        return comp
+    }
+    if(typ === "lcdview") {
+        let comp = new LCDView()
+        // @ts-ignore
+        if(json.id) comp.id = json.id
+        return comp
+    }
+    if(typ === "dropdown_button") {
+        let comp = new DropdownButton([],-1,(s)=>"item")
+        // @ts-ignore
+        if(json.id) comp.id = json.id
+        return comp
+    }
+    throw new Error(`unsupported type ${typ}`)
+}
+function restore_from_json(toolbar_json: any):View {
+    console.log("working with",toolbar_json)
+    let comps = toolbar_json.components.map(json => build_component(json))
+    toolbar_json.components.forEach((json,i) => {
+        let comp = comps[i]
+        if(json.children) {
+            json.children.forEach(id => {
+                let ch = comps.find(ch => {
+                    return ch.id === id
+                })
+                comp.add(ch)
+            })
+        }
+    })
+    let root_id = toolbar_json.root
+    let root = comps.find(ch => ch.id === root_id)
+    if(!root) throw new Error(`could not find root node ${root_id}`)
+    return root
+}
+
 function make_toolbar(surf:CanvasSurface) {
-    let toolbar = new HBox()
-    toolbar.fill = '#aaa'
-    toolbar._name = 'toolbar'
-    toolbar.valign = 'center'
+    let toolbar = restore_from_json(toolbar_json)
+    // @ts-ignore
+    let drop:DropdownButton = ((toolbar as unknown as ParentView).get_children().find(ch => ch.id === 'Dropdown_button_001')) as DropdownButton
+    console.log("drop is",drop)
+    drop.data = ['zero','mid','loud','bleeding ears']
+    drop.set_renderer((v)=>v.toString())
+    drop.set_selected_index(0)
 
-
-    toolbar.add(new ActionButton(`⏪`))
-    toolbar.add(new ActionButton(`▶`))
-    toolbar.add(new ActionButton(`⏩`))
-    toolbar.add(new FontIcon(0x1D160))
-
-    toolbar.add(new HSpacer())
-    toolbar.add(new LCDView())
-    toolbar.add(new HSpacer())
-    let data = ['zero','mid','loud','bleeding ears']
-    let volume = new DropdownButton(data,0,(v)=>v.toString())
-    toolbar.add(volume)
-    let add_songs = new ActionButton('add songs')
+    // @ts-ignore
+    let add_songs:ActionButton = ((toolbar as unknown as ParentView).get_children().find(ch => ch.id === 'ActionButton_004')) as ActionButton
     add_songs.on(COMMAND_ACTION,open_songs_dialog(surf))
-    toolbar.add(add_songs)
-
-    toolbar.add(new FontIcon(2764))
-
     return toolbar
 }
 
@@ -392,7 +441,7 @@ export function start() {
     let dl = new DebugLayer()
     dl.set_visible(true)
     main.add(dl)
-    surface.set_root(main)
+    surface.set_root(new KeystrokeCaptureView(main))
     surface.setup_mouse_input()
     surface.addToPage();
     surface.repaint()
