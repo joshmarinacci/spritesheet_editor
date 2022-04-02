@@ -124,17 +124,17 @@ function open_songs_dialog(surf:CanvasSurface) {
     return ()=>{
         let dialog = new DialogContainer()
         let box = new VBox()
-        box.vflex = true
+        box.set_vflex(true)
         box.halign = 'stretch'
         box.add(new ActionButton("dialog header"))
         let body = new VBox()
         body.halign = 'right'
-        body.vflex = true
+        body.set_vflex(true)
         body.fill = 'white'
         body.add(new ActionButton("dialog body"))
         let scroll = new ScrollView()
-        scroll.hflex = true
-        scroll.vflex = true
+        scroll.set_hflex(true)
+        scroll.set_vflex(true)
         scroll.set_content(new FixedGridPanel(new Size(600,600)))
         body.add(scroll)
         box.add(body)
@@ -222,26 +222,24 @@ function restore_from_json(toolbar_json: any):View {
 }
 
 function make_toolbar(surf:CanvasSurface) {
-    let toolbar = restore_from_json(toolbar_json)
-    // @ts-ignore
-    let drop:DropdownButton = ((toolbar as unknown as ParentView).get_children().find(ch => ch.id === 'Dropdown_button_001')) as DropdownButton
-    console.log("drop is",drop)
+    let toolbar:HBox = restore_from_json(toolbar_json) as HBox
+    let drop:DropdownButton = toolbar.find_child('Dropdown_button_001') as DropdownButton
     drop.data = ['zero','mid','loud','bleeding ears']
     drop.set_renderer((v)=>v.toString())
     drop.set_selected_index(0)
 
     // @ts-ignore
-    let add_songs:ActionButton = ((toolbar as unknown as ParentView).get_children().find(ch => ch.id === 'ActionButton_004')) as ActionButton
+    let add_songs:ActionButton = toolbar.find_child('ActionButton_004') as ActionButton
     add_songs.on(COMMAND_ACTION,open_songs_dialog(surf))
     return toolbar
 }
 
 function make_statusbar() {
     let status_bar = new HBox()
-    status_bar._name = 'statusbar'
+    status_bar.set_name('statusbar')
     status_bar.fill = '#aaa'
-    status_bar.vflex = false
-    status_bar.hflex = true
+    status_bar.set_vflex(false)
+    status_bar.set_hflex(true)
     status_bar.add(new Label("cool status bar"))
     status_bar.add(new HSpacer())
     return status_bar
@@ -348,13 +346,13 @@ class TableView extends BaseParentView {
         this.header = new TableHeaderView(this)
         this.add(this.header)
         this.scroll = new ScrollView()
-        this.scroll.hflex = true
-        this.scroll.vflex = true
+        this.scroll.set_hflex(true)
+        this.scroll.set_vflex(true)
         this.add(this.scroll)
         this.grid = new TableGridView(this)
         this.scroll.set_content(this.grid)
-        this.hflex = true
-        this.vflex = true
+        this.set_hflex(true)
+        this.set_vflex(true)
     }
     override draw(g: CanvasSurface) {
         super.draw(g);
@@ -389,9 +387,9 @@ function make_song_list(surface: CanvasSurface) {
         })
     }
     let song_list = new TableView(songs, ['artist','title','album'], [200,200,300] );
-    song_list._name = 'song-list'
-    song_list.hflex = true
-    song_list.vflex = true
+    song_list.set_name('song-list')
+    song_list.set_hflex(true)
+    song_list.set_vflex(true)
     return song_list
 }
 
@@ -401,34 +399,33 @@ export function start() {
     surface.debug = false
 
     let main = new LayerView();
-    main._name = 'layer-view'
+    main.set_name('layer-view')
     let app_layer = new LayerView()
-    app_layer._name = 'app-layer'
+    app_layer.set_name('app-layer')
     main.add(app_layer)
 
     let dialog_layer = new DialogLayer()
-    dialog_layer._name = 'dialog-layer'
+    dialog_layer.set_name('dialog-layer')
     main.add(dialog_layer)
 
     let popup_layer = new PopupLayer()
-    popup_layer._name = 'popup-layer'
+    popup_layer.set_name('popup-layer')
     main.add(popup_layer)
 
     let root = new VBox();
-    root._name = 'root'
+    root.set_name('root')
     root.add(make_toolbar(surface))
 
     let middle_layer = new HBox()
-    middle_layer.vflex = true
-    middle_layer._name = 'middle'
+    middle_layer.set_vflex(true)
+    middle_layer.set_name('middle')
     let source_list = new SelectList(['Library','Playlists','Radio'],(v)=>v)
-    source_list._name = 'source-list'
-    source_list.vflex = false
+    source_list.set_name('source-list')
 
     let scroll = new ScrollView()
     scroll.set_content(source_list)
     scroll.set_pref_width(220)
-    scroll.vflex = true
+    scroll.set_vflex(true)
     middle_layer.add(scroll)
 
     middle_layer.add(make_song_list(surface))

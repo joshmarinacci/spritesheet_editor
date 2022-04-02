@@ -14,3 +14,14 @@ Create a canvas surface, init the inputs, add some components, then go.
 
 ```
 
+
+# the rules of making custom Views
+
+All Views must
+* have a constructor that takes a JSON object to set internal properties, 
+  using defaults if the desired field is not in the input object.
+* use `propname()` and `set_propname()` for property getters and setters, when applicable
+* have an id and name field
+
+In general you don't need to worry about these rules if you extend the BaseView or BaseParentView classes
+since they take care of most of the work. 

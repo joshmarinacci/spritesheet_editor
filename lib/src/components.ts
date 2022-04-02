@@ -35,8 +35,6 @@ export class Label extends BaseView {
         super(gen_id("label"))
         this._name = 'label'
         this.caption = caption
-        this.hflex = false
-        this.vflex = false
     }
 
     draw(g: CanvasSurface): void {
@@ -67,8 +65,6 @@ export class ActionButton extends BaseView {
         super(gen_id("button2"))
         this._name = 'button2'
         this.caption = button1
-        this.hflex = false
-        this.vflex = false
         this.active = false
     }
     draw(g: CanvasSurface): void {
@@ -155,7 +151,7 @@ export class SelectList extends BaseView {
         this.data = data
         this.renderer = renderer
         this.selected_index = -1
-        this.vflex = true
+        this._vflex = true
     }
     draw(g: CanvasSurface): void {
         g.fillBackgroundSize(this.size(),'#ddd')
@@ -182,7 +178,7 @@ export class SelectList extends BaseView {
         this.data = data
     }
     layout(g: CanvasSurface, available: Size): Size {
-        if(this.hflex) {
+        if(this.hflex()) {
             this.set_size(new Size(available.w, available.h))
         } else {
             this.set_size(new Size(200, available.h))
@@ -221,8 +217,7 @@ export class Header extends BaseView {
         this._name = 'header'
         this.fill = 'white'
         this.caption = caption
-        this.hflex = true
-        this.vflex = false
+        this._hflex = true
     }
     draw(g: CanvasSurface): void {
         g.fillBackgroundSize(this.size(),this.fill)
@@ -245,8 +240,6 @@ export class HBox extends BaseParentView {
 
     constructor() {
         super(gen_id('hbox'));
-        this.hflex = false
-        this.vflex = false
         this.valign = 'top'
         this.pad = 0
         this.fill = null
@@ -255,8 +248,8 @@ export class HBox extends BaseParentView {
     layout(g: CanvasSurface, real_available: Size): Size {
         let available = real_available.shrink(this.pad);
         //split out flex and non-flex children
-        let yes_flex = this._children.filter(ch => ch.hflex)
-        let non_flex = this._children.filter(ch => !ch.hflex)
+        let yes_flex = this._children.filter(ch => ch.hflex())
+        let non_flex = this._children.filter(ch => !ch.hflex())
         //call layout on the non-flex children first
         let total_w = 0
         let leftover_w = available.w
@@ -292,8 +285,8 @@ export class HBox extends BaseParentView {
         })
         //return own size
         this.set_size(new Size(nx+this.pad*2, maxh+this.pad*2))
-        if (this.vflex) this.size().h = real_available.h
-        if (this.hflex) this.size().w = real_available.w
+        if (this.vflex()) this.size().h = real_available.h
+        if (this.hflex()) this.size().w = real_available.w
         return this.size()
     }
 
@@ -311,17 +304,14 @@ export class VBox extends BaseParentView {
     constructor() {
         super(gen_id('vbox'));
         this.fill = null
-        this.hflex = false
-        this.vflex = false
         this.halign = "left"
         this.pad = 0
     }
-
     layout(g: CanvasSurface, real_available: Size): Size {
         let available = real_available.shrink(this.pad);
 
-        let yes_flex = this.get_children().filter(ch =>  ch.vflex)
-        let non_flex = this.get_children().filter(ch => !ch.vflex)
+        let yes_flex = this.get_children().filter(ch =>  ch.vflex())
+        let non_flex = this.get_children().filter(ch => !ch.vflex())
         //call layout on the non-flex children first
         let total_h = 0
         let leftover_h = available.h
@@ -357,10 +347,10 @@ export class VBox extends BaseParentView {
         //return own size
         this.size().w = maxw + this.pad * 2
         this.size().h = ny + this.pad * 2
-        if(this.hflex) {
+        if(this.hflex()) {
             this.size().w = available.w
         }
-        if(this.vflex) {
+        if(this.vflex()) {
             this.size().h = available.h
         }
         return this.size()
@@ -374,8 +364,7 @@ export class VBox extends BaseParentView {
 export class HSpacer extends BaseView {
     constructor() {
         super("h-spacer");
-        this.hflex = true
-        this.vflex = false
+        this._hflex = true
         this._name = 'h-spacer'
     }
 
@@ -394,8 +383,8 @@ export class GrowPanel extends BaseParentView {
     constructor() {
         super(gen_id('grow'));
         this.fill = null
-        this.hflex = true
-        this.vflex = true
+        this._hflex = true
+        this._vflex = true
     }
 
     layout(g: CanvasSurface, available: Size): Size {
@@ -577,17 +566,17 @@ export class ScrollView extends BaseParentView {
     constructor() {
         super(gen_id("scroll-view"))
         this._name = 'scroll-view'
-        this.hflex = false
-        this.vflex = false
         this._pref_width = 300
 
         this.wrapper = new ScrollWrapper()
         this.add(this.wrapper)
 
         this.hbar = new ScrollBar(false,this.wrapper)
+        // @ts-ignore
         this.hbar._name = 'h-scroll-bar'
         this.add(this.hbar)
         this.vbar = new ScrollBar(true,this.wrapper)
+        // @ts-ignore
         this.vbar._name = 'v-scroll-bar'
         this.add(this.vbar)
 
@@ -604,10 +593,10 @@ export class ScrollView extends BaseParentView {
 
     layout(g: CanvasSurface, available: Size): Size {
         this.set_size(new Size(this._pref_width,300))
-        if(this.hflex) {
+        if(this.hflex()) {
             this.size().w = available.w
         }
-        if(this.vflex) {
+        if(this.vflex()) {
             this.size().h = available.h
         }
         let ws = this.size().shrink(10)

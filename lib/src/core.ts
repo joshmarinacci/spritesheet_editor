@@ -101,8 +101,8 @@ export class CommonEvent {
 }
 
 export interface View {
-    hflex: boolean
-    vflex: boolean
+    hflex(): boolean
+    vflex(): boolean
     size():Size
     set_size(size:Size)
     position():Point
@@ -120,6 +120,7 @@ export interface ParentView {
     is_parent_view(): boolean,
 
     get_children(): View[]
+    find_child(id:string):View|null
 
     clip_children(): boolean,
     // should the parent be counted as a mouse focus
@@ -128,13 +129,13 @@ export interface ParentView {
 }
 
 export abstract class BaseParentView implements View, ParentView {
-    hflex: boolean
-    vflex: boolean
+    protected _hflex: boolean
+    protected _vflex: boolean
     id: string
-    _visible: boolean
+    protected _visible: boolean
     protected _children: View[]
     private _listeners: Map<string, Callback[]>
-    _name: string
+    protected _name: string
     private _size: Size;
     private _position: Point;
 
@@ -146,6 +147,19 @@ export abstract class BaseParentView implements View, ParentView {
         this._name = 'unnamed'
         this._listeners = new Map<string, Callback[]>()
         this._visible = true
+    }
+
+    hflex(): boolean {
+        return this._hflex
+    }
+    set_hflex(hflex) {
+        this._hflex = hflex
+    }
+    vflex(): boolean {
+        return this._vflex
+    }
+    set_vflex(vflex) {
+        this._vflex = vflex
     }
 
     protected log(...args) {
@@ -175,6 +189,10 @@ export abstract class BaseParentView implements View, ParentView {
     get_children(): View[] {
         return this._children
     }
+    find_child(id: string): View|null {
+        // @ts-ignore
+        return this.get_children().find((ch:View) => ch.id === id)
+    }
 
     add(view: View) {
         this._children.push(view)
@@ -194,6 +212,10 @@ export abstract class BaseParentView implements View, ParentView {
     name(): string {
         return this._name
     }
+    set_name(name:string) {
+        this._name = name
+    }
+
 
     on(type: string, cb: Callback) {
         this._get_listeners(type).push(cb)
@@ -224,12 +246,12 @@ export abstract class BaseParentView implements View, ParentView {
 }
 
 export abstract class BaseView implements View {
-    hflex: boolean;
-    vflex: boolean;
+    protected _hflex: boolean;
+    protected _vflex: boolean;
     protected _visible: boolean
-    _name: string
+    protected _name: string
     private _listeners: Map<string, Callback[]>
-    private id: string;
+    protected id: string;
     private _size: Size;
     private _position: Point;
 
@@ -240,6 +262,13 @@ export abstract class BaseView implements View {
         this._visible = true
         this._name = 'unnamed'
         this._listeners = new Map<string, Callback[]>()
+    }
+
+    hflex(): boolean {
+        return this._hflex
+    }
+    vflex(): boolean {
+        return this._vflex
     }
 
     protected log(...args) {
@@ -281,6 +310,9 @@ export abstract class BaseView implements View {
 
     name(): string {
         return this._name
+    }
+    set_name(name:string) {
+        this._name = name
     }
 
     visible(): boolean {
