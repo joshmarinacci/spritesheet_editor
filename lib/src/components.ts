@@ -79,6 +79,7 @@ export class ActionButton extends BaseView {
         if(event.type === POINTER_UP) {
             this.active = false
             let ae = new CommandEvent()
+            ae.ctx = event.ctx
             ae.type = COMMAND_ACTION
             ae.category = COMMAND_CATEGORY
             ae.target = this
@@ -656,6 +657,17 @@ export class PopupLayer extends LayerView {
 
     draw(g: CanvasSurface) {
         if (this._children.length > 0) g.fillBackgroundSize(this.size(), 'rgba(255,255,255,0.7)')
+    }
+    input(event: CoolEvent) {
+        if(event.type === POINTER_DOWN) {
+            this._children = []
+            event.stopped = true
+        }
+    }
+
+    override can_receive_mouse(): boolean {
+        if(this.get_children().length > 0) return true
+        return false
     }
 }
 
