@@ -127,6 +127,9 @@ class MouseInputService {
                         return true
                     }
                 }
+                if(parent.can_receive_mouse()) {
+                    return true
+                }
             } else {
                 return true
             }

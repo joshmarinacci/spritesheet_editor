@@ -3,7 +3,7 @@ import {
     BaseView,
     CommonEvent,
     CoolEvent,
-    ParentView,
+    ParentView, POINTER_CATEGORY,
     POINTER_DOWN,
     POINTER_DRAG,
     PointerEvent,
@@ -22,6 +22,7 @@ export class DebugLensGlass extends BaseView {
 
     constructor(size: Size) {
         super(gen_id('debug-glass'));
+        this._name = 'debug-lens-glass'
         this.set_size(size)
     }
 
@@ -144,14 +145,19 @@ export class ResizeHandle extends BaseView {
     private lens: DebugLens;
 
     constructor(lens: DebugLens) {
-        super(gen_id('debug-lense'))
+        super(gen_id('debug-lens-resize'))
+        this._name = 'debug-lens-resize-handle'
         this.lens = lens
         this.set_size(new Size(20, 20))
     }
 
     override input(event: CoolEvent) {
-        if (event.type === POINTER_DRAG) {
-            this.lens.set_size(this.lens.size().add((event as PointerEvent).delta))
+        if (event.category === POINTER_CATEGORY) {
+            let pt = event as PointerEvent
+            if(event.type === POINTER_DRAG) {
+                this.lens.set_size(this.lens.size().add(pt.delta))
+            }
+            event.stopped = true
             event.ctx.repaint()
         }
     }
@@ -173,10 +179,11 @@ export class DebugLens extends BaseParentView {
     private resize_handle: ResizeHandle;
 
     constructor() {
-        super(gen_id('debug-window'));
-        this._name = 'debug-window'
+        super(gen_id('debug-lens'));
+        this._name = 'debug-lens'
         this.set_size(new Size(400, 300))
         let vbox = new VBox()
+        vbox._name = 'debug-lens-vbox'
         vbox.halign = 'center'
         this.vbox = vbox
         let names = new ToggleButton('names')
@@ -207,9 +214,13 @@ export class DebugLens extends BaseParentView {
             // console.log('starting at',event)
         }
         if (event.type === POINTER_DRAG) {
+            if(event.target !== this) return
             this.set_position(this.position().add((event as PointerEvent).delta))
             event.ctx.repaint()
         }
+    }
+    override can_receive_mouse(): boolean {
+        return true
     }
 
     override draw(g: CanvasSurface) {

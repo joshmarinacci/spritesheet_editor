@@ -122,6 +122,9 @@ export interface ParentView {
     get_children(): View[]
 
     clip_children(): boolean,
+    // should the parent be counted as a mouse focus
+    can_receive_mouse(): boolean
+
 }
 
 export abstract class BaseParentView implements View, ParentView {
@@ -213,6 +216,10 @@ export abstract class BaseParentView implements View, ParentView {
     private _get_listeners(type: string) {
         if (!this._listeners.has(type)) this._listeners.set(type, [])
         return this._listeners.get(type)
+    }
+
+    can_receive_mouse(): boolean {
+        return false;
     }
 }
 

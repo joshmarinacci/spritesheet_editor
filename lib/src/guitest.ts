@@ -230,7 +230,7 @@ class TableHeaderView extends BaseView {
     }
     draw(g: CanvasSurface): void {
         g.fillBackgroundSize(this.size(),'#f0f0f0')
-        this.log("drawing",this.size())
+        // this.log("drawing",this.size())
         let x = 0
         let y = 20
         this.table.columns_keys.forEach((key,k)=>{
@@ -313,7 +313,7 @@ class TableView extends BaseParentView {
     }
 
     layout(g: CanvasSurface, available: Size): Size {
-        this.log('layout. avail',available)
+        // this.log('layout. avail',available)
         if(this.hflex && this.vflex) {
             this.set_size(available)
         } else {
@@ -353,7 +353,9 @@ export function start() {
     surface.debug = false
 
     let main = new LayerView();
+    main._name = 'layer-view'
     let app_layer = new LayerView()
+    app_layer._name = 'app-layer'
     main.add(app_layer)
 
     let dialog_layer = new DialogLayer()
@@ -389,7 +391,7 @@ export function start() {
 
 
     let dl = new DebugLayer()
-    dl.set_visible(false)
+    dl.set_visible(true)
     main.add(dl)
     surface.set_root(main)
     surface.setup_mouse_input()
