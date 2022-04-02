@@ -257,9 +257,26 @@ export class DebugLens extends BaseParentView {
 }
 
 export class DebugLayer extends LayerView {
+    private button: ToggleButton;
     constructor() {
         super("debug-layer");
         this._name = 'debug-layer'
-        this.add(new DebugLens())
+        let dl = new DebugLens()
+        dl._visible = false
+        this.add(dl)
+
+        this.button = new ToggleButton('D')
+        this.button.on(`action`,() => {
+            dl._visible = !dl._visible
+        })
+        this.add(this.button)
+    }
+    layout(g: CanvasSurface, available: Size): Size {
+        this.button.layout(g,available)
+        super.layout(g, available);
+        let s = this.size()
+        let b = this.button.size()
+        this.button.set_position(new Point(s.w - b.w,s.h - b.h))
+        return this.size()
     }
 }

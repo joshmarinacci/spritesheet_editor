@@ -131,7 +131,7 @@ export abstract class BaseParentView implements View, ParentView {
     hflex: boolean
     vflex: boolean
     id: string
-    protected _visible: boolean
+    _visible: boolean
     protected _children: View[]
     private _listeners: Map<string, Callback[]>
     _name: string

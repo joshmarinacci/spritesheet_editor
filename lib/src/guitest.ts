@@ -195,7 +195,6 @@ function make_statusbar() {
     status_bar.hflex = true
     status_bar.add(new Label("cool status bar"))
     status_bar.add(new HSpacer())
-    status_bar.add(new ActionButton("blah"))
     return status_bar
 }
 
