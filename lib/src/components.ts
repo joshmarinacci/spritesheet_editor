@@ -729,7 +729,7 @@ export class KeystrokeCaptureView extends LayerView {
                 event.domEvent.preventDefault()
                 kb.stopped = true
             }
-            if (kb.key === 'd' && kb.modifiers.meta === true) {
+            if (kb.key === 'd' && kb.modifiers.meta === true && kb.modifiers.ctrl === true) {
                 console.log("toggling debug")
             }
         }

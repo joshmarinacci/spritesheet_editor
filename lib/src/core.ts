@@ -147,6 +147,8 @@ export abstract class BaseParentView implements View, ParentView {
         this._name = 'unnamed'
         this._listeners = new Map<string, Callback[]>()
         this._visible = true
+        this._hflex = false
+        this._vflex = false
     }
 
     hflex(): boolean {
@@ -262,6 +264,8 @@ export abstract class BaseView implements View {
         this._visible = true
         this._name = 'unnamed'
         this._listeners = new Map<string, Callback[]>()
+        this._hflex = false
+        this._vflex = false
     }
 
     hflex(): boolean {

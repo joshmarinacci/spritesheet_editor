@@ -7,8 +7,9 @@ import {
     KeystrokeCaptureView,
     LayerView,
     SelectList,
-    VBox
+    VBox,
 } from "../../lib/src/components";
+import {DebugLayer} from "../../lib/src/debug";
 import {canvasToPNGBlob, fileToJSON, forceDownloadBlob, jsonObjToBlob} from "../../common/util";
 import {
     CHERRY_BLOSSOM,
@@ -334,6 +335,7 @@ export function start() {
 
     root.add(new KeystrokeCaptureView(main_view))
     root.add(popup_layer)
+    root.add(new DebugLayer())
     surface.set_root(root)
     surface.load_jsonfont(basefont_data,'somefont','base')
     surface.addToPage();

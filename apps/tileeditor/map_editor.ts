@@ -123,7 +123,20 @@ export function make_map_view(doc: Doc) {
     toolbar.add(map_name_edit)
 
 
+
     map_view.add(toolbar)
+
+    let toolbar2 = new HBox()
+    let more_width = with_props(new ActionButton(),{caption:"+ width"})
+    more_width.on("action",() => {
+        let tm = doc.get_selected_map()
+        tm.expand_width(1);
+        doc.fire("change", {})
+    })
+    toolbar2.add(more_width)
+    map_view.add(toolbar2)
+
+
     let hb = new HBox()
     let scroll = new ScrollView()
     scroll.set_hflex(true)
@@ -132,6 +145,7 @@ export function make_map_view(doc: Doc) {
     hb.add(scroll)
     hb.add(selector)
     map_view.add(hb)
+
 
     doc.addEventListener('main-selection', () => {
         let map = doc.get_selected_map()

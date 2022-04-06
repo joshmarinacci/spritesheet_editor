@@ -129,6 +129,15 @@ export class Tilemap {
             }
         }
     }
+    expand_width(number: number) {
+        let new_tm = new Tilemap("temp","temp",this.w+number,this.h);
+        this.forEachPixel((val, i, j) => {
+            new_tm.set_pixel(i,j,val)
+        })
+        this.data = new_tm.data
+        this.w = new_tm.w
+        this.h = new_tm.h
+    }
 
     set_pixel(x: number, y: number, color: any) {
         let n = y * this.w + x;

@@ -83,7 +83,7 @@ export class DebugLensGlass extends BaseView {
         }
 
         if(this.draw_flex) {
-            let text = `hflex=${view.hflex} vflex=${view.vflex}`
+            let text = `hflex=${view.hflex()} vflex=${view.vflex()}`
             draw_debug_text(g, pos.add(new Point(5, 35)), text)
         }
         if(this.draw_align) {
@@ -183,7 +183,7 @@ export class DebugLens extends BaseParentView {
         this._name = 'debug-lens'
         this.set_size(new Size(400, 300))
         let vbox = new VBox()
-        vbox._name = 'debug-lens-vbox'
+        vbox.set_name('debug-lens-vbox')
         vbox.halign = 'center'
         this.vbox = vbox
         let names = new ToggleButton('names')
@@ -254,6 +254,9 @@ export class DebugLens extends BaseParentView {
         return this.size()
     }
 
+    set_visible(b: boolean) {
+        this._visible = b
+    }
 }
 
 export class DebugLayer extends LayerView {
@@ -262,12 +265,11 @@ export class DebugLayer extends LayerView {
         super("debug-layer");
         this._name = 'debug-layer'
         let dl = new DebugLens()
-        dl._visible = false
+        dl.set_visible(false)
         this.add(dl)
-
         this.button = new ToggleButton('D')
         this.button.on(`action`,() => {
-            dl._visible = !dl._visible
+            dl.set_visible(!dl.visible())
         })
         this.add(this.button)
     }
