@@ -266,7 +266,7 @@ class KeyboardInputService {
             let parent = root as unknown as ParentView;
             for (let i = parent.get_children().length-1; i >= 0; i--) {
                 let ch = parent.get_children()[i]
-                this.log('checking child',ch)
+                // this.log('checking child',ch)
                 let res = this.calculate_path_to_keyboard_focus(ch,target)
                 if(res) {
                     (res as View[]).unshift(root)

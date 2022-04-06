@@ -488,11 +488,6 @@ export class Doc extends Observable {
         this.selected_tree_item = null
         this._selected_sheet = 0
 
-        console.log("final version of the doc is",this)
-        console.log('selected tile is',this.get_selected_tile())
-        console.log("selected map is",this.get_selected_map())
-        console.log("selected font is",this.get_selected_font())
-        console.log("selected glyph is",this.get_selected_glyph())
         this.fire('reload',this)
         this.fire('structure',this)
     }

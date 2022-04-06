@@ -1,6 +1,6 @@
 import {ActionButton, HBox, Label, ScrollView, ToggleButton, VBox} from "../../lib/src/components";
 import {CanvasSurface,} from "../../lib/src/canvas";
-import {Size} from "../../lib/src/common";
+import {Callback, Size} from "../../lib/src/common";
 import {BaseView, CoolEvent, POINTER_DOWN, POINTER_DRAG, PointerEvent, with_props} from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
@@ -13,13 +13,14 @@ export class MapEditor extends BaseView {
     private doc: Doc;
     private _scale: number;
     private tilemap: Tilemap | null;
+    private _zoom :number;
 
-    constructor(doc: Doc, scale: number) {
+    constructor(doc: Doc, zoom: number) {
         super("map-editor")
         this._name = 'map-editor'
-        this._scale = scale;
         this.doc = doc
         this.tilemap = null
+        this.set_zoom(zoom)
     }
 
     scale() {
@@ -72,23 +73,42 @@ export class MapEditor extends BaseView {
     set_tilemap(selectedMap: Tilemap) {
         this.tilemap = selectedMap
     }
+
+    zoom():number {
+        return this._zoom
+    }
+    set_zoom(zoom: number) {
+        this._zoom = zoom
+        this._scale = Math.pow(2,zoom);
+    }
+}
+
+function make_button(caption: string, cb: Callback) {
+    let button = with_props(new ActionButton(), {caption: caption})
+    button.on('action', cb)
+    return button
+}
+
+function make_textline(width: number, value:string, callback: Callback) {
+    let map_name_edit = new TextLine()
+    map_name_edit.set_pref_width(200)
+    map_name_edit.set_text(value)
+    map_name_edit.on("action", callback)
+    return map_name_edit
 }
 
 export function make_map_view(doc: Doc) {
-    let map_view = new VBox()
-    map_view.set_name('map-editor-view')
-    map_view.set_hflex(true)
-    map_view.set_vflex(true)
+    let map_view = with_props(new VBox(), {
+        name:'map-editor-view',
+        hflex:true,
+        vflex:true,
+    }) as VBox
 
     // lets you edit an entire tile map, using the currently selected tile
-    let map_editor = new MapEditor(doc, 16);
+    let map_editor = new MapEditor(doc, 5);
     map_editor.set_tilemap(doc.get_selected_map())
 
-    let selector = new TileSelector(doc)
-
-    let toolbar = new HBox()
-    toolbar.set_fill('#ccc')
-    toolbar.set_hflex(true)
+    let toolbar = with_props(new HBox(), { fill:'#ccc', hflex:true }) as HBox
     let grid_toggle = new ToggleButton("grid")
     grid_toggle.on('action', () => {
         doc.set_map_grid_visible(!doc.get_map_grid_visible());
@@ -96,44 +116,22 @@ export function make_map_view(doc: Doc) {
     });
     toolbar.add(grid_toggle)
 
-    let zoom = 6
-    let zoom_in = with_props(new ActionButton(), {caption: '+'})
-    zoom_in.on('action', () => {
-        zoom += 1
-        map_editor.set_scale(Math.pow(2, zoom))
-    })
-    toolbar.add(zoom_in)
-    let zoom_out = with_props(new ActionButton(), {caption: '-'})
-    zoom_out.on('action', () => {
-        zoom -= 1
-        map_editor.set_scale(Math.pow(2, zoom))
-    })
-    toolbar.add(zoom_out)
-
-
+    toolbar.add(make_button("+",()=> map_editor.set_zoom(map_editor.zoom()+1)))
+    toolbar.add(make_button("-",()=> map_editor.set_zoom(map_editor.zoom()-1)))
     toolbar.add(new Label("name"))
-    let map_name_edit = new TextLine()
-    map_name_edit.set_pref_width(200)
-    if (doc.get_selected_map()) {
-        map_name_edit.set_text(doc.get_selected_map().name)
-    }
-    map_name_edit.on("action", (name) => {
+    let name = doc.get_selected_map()?doc.get_selected_map().name:""
+    let map_name_edit = make_textline(200, name, (name)=>{
         if (doc.get_selected_map()) doc.get_selected_map().name = name
     })
     toolbar.add(map_name_edit)
-
-
-
     map_view.add(toolbar)
 
     let toolbar2 = new HBox()
-    let more_width = with_props(new ActionButton(),{caption:"+ width"})
-    more_width.on("action",() => {
+    toolbar2.add(make_button('+ width',()=>{
         let tm = doc.get_selected_map()
         tm.expand_width(1);
         doc.fire("change", {})
-    })
-    toolbar2.add(more_width)
+    }))
     map_view.add(toolbar2)
 
 
@@ -143,6 +141,7 @@ export function make_map_view(doc: Doc) {
     scroll.set_vflex(true)
     scroll.set_content(map_editor)
     hb.add(scroll)
+    let selector = new TileSelector(doc)
     hb.add(selector)
     map_view.add(hb)
 
