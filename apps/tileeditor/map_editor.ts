@@ -1,33 +1,13 @@
-import {
-    ActionButton,
-    CustomLabel,
-    DropdownButton,
-    HBox,
-    Header,
-    KeystrokeCaptureView,
-    Label,
-    LayerView, ScrollView,
-    SelectList, ToggleButton,
-    VBox
-} from "../../lib/src/components";import {CanvasSurface,} from "../../lib/src/canvas";
-import {gen_id, Rect, Size} from "../../lib/src/common";
-import {
-    BaseView,
-    CoolEvent,
-    FOCUS_CATEGORY, KEYBOARD_DOWN,
-    POINTER_CATEGORY,
-    POINTER_DOWN, POINTER_DRAG,
-    PointerEvent,
-    SECONDARY_BUTTON, with_props
-} from "../../lib/src/core";
-import {StandardPanelBackgroundColor, StandardTextColor, StandardTextStyle} from "../../lib/src/style";
+import {ActionButton, HBox, Label, ScrollView, ToggleButton, VBox} from "../../lib/src/components";
+import {CanvasSurface,} from "../../lib/src/canvas";
+import {Size} from "../../lib/src/common";
+import {BaseView, CoolEvent, POINTER_DOWN, POINTER_DRAG, PointerEvent, with_props} from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
-import {Doc, draw_sprite, Sprite, Tilemap} from "./app-model";
-import {draw_grid, TextLine, wrap_number} from "./common";
-import {draw_selection_rect} from "./palette_chooser";
-import {EMPTY_COLOR} from "./app";
+import {Doc, Sprite, Tilemap} from "./app-model";
+import {draw_grid, TextLine} from "./common";
 import {TileSelector} from "./tile_selector";
+import {EMPTY_COLOR} from "./font_editor";
 
 export class MapEditor extends BaseView {
     private doc: Doc;

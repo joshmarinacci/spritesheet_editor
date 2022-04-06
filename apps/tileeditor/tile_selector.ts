@@ -1,21 +1,12 @@
 import {CanvasSurface,} from "../../lib/src/canvas";
-import {gen_id, Rect, Size} from "../../lib/src/common";
-import {
-    BaseView,
-    CoolEvent,
-    FOCUS_CATEGORY, KEYBOARD_DOWN,
-    POINTER_CATEGORY,
-    POINTER_DOWN,
-    PointerEvent,
-    SECONDARY_BUTTON
-} from "../../lib/src/core";
-import {StandardPanelBackgroundColor, StandardTextColor, StandardTextStyle} from "../../lib/src/style";
+import {Rect, Size} from "../../lib/src/common";
+import {BaseView, CoolEvent, POINTER_DOWN, PointerEvent} from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
 import {Doc, draw_sprite} from "./app-model";
 import {draw_grid, wrap_number} from "./common";
 import {draw_selection_rect} from "./palette_chooser";
-import {EMPTY_COLOR} from "./app";
+import {EMPTY_COLOR} from "./font_editor";
 
 export class TileSelector extends BaseView {
     private doc: Doc;

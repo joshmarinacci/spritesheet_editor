@@ -1,9 +1,9 @@
-import {Doc, Sprite} from "./app-model";
-import {BaseView, CoolEvent, POINTER_CATEGORY, POINTER_DOWN, PointerEvent, SECONDARY_BUTTON} from "../../lib/src/core";
+import {Doc} from "./app-model";
+import {BaseView, CoolEvent, POINTER_DOWN, PointerEvent} from "../../lib/src/core";
 import {CanvasSurface,} from "../../lib/src/canvas";
-import {Point, Rect, Size} from "../../lib/src/common";
+import {Rect, Size} from "../../lib/src/common";
 import {draw_grid} from "./common";
-import {EMPTY_COLOR} from "./app";
+import {EMPTY_COLOR} from "./font_editor";
 
 export class PaletteChooser extends BaseView {
     private palette: any;
