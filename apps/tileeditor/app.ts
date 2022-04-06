@@ -49,9 +49,9 @@ import basefont_data from "../../lib/src/base_font.json";
 export const EMPTY_COLOR = '#62fcdc'
 
 class TileEditor extends BaseView {
-    doc: Doc;
-    scale: number
-    sprite: Sprite
+    private doc: Doc;
+    private scale: number
+    private sprite: Sprite
     private palette: string[];
     private _next_click_fill: boolean;
     constructor(doc, palette) {
@@ -88,18 +88,17 @@ class TileEditor extends BaseView {
             if (e.type === POINTER_DOWN) {
                 let value = tile.get_pixel(pt.x, pt.y);
                 if (typeof value === 'number') {
-                    this.doc.selected_color = value
-                    this.doc.fire('change', "tile edited");
+                    this.doc.set_selected_color(value)
                 }
             }
             return
         }
         if(this._next_click_fill && e.type === POINTER_DOWN) {
             let v = tile.get_pixel(pt.x,pt.y)
-            this.bucket_fill(tile,v,this.doc.selected_color,pt)
+            this.bucket_fill(tile,v,this.doc.get_selected_color(),pt)
             this._next_click_fill = false
         } else {
-            tile.set_pixel(pt.x, pt.y, this.doc.selected_color);
+            tile.set_pixel(pt.x, pt.y, this.doc.get_selected_color());
         }
         this.doc.mark_dirty()
         this.doc.fire('change', "tile edited");
@@ -134,8 +133,8 @@ class TileEditor extends BaseView {
 }
 
 class TileSelector extends BaseView {
-    doc: Doc;
-    scale: number;
+    private doc: Doc;
+    private scale: number;
     constructor(doc) {
         super('tile-selector')
         this.doc = doc
@@ -149,11 +148,11 @@ class TileSelector extends BaseView {
         if(sheet) {
             sheet.sprites.forEach((sprite, s) => {
                 let pt = wrap_number(s, 8);
-                draw_sprite(sprite, g, pt.x * this.scale, pt.y * this.scale, 4, this.doc.palette())
+                draw_sprite(sprite, g, pt.x * this.scale, pt.y * this.scale, 4, this.doc.get_color_palette())
             })
         }
         draw_grid(g,this.size(),this.scale);
-        let pt = wrap_number(this.doc.selected_tile,8);
+        let pt = wrap_number(this.doc.get_selected_tile_index(),8);
         draw_selection_rect(g,new Rect(pt.x*this.scale,pt.y*this.scale,this.scale,this.scale));
     }
     input(evt: CoolEvent): void {
@@ -163,8 +162,8 @@ class TileSelector extends BaseView {
             let val = pt.x + pt.y * 8;
             let sheet = this.doc.get_selected_sheet()
             if (val >= 0 && val < sheet.sprites.length) {
-                this.doc.selected_tile = val;
-                this.doc.fire('change', this.doc.selected_color)
+                this.doc.set_selected_tile_index(val);
+                this.doc.fire('change', this.doc.get_selected_color())
             }
         }
     }
@@ -182,8 +181,8 @@ function wrap_number(num:number,width:number):Point {
 }
 
 class MapEditor extends BaseView {
-    doc: Doc;
-    _scale:number;
+    private doc: Doc;
+    private _scale:number;
     private tilemap: Tilemap | null;
 
     constructor(doc:Doc, scale:number) {
@@ -213,7 +212,7 @@ class MapEditor extends BaseView {
                 ctx.ctx.drawImage(tile._img,i*this._scale,j*this._scale, this._scale, this._scale)
             }
         })
-        if(this.doc.map_grid_visible) draw_grid(ctx,this.size(),this._scale)
+        if(this.doc.get_map_grid_visible()) draw_grid(ctx,this.size(),this._scale)
     }
 
     input(evt: CoolEvent): void {
@@ -221,7 +220,7 @@ class MapEditor extends BaseView {
             let e = evt as PointerEvent
             let pt = e.position.divide_floor(this._scale);
             if(!this.tilemap) return
-            let sheet = this.doc.get_selected_sheet()
+            this.doc.get_selected_sheet();
             let tile = this.doc.get_selected_tile();
             if(tile) {
                 this.tilemap.set_pixel(pt.x,pt.y,tile.id)
@@ -246,9 +245,9 @@ class MapEditor extends BaseView {
 }
 
 class PaletteChooser extends BaseView{
-    palette: any;
-    doc: Doc;
-    scale:number;
+    private palette: any;
+    private doc: Doc;
+    private scale:number;
     constructor(doc, palette) {
         super('palette chooser')
         this.doc = doc
@@ -264,7 +263,7 @@ class PaletteChooser extends BaseView{
                 ctx.fillRect(i*this.scale+0.5,0+0.5,this.scale,this.scale,this.palette[i]);
             }
             draw_grid(ctx,this.size(),this.scale)
-            let i = this.doc.selected_color;
+            let i = this.doc.get_selected_color()
             let rect = new Rect(i*this.scale+1,1,this.scale-2,this.scale-2);
             draw_selection_rect(ctx,rect)
         }
@@ -275,8 +274,8 @@ class PaletteChooser extends BaseView{
             let e = evt as PointerEvent
             let val = e.position.divide_floor(this.scale).x
             if (val >= 0 && val < this.palette.length) {
-                this.doc.selected_color = val;
-                this.doc.fire('change', this.doc.selected_color)
+                this.doc.set_selected_color(val);
+                this.doc.fire('change', this.doc.get_selected_color())
                 e.ctx.repaint()
             }
         }
@@ -289,7 +288,7 @@ class PaletteChooser extends BaseView{
     }
 }
 
-function setup_toolbar(doc: Doc, surface: CanvasSurface, popup_layer:LayerView):HBox {
+function setup_toolbar(doc: Doc):HBox {
     let toolbar = new HBox();
     toolbar.pad = 0
     toolbar.set_fill('#ccc')
@@ -357,7 +356,7 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface, popup_layer:LayerView):
             let x = i*64
             let y = j*64
             tile.forEachPixel((val: number, i: number, j: number) => {
-                ctx.fillStyle = doc.palette()[val]
+                ctx.fillStyle = doc.get_color_palette()[val]
                 ctx.fillRect(x+i*8, y+j*8, 8,8);
             });
         })
@@ -577,11 +576,11 @@ function make_sheet_editor_view(doc: Doc) {
     sheet_editor.set_name('sheet-editor-view')
 
     let vb1 = new VBox()
-    let palette_chooser = new PaletteChooser(doc,doc.palette());
+    let palette_chooser = new PaletteChooser(doc,doc.get_color_palette());
     vb1.add(palette_chooser);
 
     // tile editor, edits the current tile
-    let tile_editor = new TileEditor(doc, doc.palette());
+    let tile_editor = new TileEditor(doc, doc.get_color_palette());
     vb1.add(tile_editor)
     let tile_name_editor = new TextLine()
     tile_name_editor.set_pref_width(200)
@@ -666,9 +665,8 @@ function make_map_view(doc: Doc) {
     toolbar.set_hflex(true)
     let grid_toggle = new ToggleButton("grid")
     grid_toggle.on('action',()=>{
-        doc.map_grid_visible = !doc.map_grid_visible;
-        grid_toggle.selected = doc.map_grid_visible;
-        doc.fire("change", grid_toggle.selected);
+        doc.set_map_grid_visible(!doc.get_map_grid_visible());
+        grid_toggle.selected = doc.get_map_grid_visible();
     });
     toolbar.add(grid_toggle)
 
@@ -737,11 +735,11 @@ class GlyphChooser extends BaseView {
         if(font) {
             font.glyphs.forEach((glyph,s)=>{
                 let pt = wrap_number(s, this.wrap);
-                draw_sprite(glyph, g, pt.x * this.scale, pt.y * this.scale, 4, this.doc.font_palette)
+                draw_sprite(glyph, g, pt.x * this.scale, pt.y * this.scale, 4, this.doc.get_font_palette())
             })
         }
         draw_grid(g,this.size(),this.scale);
-        let pt = wrap_number(this.doc.selected_glyph,this.wrap);
+        let pt = wrap_number(this.doc.get_selected_glyph_index(),this.wrap);
         draw_selection_rect(g,new Rect(pt.x*this.scale,pt.y*this.scale,this.scale,this.scale));
     }
     input(evt: CoolEvent): void {
@@ -751,8 +749,7 @@ class GlyphChooser extends BaseView {
             let val = pt.x + pt.y * this.wrap;
             let font = this.doc.get_selected_font()
             if (val >= 0 && val < font.glyphs.length) {
-                this.doc.selected_glyph = val;
-                this.doc.fire('change', this.doc.selected_glyph)
+                this.doc.set_selected_glyph_index(val);
             }
         }
     }
@@ -832,10 +829,10 @@ function make_font_view(doc: Doc) {
     col1.add(glyph_count_label)
 
 
-    let palette_chooser = new PaletteChooser(doc,doc.font_palette);
+    let palette_chooser = new PaletteChooser(doc,doc.get_font_palette());
     col1.add(palette_chooser);
 
-    let editor = new TileEditor(doc,doc.font_palette)
+    let editor = new TileEditor(doc,doc.get_font_palette())
     col1.add(editor)
 
 
@@ -1027,7 +1024,7 @@ export function start() {
     let main_label = new Header('Tile Map Editor')
     main_view.add(main_label);
 
-    let toolbar = setup_toolbar(doc, surface, popup_layer);
+    let toolbar = setup_toolbar(doc);
     toolbar.id = 'toolbar'
     main_view.add(toolbar);
 
@@ -1064,8 +1061,8 @@ export function start() {
     })
     // @ts-ignore
     itemlist.on('change',(e)  => {
-        doc.selected_tree_item = e.item
-        doc.selected_tree_item_index = e.y
+        doc.set_selected_tree_item(e.item)
+        // doc.set_selected_tree_item_index(e.y)
         if (e.item instanceof Sheet) {
             doc.set_selected_sheet(e.item as Sheet)
         }

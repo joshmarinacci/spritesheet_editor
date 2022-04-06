@@ -78,7 +78,7 @@ export class Sprite {
     }
     sync() {
         let c = this._img.getContext('2d')
-        let pal = this.doc.palette()
+        let pal = this.doc.get_color_palette()
         this.forEachPixel((v,i,j)=>{
             c.fillStyle = pal[v]
             c.fillRect(i, j, 1, 1)
@@ -303,23 +303,23 @@ export class Doc extends Observable {
     maps:Tilemap[]
     name:string
 
-    selected_color: number
-    private _palette: string[]
-    font_palette: string[]
-    selected_tile: number
-    selected_map: number
-    selected_font: number
-    selected_glyph: number
-    map_grid_visible: boolean;
-    selected_tree_item_index:number
+    private _selected_color: number
+    private _color_palette: string[]
+    private font_palette: string[]
+    private _selected_tile_index: number
+    private selected_map: number
+    private selected_font: number
+    private selected_glyph_index: number
+    private _map_grid_visible: boolean;
+    // private selected_tree_item_index:number
     selected_tree_item:any
-    selected_sheet: number;
+    private _selected_sheet: number;
     private _dirty: boolean;
 
     constructor() {
         super();
-        this.selected_color = 1;
-        this._palette = GRAYSCALE_PALETTE
+        this._selected_color = 1;
+        this._color_palette = GRAYSCALE_PALETTE
         this.font_palette = [
             '#ffffff',
             '#404040',
@@ -328,63 +328,100 @@ export class Doc extends Observable {
         sheet.add(new Sprite(gen_id('sprite'),'sprite1',8,8,this))
         sheet.add(new Sprite(gen_id('sprite'),'sprite2',8,8,this))
         this.sheets = [sheet]
-        this.selected_sheet = 0
-        this.selected_tile = 0;
+        this._selected_sheet = 0
+        this._selected_tile_index = 0;
         let tilemap = new Tilemap(gen_id('tilemap'),'main-map', 16, 16);
         tilemap.set_pixel(0, 0, 'sprite1');
         this.maps = [tilemap]
-        this.map_grid_visible = true;
+        this._map_grid_visible = true;
         let font = new SpriteFont(gen_id('font'),'somefont',this)
         let glyph = new SpriteGlyph(gen_id('glyph'),'a',8,8,this)
         font.glyphs.push(glyph)
         this.fonts = [font]
-        this.selected_tree_item_index = -1
+        // this.selected_tree_item_index = -1
         this.selected_tree_item = null
         this._dirty = false
         this.name = 'unnamed-project'
     }
 
-    palette(): string[] {
-        return this._palette
+    get_color_palette(): string[] {
+        return this._color_palette
+    }
+    set_palette(palette: string[]) {
+        this._color_palette = palette
+        this.fire('palette-change',this._color_palette)
+        this.sheets.forEach(sh => {
+            sh.sprites.forEach(sp => {
+                sp.sync()
+            })
+        })
+    }
+    set_selected_color(value: number) {
+        this._selected_color = value;
+        this.fire('change', "tile edited");
+    }
+    get_selected_color():number {
+        return this._selected_color
+    }
+    get_selected_tile_index() {
+        return this._selected_tile_index
+    }
+    set_selected_tile_index(val: number) {
+        this._selected_tile_index = val
     }
     get_selected_sheet():Sheet {
-        return this.sheets[this.selected_sheet]
+        return this.sheets[this._selected_sheet]
     }
-    get_selected_tile() {
+    set_selected_sheet(target: Sheet) {
+        this._selected_sheet = this.sheets.indexOf(target)
+        this.fire('main-selection',this._selected_sheet)
+    }
+    get_selected_tile():Sprite {
         let sheet = this.get_selected_sheet();
         if (!sheet) return null
-        return sheet.sprites[this.selected_tile]
+        return sheet.sprites[this._selected_tile_index]
+    }
+    get_selected_glyph_index():number {
+        return this.selected_glyph_index
+    }
+    set_selected_glyph_index(val: number) {
+        this.selected_glyph_index = val;
+        this.fire('change', this.selected_glyph_index)
     }
     get_selected_map():Tilemap {
         return this.maps[this.selected_map]
-    }
-    get_selected_font():SpriteFont {
-        return this.fonts[this.selected_font]
-    }
-    get_selected_glyph():SpriteGlyph {
-        let font = this.get_selected_font()
-        if(!font) return  null
-        return font.glyphs[this.selected_glyph]
-    }
-
-    set_selected_sheet(target: Sheet) {
-        this.selected_sheet = this.sheets.indexOf(target)
-        this.fire('main-selection',this.selected_sheet)
     }
     set_selected_map(target: Tilemap) {
         this.selected_map = this.maps.indexOf(target)
         this.fire('main-selection',this.selected_map)
     }
+    get_selected_font():SpriteFont {
+        return this.fonts[this.selected_font]
+    }
     set_selected_font(target: SpriteFont) {
         this.selected_font = this.fonts.indexOf(target)
         this.fire('main-selection',this.selected_font)
     }
+    get_selected_glyph():SpriteGlyph {
+        let font = this.get_selected_font()
+        if(!font) return  null
+        return font.glyphs[this.selected_glyph_index]
+    }
     set_selected_glyph(target: SpriteGlyph) {
         let font = this.get_selected_font()
         if(!font) return
-        this.selected_glyph = font.glyphs.indexOf(target)
+        this.selected_glyph_index = font.glyphs.indexOf(target)
     }
-
+    get_font_palette():string[] {
+        return this.font_palette;
+    }
+    get_map_grid_visible():boolean {
+        return this._map_grid_visible
+    }
+    set_map_grid_visible(visible: boolean) {
+        this._map_grid_visible = visible
+        this.fire("change", this._map_grid_visible);
+    }
 
     toJsonObj() {
         return {
@@ -432,22 +469,21 @@ export class Doc extends Observable {
         })
 
 
-        this.selected_color = 0
-        this.selected_tile = 0
+        this._selected_color = 0
+        this._selected_tile_index = 0
         this.selected_map = 0
         this.selected_font = 0
-        this.selected_glyph = 0
-        this.map_grid_visible = true
-        this.selected_tree_item_index = -1
+        this.selected_glyph_index = 0
+        this._map_grid_visible = true
+        // this.selected_tree_item_index = -1
         this.selected_tree_item = null
-        this.selected_sheet = 0
+        this._selected_sheet = 0
 
         console.log("final version of the doc is",this)
-        console.log("selected sheet is",this.get_selected_sheet())
         console.log('selected tile is',this.get_selected_tile())
         console.log("selected map is",this.get_selected_map())
         console.log("selected font is",this.get_selected_font())
-        console.log("selected gly0h is",this.get_selected_glyph())
+        console.log("selected glyph is",this.get_selected_glyph())
         this.fire('reload',this)
         this.fire('structure',this)
     }
@@ -476,14 +512,12 @@ export class Doc extends Observable {
         }
     }
 
-    set_palette(palette: string[]) {
-        this._palette = palette
-        this.fire('palette-change',this._palette)
-        this.sheets.forEach(sh => {
-            sh.sprites.forEach(sp => {
-                sp.sync()
-            })
-        })
+    set_selected_tree_item_index(y:number) {
+        // this.selected_tree_item_index = y
+    }
+
+    set_selected_tree_item(item:any) {
+        this.selected_tree_item = item
     }
 }
 
