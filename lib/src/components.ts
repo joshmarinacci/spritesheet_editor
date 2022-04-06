@@ -647,8 +647,8 @@ export class PopupContainer extends BaseParentView {
         return new Size(size.w, size.h)
     }
 
-    open_at(x: number, y: number) {
-        this.set_position(new Point(x, y))
+    open_at(position:Point) {
+        this.set_position(position)
     }
 
     hide() {
@@ -752,5 +752,40 @@ export class FontIcon extends BaseView {
     layout(g: CanvasSurface, available: Size): Size {
         this.set_size(new Size(16, 16))
         return this.size()
+    }
+}
+
+type Action = { caption: string }
+
+export class DropdownButton extends ActionButton {
+    actions: Action[]
+
+    constructor() {
+        super();
+        this.actions = []
+        this.on('action', (e) => {
+            let popup = new PopupContainer();
+            let popup_box = new VBox()
+            popup_box.set_vflex(false)
+            this.actions.forEach(act => {
+                let button = new ActionButton(act.caption)
+                button.set_caption(act.caption)
+                button.on('action', () => {
+                    // @ts-ignore
+                    act.fun();
+                    popup.hide()
+                })
+                popup_box.add(button)
+            })
+            popup.add(popup_box)
+            let popup_layer = e.ctx.find_by_name('popup-layer')
+            popup_layer.add(popup)
+            let off = e.ctx.view_to_local(new Point(0, 0), this)
+            popup.open_at(off.add(new Point(0, this.size().h)));
+        })
+    }
+
+    set_actions(actions: Action[]) {
+        this.actions = actions
     }
 }

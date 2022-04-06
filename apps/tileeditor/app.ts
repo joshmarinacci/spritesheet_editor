@@ -1,12 +1,12 @@
 import {
     ActionButton,
     CustomLabel,
+    DropdownButton,
     HBox,
     Header,
     KeystrokeCaptureView,
     Label,
     LayerView,
-    PopupContainer,
     ScrollView,
     SelectList,
     ToggleButton,
@@ -400,49 +400,15 @@ function setup_toolbar(doc: Doc, surface: CanvasSurface, popup_layer:LayerView):
     });
     toolbar.add(dirty_label)
 
-    let change_palette_button = with_props(new ActionButton(),{caption:'palette'})
-    change_palette_button.on('action',()=>{
-        let popup = new PopupContainer();
-        let popup_box = new VBox()
-        popup_box.set_vflex(false)
-        let grayscale_button = new ActionButton('grayscale')
-        grayscale_button.on('action',()=>{
-            doc.set_palette(GRAYSCALE_PALETTE)
-            popup.hide()
-        })
-        popup_box.add(grayscale_button)
-
-        let inverted_button = new ActionButton('inverted')
-        inverted_button.on('action',()=>{
-            doc.set_palette(INVERTED_PALETTE)
-            popup.hide()
-        })
-        popup_box.add(inverted_button)
-
-        let demichrome = new ActionButton('demichrome')
-        demichrome.on('action',()=>{
-            doc.set_palette(DEMI_CHROME)
-            popup.hide()
-        })
-        popup_box.add(demichrome)
-
-        let cherry_blossom = new ActionButton('cherry blossom')
-        cherry_blossom.on('action',()=>{
-            doc.set_palette(CHERRY_BLOSSOM)
-            popup.hide()
-        })
-        popup_box.add(cherry_blossom)
-
-        let dune = new ActionButton('dune')
-        dune.on('action',()=>{
-            doc.set_palette(DUNE)
-            popup.hide()
-        })
-        popup_box.add(dune)
-
-        popup.add(popup_box)
-        popup_layer.add(popup)
-        popup.open_at(500,50);
+    let change_palette_button = with_props(new DropdownButton(), {
+        caption:'palette',
+        actions:[
+            {caption:'Grayscale',fun:()=>doc.set_palette(GRAYSCALE_PALETTE)},
+            {caption:'Inverted' ,fun:()=>doc.set_palette(INVERTED_PALETTE)},
+            {caption:'Demi-chrome' ,fun:()=>doc.set_palette(DEMI_CHROME)},
+            {caption:'Cherry Blossom' ,fun:()=>doc.set_palette(CHERRY_BLOSSOM)},
+            {caption:'Dune' ,fun:()=>doc.set_palette(DUNE)},
+        ]
     })
     toolbar.add(change_palette_button)
 
