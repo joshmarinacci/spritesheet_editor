@@ -17,7 +17,7 @@ import {
     Doc,
     DUNE,
     GRAYSCALE_PALETTE,
-    INVERTED_PALETTE,
+    INVERTED_PALETTE, PICO8,
     Sheet,
     Sprite,
     SpriteFont,
@@ -154,6 +154,7 @@ function setup_toolbar(doc: Doc):HBox {
             {caption:'Demi-chrome' ,fun:()=>doc.set_palette(DEMI_CHROME)},
             {caption:'Cherry Blossom' ,fun:()=>doc.set_palette(CHERRY_BLOSSOM)},
             {caption:'Dune' ,fun:()=>doc.set_palette(DUNE)},
+            {caption:'Pico8' ,fun:()=>doc.set_palette(PICO8)},
         ]
     })
     toolbar.add(change_palette_button)

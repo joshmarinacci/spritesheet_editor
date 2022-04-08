@@ -88,4 +88,8 @@ export class TileEditor extends BaseView {
         if (pt.y > 0) this.bucket_fill(tile, target, replace, pt.add(new Point(0, -1)))
         if (pt.y < tile.h - 1) this.bucket_fill(tile, target, replace, pt.add(new Point(0, +1)))
     }
+
+    set_palette(colorPalette: string[]) {
+        this.palette = colorPalette
+    }
 }

@@ -83,6 +83,10 @@ export function make_sheet_editor_view(doc: Doc) {
         let sheet = doc.get_selected_sheet()
         if (sheet) sheet_name_edit.set_text(sheet.name)
     })
+    doc.addEventListener('palette-change', () => {
+        palette_chooser.set_palette(doc.get_color_palette())
+        tile_editor.set_palette(doc.get_color_palette());
+    })
 
     return sheet_editor
 }

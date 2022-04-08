@@ -48,6 +48,10 @@ export class PaletteChooser extends BaseView {
         this.set_size(size)
         return size
     }
+
+    set_palette(colorPalette: string[]) {
+        this.palette = colorPalette
+    }
 }
 
 export function draw_selection_rect(g: CanvasSurface, rect: Rect) {
