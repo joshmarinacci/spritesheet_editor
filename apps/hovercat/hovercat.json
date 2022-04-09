@@ -157,7 +157,7 @@
             {
                "clazz": "Sprite",
                "id": "tile_19862",
-               "name": "tilename",
+               "name": "ground",
                "w": 8,
                "h": 8,
                "data": [
@@ -595,7 +595,7 @@
             {
                "clazz": "Sprite",
                "id": "tile_85023",
-               "name": "tilename",
+               "name": "cat1",
                "w": 8,
                "h": 8,
                "data": [
@@ -668,7 +668,7 @@
             {
                "clazz": "Sprite",
                "id": "tile_77614",
-               "name": "tilename",
+               "name": "cat2",
                "w": 8,
                "h": 8,
                "data": [

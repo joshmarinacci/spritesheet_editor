@@ -26,9 +26,9 @@ function log(...args) {
 
 
 class TilemapView extends BaseView {
-    private map: Tilemap;
+    map: Tilemap;
     private sheet: Sheet;
-    private scroll: Point;
+    scroll: Point;
     private cache: Map<string, Sprite>;
     constructor(map:Tilemap, sheet:Sheet) {
         super('dialog-view');
@@ -44,10 +44,6 @@ class TilemapView extends BaseView {
         let h = this.size().h/SCALE/tile_w
         let view_w_tiles = w
         let map_w_pixels = this.map.w * SCALE * tile_w
-        this.scroll.x += 0.5
-        if(this.scroll.x > map_w_pixels - this.size().w) {
-            this.scroll.x = 0
-        }
 
         g.fillBackgroundSize(this.size(),'rgba(255,255,255,0.7)')
         g.ctx.imageSmoothingEnabled = false
@@ -81,6 +77,47 @@ class TilemapView extends BaseView {
     }
 }
 
+class CatView extends BaseView {
+    private model: any;
+    private sprite1: Sprite
+    private sprite2: Sprite
+    constructor(model: any, spritesheet: Sheet) {
+        super('sprite-view')
+        this.model = model;
+        this.sprite1 = spritesheet.sprites.find(sp => sp.name === 'cat1')
+        this.sprite2 = spritesheet.sprites.find(sp => sp.name === 'cat2')
+        this.set_size(new Size(8*SCALE,8*SCALE))
+    }
+    draw(g: CanvasSurface): void {
+        g.ctx.imageSmoothingEnabled = false
+        // g.fill(new Rect(0,0,8*SCALE,8*SCALE),'yellow')
+        // g.fill(new Rect(8 * SCALE,0,8*SCALE,8*SCALE),'yellow')
+        g.draw_sprite(0,0,this.sprite1,SCALE)
+        g.draw_sprite(8 * SCALE,0,this.sprite2,SCALE)
+    }
+    position(): Point {
+        return new Point(
+            this.model.position.x,
+            this.model.position.y,
+        )
+    }
+
+    layout(g: CanvasSurface, available: Size): Size {
+        return this.size()
+    }
+}
+
+class Player {
+    position: Point // position in pixels
+    vel: Point // velocity in pixels per tick
+    standing: boolean;
+    constructor() {
+        this.position = new Point(100,100)
+        this.vel = new Point(0,0)
+        this.standing = false
+    }
+}
+
 export async function start() {
     let doc = new Doc()
     doc.reset_from_json(hovercat_json)
@@ -98,7 +135,12 @@ export async function start() {
 
     let root = new LayerView()
 
-    root.add(new TilemapView(level1,level1_sheet))
+    let tile_view = new TilemapView(level1, level1_sheet)
+    root.add(tile_view)
+
+    let player = new Player();
+    let player_view = new CatView(player, level1_sheet)
+    root.add(player_view)
 
     surface.addToPage();
     surface.set_root(root);
@@ -107,17 +149,75 @@ export async function start() {
     surface.on_input((evt) => {
         if(evt.type === KEYBOARD_DOWN) {
             let e = evt as KeyboardEvent
-            log(e)
-            // if(e.key === 'ArrowLeft')  turn_to(new Point(-1,0));
-            // if(e.key === 'ArrowRight') turn_to(new Point(+1,0));
+            // log(e)
+            if(e.key === 'ArrowLeft')  {
+                player.vel.x = -1
+            }
+            if(e.key === 'ArrowRight') {
+                player.vel.x = 1
+            }
             // if(e.key === 'ArrowUp')    turn_to(new Point(+0,-1));
             // if(e.key === 'ArrowDown')  turn_to(new Point(+0,+1));
+            if(e.code === 'Space') {
+                if(player.standing) {
+                    player.vel.y = -8
+                    player.standing = false
+                }
+            }
         }
     })
 
     let clock = 0
+    let gravity = new Point(0,0.2)
+    let max_vel = new Point(1,10)
+    let bottom = 15*8*SCALE
+    player.position.y = bottom
+    player.vel.y = - 8
+
+    let ground = level1_sheet.sprites.find((t:Sprite) => t.name === 'ground');
+
     function process_tick() {
         clock += 1
+        // auto scroll
+        // tile_view.scroll.x += 0.2
+        let map_w_pixels = tile_view.map.w * SCALE * 8
+        if(tile_view.scroll.x > map_w_pixels - tile_view.size().w) {
+            tile_view.scroll.x = 0
+        }
+
+        // update player state from input
+        // check for intersection with level
+        // update player position from physics
+        //fall if not standing
+        if(!player.standing) {
+            player.vel.y += gravity.y
+            // don't fall faster than max velocity
+            if (player.vel.y > max_vel.y) player.vel.y = max_vel.y
+            // move player down
+            player.position.y += player.vel.y
+        }
+        //update x
+        player.position.x += player.vel.x
+        if(player.position.x < 0) player.position.x = 0
+
+        // check tile below the user
+        let player_pos_tiles = player.position.divide_floor(8*SCALE)
+        // log(player_pos_tiles)
+        let tile_id = tile_view.map.get_pixel(player_pos_tiles.x, player_pos_tiles.y)
+        // log(tile_id)
+        if(tile_id === ground.id) {
+            log("hit ground")
+            player.vel.y = 0
+            player.standing = true
+            player.position.y = (player_pos_tiles.y-1)*8*SCALE
+        }
+
+
+        // don't fall off the bottom of the screen
+        if(player.position.y > bottom) {
+            player.position.y = bottom
+        }
+
     }
 
     function restart() {
@@ -125,9 +225,6 @@ export async function start() {
     }
     restart()
 
-    // update player state from input
-    // check for intersection with level
-    // update player position from physics
     // draw background layer
     // draw foreground layer
     // draw enmies
