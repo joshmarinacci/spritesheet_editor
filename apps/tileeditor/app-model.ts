@@ -543,8 +543,8 @@ export class Doc extends Observable {
         this.selected_tree_item = item
     }
 
-    find_tilemap_by_name(level: string):Tilemap {
-        return this.maps.find(mp => mp.name === level)
+    find_tilemap_by_name(name: string):Tilemap {
+        return this.maps.find(mp => mp.name === name)
     }
 
     set_name(text:string) {
@@ -554,6 +554,10 @@ export class Doc extends Observable {
 
     name():string {
         return this._name
+    }
+
+    find_sheet_by_name(name: string) {
+        return this.sheets.find(sh => sh.name === name);
     }
 }
 
