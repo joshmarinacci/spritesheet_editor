@@ -11,14 +11,14 @@ import {
     DEMI_CHROME,
     Doc, DUNE,
     GRAYSCALE_PALETTE,
-    INVERTED_PALETTE,
+    INVERTED_PALETTE, PICO8,
     Sheet,
     Sprite,
     SpriteFont, Tilemap
 } from "../tileeditor/app-model";
 
 const SCALE = 3
-const CANVAS_SIZE = new Size(30,20)
+const CANVAS_SIZE = new Size(20,16)
 
 function log(...args) {
     console.log(...args)
@@ -26,25 +26,51 @@ function log(...args) {
 
 
 class TilemapView extends BaseView {
-    private text: string;
     private map: Tilemap;
     private sheet: Sheet;
+    private scroll: Point;
+    private cache: Map<string, Sprite>;
     constructor(map:Tilemap, sheet:Sheet) {
         super('dialog-view');
         this.map = map
         this.sheet = sheet
-        this.text = 'dialog text here'
+        this.scroll = new Point(0,0)
+        log('size is',this.map.w,this.map.h)
+        this.cache = new Map()
     }
     draw(g: CanvasSurface): void {
+        let tile_w = 8
+        let w = this.size().w/SCALE/tile_w
+        let h = this.size().h/SCALE/tile_w
+        let view_w_tiles = w
+        let map_w_pixels = this.map.w * SCALE * tile_w
+        this.scroll.x += 0.5
+        if(this.scroll.x > map_w_pixels - this.size().w) {
+            this.scroll.x = 0
+        }
+
         g.fillBackgroundSize(this.size(),'rgba(255,255,255,0.7)')
-        let sprite_w = this.sheet.sprites[0].w
-        let map_w = this.map.w * sprite_w * SCALE
-        let map_scale = SCALE * sprite_w
-        let map_x = (this.size().w - map_w)/2
-        let text_w = g.measureText(this.text,'base').w *2
-        let text_x = (this.size().w - text_w)/2
-        g.draw_tilemap(this.map,this.sheet,map_x,16,map_scale)
-        g.fillStandardText(this.text, text_x,150,'base',2)
+        g.ctx.imageSmoothingEnabled = false
+        let tile_x_off = Math.floor(this.scroll.x/tile_w/SCALE)
+        let scroll_x =  (tile_x_off*tile_w*SCALE)- this.scroll.x
+
+        for(let i=0; i<w+1; i++) {
+            for(let j=0; j<h; j++) {
+                let x = i*tile_w*SCALE + scroll_x
+                let y = j*tile_w*SCALE
+                // g.fillRect(x,y,8,8, 'red');
+                let tile_id = this.map.get_pixel(i+tile_x_off,j)
+                if(!this.cache.has(tile_id)) {
+                    let tile = this.sheet.sprites.find((t:Sprite) => t.id === tile_id);
+                    this.cache.set(tile_id,tile)
+                }
+                let tile = this.cache.get(tile_id)
+                let scale = tile_w*SCALE
+                if(tile) {
+                    g.ctx.drawImage(tile._img,x,y, scale, scale)
+                }
+            }
+        }
     }
     layout(g: CanvasSurface, available: Size): Size {
         this.set_size(available)
@@ -53,15 +79,12 @@ class TilemapView extends BaseView {
     set_visible(visible: boolean) {
         this._visible = visible
     }
-
-    set_text(died: string) {
-        this.text = died
-    }
 }
 
 export async function start() {
     let doc = new Doc()
     doc.reset_from_json(hovercat_json)
+    doc.set_palette(PICO8)
     log(doc)
 
 
