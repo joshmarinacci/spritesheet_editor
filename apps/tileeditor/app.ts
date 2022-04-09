@@ -62,7 +62,7 @@ function setup_toolbar(doc: Doc):HBox {
     let save_button = with_props(new ActionButton(),{caption:"save"})
     save_button.on('action',()=>{
         let blob = jsonObjToBlob(doc.toJsonObj())
-        forceDownloadBlob(`${doc.name}.json`,blob)
+        forceDownloadBlob(`${doc.name()}.json`,blob)
     });
     toolbar.add(save_button);
 
@@ -107,7 +107,7 @@ function setup_toolbar(doc: Doc):HBox {
                 ctx.fillRect(x+i*8, y+j*8, 8,8);
             });
         })
-        canvasToPNGBlob(canvas).then((blob)=> forceDownloadBlob(`${doc.name}@8.png`,blob))
+        canvasToPNGBlob(canvas).then((blob)=> forceDownloadBlob(`${doc.name()}@8.png`,blob))
     })
     toolbar.add(export_button);
 
@@ -163,11 +163,12 @@ function setup_toolbar(doc: Doc):HBox {
     doc_name_edit.set_pref_width(200)
     doc_name_edit.set_text('unknownprojectx')
     doc_name_edit.on('action',(text)=>{
-        doc.name = text
+        doc.set_name(text)
     })
     toolbar.add(doc_name_edit)
     doc.addEventListener('reload',() => {
-        doc_name_edit.set_text(doc.name)
+        console.log("reloaded to set the text name", doc.name())
+        doc_name_edit.set_text(doc.name())
     })
 
     return toolbar

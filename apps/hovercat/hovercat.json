@@ -1,10 +1,11 @@
 {
    "version": 2,
+   "name": "hovercat",
    "sheets": [
       {
          "clazz": "Sheet",
          "id": "sheetx",
-         "name": "the sheet",
+         "name": "base-sheet",
          "sprites": [
             {
                "clazz": "Sprite",
@@ -3007,7 +3008,7 @@
       {
          "clazz": "Font",
          "id": "font_6566",
-         "name": "somefont",
+         "name": "base-font",
          "glyphs": [
             {
                "clazz": "Glyph",

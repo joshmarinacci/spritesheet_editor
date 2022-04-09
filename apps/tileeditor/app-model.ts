@@ -327,7 +327,7 @@ export class Doc extends Observable {
     sheets: Sheet[]
     fonts: SpriteFont[]
     maps:Tilemap[]
-    name:string
+    private _name:string
 
     private _selected_color: number
     private _color_palette: string[]
@@ -367,7 +367,7 @@ export class Doc extends Observable {
         // this.selected_tree_item_index = -1
         this.selected_tree_item = null
         this._dirty = false
-        this.name = 'unnamed-project'
+        this._name = 'unnamed-project'
     }
 
     get_color_palette(): string[] {
@@ -452,6 +452,7 @@ export class Doc extends Observable {
     toJsonObj() {
         return {
             version:2,
+            name: this._name,
             sheets: this.sheets.map(sh => sh.toJsonObj()),
             fonts:  this.fonts.map(fnt => fnt.toJsonObj()),
             maps:   this.maps.map(mp => mp.toJsonObj()),
@@ -478,6 +479,7 @@ export class Doc extends Observable {
         }
         if(data.version !== 2) throw new Error("we can only parse version 2 json")
         // console.log("processing",data);
+        if(data.name) this._name = data.name
 
         this.sheets = data.sheets.map(sh => {
             // console.log("sheet",sh)
@@ -543,6 +545,15 @@ export class Doc extends Observable {
 
     find_tilemap_by_name(level: string):Tilemap {
         return this.maps.find(mp => mp.name === level)
+    }
+
+    set_name(text:string) {
+        this._name = text
+        this.mark_dirty()
+    }
+
+    name():string {
+        return this._name
     }
 }
 
