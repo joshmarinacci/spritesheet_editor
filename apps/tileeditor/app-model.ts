@@ -540,6 +540,10 @@ export class Doc extends Observable {
     set_selected_tree_item(item:any) {
         this.selected_tree_item = item
     }
+
+    find_tilemap_by_name(level: string):Tilemap {
+        return this.maps.find(mp => mp.name === level)
+    }
 }
 
 export function draw_sprite(sprite: Sprite, ctx: CanvasSurface, x: number, y: number, scale: number, palette:string[]) {

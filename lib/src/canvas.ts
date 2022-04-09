@@ -472,6 +472,10 @@ export class CanvasSurface {
     }
 
     propagateKeyboardEvent(evt: KeyboardEvent, path:View[]) {
+        if(!this._keyboard_focus) {
+            if(this._input_callback) this._input_callback(evt)
+            return
+        }
         if(!path) {
             this.log("no path, can't propagate")
             return

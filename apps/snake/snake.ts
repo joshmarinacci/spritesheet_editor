@@ -294,7 +294,7 @@ export async function start() {
     let board = new GridModel(BOARD_SIZE)
     board.fill_all(()=>EMPTY)
     let board_layer = new LayerView();
-    board_layer._name = 'board'
+    board_layer.set_name('board')
     let board_view = new GridView(board,doc.sheets[0])
     board_layer.add(board_view);
     root.add(board_layer);
