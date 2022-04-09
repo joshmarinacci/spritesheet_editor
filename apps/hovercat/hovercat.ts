@@ -17,8 +17,9 @@ import {
     SpriteFont, Tilemap
 } from "../tileeditor/app-model";
 
-const SCALE = 3
+const SCALE = 5
 const CANVAS_SIZE = new Size(20,16)
+const TILE_SIZE = 8
 
 function log(...args) {
     console.log(...args)
@@ -39,7 +40,7 @@ class TilemapView extends BaseView {
         this.cache = new Map()
     }
     draw(g: CanvasSurface): void {
-        let tile_w = 8
+        let tile_w = TILE_SIZE
         let w = this.size().w/SCALE/tile_w
         let h = this.size().h/SCALE/tile_w
         let view_w_tiles = w
@@ -81,24 +82,29 @@ class PlayerView extends BaseView {
     private model: any;
     private sprite1: Sprite
     private sprite2: Sprite
+    test_point: Point;
     constructor(model: any, spritesheet: Sheet) {
         super('sprite-view')
         this.model = model;
         this.sprite1 = spritesheet.sprites.find(sp => sp.name === 'cat1')
         this.sprite2 = spritesheet.sprites.find(sp => sp.name === 'cat2')
-        this.set_size(new Size(8*SCALE,8*SCALE))
+        this.set_size(new Size(TILE_SIZE,TILE_SIZE))
+        this.test_point = new Point(0,0)
     }
     draw(g: CanvasSurface): void {
         g.ctx.imageSmoothingEnabled = false
-        g.draw_sprite(0,0,this.sprite1,SCALE)
-        g.draw_sprite(8 * SCALE,0,this.sprite2,SCALE)
+        // g.draw_sprite(0,0,this.sprite1,SCALE)
+        g.draw_sprite(0,0,this.sprite2,SCALE)
         //draw the bounds
-        g.stroke(new Rect(0,0,this.model.size.w,this.model.size.h), 'red')
+        g.stroke(new Rect(0,0,this.model.size.w*SCALE,this.model.size.h*SCALE), 'red')
+        g.stroke(new Rect(
+            this.test_point.x*SCALE-this.position().x,
+            this.test_point.y*SCALE-this.position().y,5,5),'green')
     }
     position(): Point {
         return new Point(
-            this.model.position.x,
-            this.model.position.y,
+            this.model.position.x*SCALE,
+            this.model.position.y*SCALE,
         )
     }
 
@@ -113,10 +119,10 @@ class Player {
     standing: boolean
     size:Size //size in pixels
     constructor() {
-        this.position = new Point(100,50)
+        this.position = new Point(10,5)
         this.vel = new Point(0,0)
         this.standing = false
-        this.size = new Size(2*8*SCALE, 1*8*SCALE)
+        this.size = new Size(1*8, 1*8)
     }
 }
 
@@ -163,8 +169,7 @@ export async function start() {
             // if(e.key === 'ArrowDown')  turn_to(new Point(+0,+1));
             if (e.code === 'Space') {
                 if (player.standing) {
-                    log("jumping")
-                    player.vel.y = -8
+                    player.vel.y = -4
                     player.standing = false
                 }
             }
@@ -173,10 +178,9 @@ export async function start() {
 
     let clock = 0
     let gravity = new Point(0, 0.2)
-    let max_vel = new Point(1, 10)
-    let bottom = 10 * 8 * SCALE
-    player.position.y = bottom
-    player.vel.y = -8
+    // let max_vel = new Point(1, 10)
+    player.position.y = 4
+    player.vel.y = 0
 
     let ground:Sprite = level1_sheet.sprites.find((t: Sprite) => t.name === 'ground')
     let block1:Sprite = level1_sheet.sprites.find((t: Sprite) => t.name === 'block1')
@@ -198,7 +202,8 @@ export async function start() {
         clock += 1
         // auto scroll
         // tile_view.scroll.x += 0.2
-        let map_w_pixels = tile_view.map.w * SCALE * 8
+        let tile_size = 8
+        let map_w_pixels = tile_view.map.w * tile_size
         if(tile_view.scroll.x > map_w_pixels - tile_view.size().w) {
             tile_view.scroll.x = 0
         }
@@ -207,10 +212,10 @@ export async function start() {
         {
             if(player.vel.x < 0) {
                 //going left
-                let player_pos_tiles = player.position.divide_floor(8*SCALE)
+                let player_pos_tiles = player.position.divide_floor(tile_size)
                 //left side =
                 let test_x = player.position.x + player.vel.x
-                let test_tile_x = Math.floor(test_x / (8 * SCALE))
+                let test_tile_x = Math.floor(test_x / tile_size)
                 let tile_id2 = tile_view.map.get_pixel(test_tile_x, player_pos_tiles.y)
                 if (blocks_sideways(tile_id2)) {
                     log("hit side")
@@ -219,9 +224,9 @@ export async function start() {
             } else {
                 // log(tile_id2)
                 //going right
-                let player_pos_tiles = player.position.divide_floor(8*SCALE)
+                let player_pos_tiles = player.position.divide_floor(tile_size)
                 let test_x = player.position.x + player.vel.x + player.size.w
-                let test_tile_x = Math.floor(test_x / (8 * SCALE))
+                let test_tile_x = Math.floor(test_x / tile_size)
                 let tile_id2 = tile_view.map.get_pixel(test_tile_x, player_pos_tiles.y)
                 if (blocks_sideways(tile_id2)) {
                     log("hit side")
@@ -236,13 +241,14 @@ export async function start() {
         if(player.vel.y >= 0) {
             //if going down
             //use bottom left corner
-            let test_pixels = player.position.add(new Point(0,player.size.h))
-            //if going right, use the bottom right corner
-            if(player.vel.x > 0) test_pixels.x += player.size.w
-
-            let test_tiles = test_pixels.divide_floor(8*SCALE)
-            let tile_id = tile_view.map.get_pixel(test_tiles.x,test_tiles.y)
             if(player.standing) {
+                let test_pixels = player.position.add(new Point(0,player.size.h))
+                //if going right, use the bottom right corner
+                if(player.vel.x < 0) test_pixels.x += player.size.w
+                player_view.test_point.copy_from(test_pixels)
+
+                let test_tiles = test_pixels.divide_floor(tile_size)
+                let tile_id = tile_view.map.get_pixel(test_tiles.x,test_tiles.y)
                 // if standing
                 if(!blocks_falling(tile_id)) {
                     log("we need to fall")
@@ -255,6 +261,13 @@ export async function start() {
                     // player.position.y += player.vel.y
                 }
             } else {
+                let test_pixels = player.position.add(new Point(0,player.size.h))
+                //if going right, use the bottom right corner
+                if(player.vel.x > 0) test_pixels.x += player.size.w
+                player_view.test_point.copy_from(test_pixels)
+
+                let test_tiles = test_pixels.divide_floor(tile_size)
+                let tile_id = tile_view.map.get_pixel(test_tiles.x,test_tiles.y)
                 // player.vel.y += gravity.y
                 // test_pixels.y += player.vel.y
 
@@ -262,7 +275,7 @@ export async function start() {
                 if(blocks_falling(tile_id)) {
                     log('we need to stand')
                     player.vel.y = 0
-                    // player.position.y += player.vel.y
+                    player.position.y += player.vel.y
                     player.standing = true
                 } else {
                     //keep falling
