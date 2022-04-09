@@ -29,13 +29,16 @@ function log(...args) {
 class TilemapView extends BaseView {
     map: Tilemap;
     private sheet: Sheet;
-    scroll: Point;
+    // scroll: Point;
     private cache: Map<string, Sprite>;
-    constructor(map:Tilemap, sheet:Sheet) {
+    private player: Player;
+
+    constructor(map: Tilemap, sheet: Sheet, player: Player) {
         super('dialog-view');
+        this.player = player
         this.map = map
         this.sheet = sheet
-        this.scroll = new Point(0,0)
+        // this.scroll = new Point(0,0)
         log('size is',this.map.w,this.map.h)
         this.cache = new Map()
     }
@@ -48,8 +51,8 @@ class TilemapView extends BaseView {
 
         g.fillBackgroundSize(this.size(),'rgba(255,255,255,0.7)')
         g.ctx.imageSmoothingEnabled = false
-        let tile_x_off = Math.floor(this.scroll.x/tile_w/SCALE)
-        let scroll_x =  (tile_x_off*tile_w*SCALE)- this.scroll.x
+        let tile_x_off = Math.floor(this.player.scroll.x/tile_w/SCALE)
+        let scroll_x =  (tile_x_off*tile_w*SCALE)- this.player.scroll.x
 
         for(let i=0; i<w+1; i++) {
             for(let j=0; j<h; j++) {
@@ -79,13 +82,13 @@ class TilemapView extends BaseView {
 }
 
 class PlayerView extends BaseView {
-    private model: any;
+    private player: any;
     private sprite1: Sprite
     private sprite2: Sprite
     test_point: Point;
     constructor(model: any, spritesheet: Sheet) {
         super('sprite-view')
-        this.model = model;
+        this.player = model;
         this.sprite1 = spritesheet.sprites.find(sp => sp.name === 'cat1')
         this.sprite2 = spritesheet.sprites.find(sp => sp.name === 'cat2')
         this.set_size(new Size(TILE_SIZE,TILE_SIZE))
@@ -94,17 +97,19 @@ class PlayerView extends BaseView {
     draw(g: CanvasSurface): void {
         g.ctx.imageSmoothingEnabled = false
         // g.draw_sprite(0,0,this.sprite1,SCALE)
-        g.draw_sprite(0,0,this.sprite2,SCALE)
+        let x = 0 - this.player.scroll.x;
+        let y = 0;
+        g.draw_sprite(x,0,this.sprite2,SCALE)
         //draw the bounds
-        g.stroke(new Rect(0,0,this.model.size.w*SCALE,this.model.size.h*SCALE), 'red')
+        g.stroke(new Rect(x,0,this.player.size.w*SCALE,this.player.size.h*SCALE), 'red')
         g.stroke(new Rect(
-            this.test_point.x*SCALE-this.position().x,
+            x + this.test_point.x*SCALE-this.position().x,
             this.test_point.y*SCALE-this.position().y,5,5),'green')
     }
     position(): Point {
         return new Point(
-            this.model.position.x*SCALE,
-            this.model.position.y*SCALE,
+            this.player.position.x*SCALE,
+            this.player.position.y*SCALE,
         )
     }
 
@@ -114,15 +119,17 @@ class PlayerView extends BaseView {
 }
 
 class Player {
-    position: Point // position in pixels
-    vel: Point // velocity in pixels per tick
+    position: Point // position in unscaled pixels
+    vel: Point // velocity in unscaled pixels per tick
     standing: boolean
-    size:Size //size in pixels
+    size:Size //size in unscaled pixels
+    scroll:Point //scroll in actual screen pixels
     constructor() {
         this.position = new Point(10,5)
         this.vel = new Point(0,0)
         this.standing = false
         this.size = new Size(1*8, 1*8)
+        this.scroll = new Point(0,0)
     }
 }
 
@@ -144,10 +151,10 @@ export async function start() {
 
     let root = new LayerView()
 
-    let tile_view = new TilemapView(level1, level1_sheet)
+    let player = new Player();
+    let tile_view = new TilemapView(level1, level1_sheet, player)
     root.add(tile_view)
 
-    let player = new Player();
     let player_view = new PlayerView(player, level1_sheet)
     root.add(player_view)
 
@@ -202,20 +209,20 @@ export async function start() {
         clock += 1
         // auto scroll
         // tile_view.scroll.x += 0.2
-        let tile_size = 8
-        let map_w_pixels = tile_view.map.w * tile_size
-        if(tile_view.scroll.x > map_w_pixels - tile_view.size().w) {
-            tile_view.scroll.x = 0
-        }
+        // let tile_size = 8
+        // let map_w_pixels = tile_view.map.w * TILE_SIZE
+        // if(tile_view.scroll.x > map_w_pixels - tile_view.size().w) {
+        //     tile_view.scroll.x = 0
+        // }
 
         //update x
         {
             if(player.vel.x < 0) {
                 //going left
-                let player_pos_tiles = player.position.divide_floor(tile_size)
+                let player_pos_tiles = player.position.divide_floor(TILE_SIZE)
                 //left side =
                 let test_x = player.position.x + player.vel.x
-                let test_tile_x = Math.floor(test_x / tile_size)
+                let test_tile_x = Math.floor(test_x / TILE_SIZE)
                 let tile_id2 = tile_view.map.get_pixel(test_tile_x, player_pos_tiles.y)
                 if (blocks_sideways(tile_id2)) {
                     log("hit side")
@@ -224,9 +231,9 @@ export async function start() {
             } else {
                 // log(tile_id2)
                 //going right
-                let player_pos_tiles = player.position.divide_floor(tile_size)
+                let player_pos_tiles = player.position.divide_floor(TILE_SIZE)
                 let test_x = player.position.x + player.vel.x + player.size.w
-                let test_tile_x = Math.floor(test_x / tile_size)
+                let test_tile_x = Math.floor(test_x / TILE_SIZE)
                 let tile_id2 = tile_view.map.get_pixel(test_tile_x, player_pos_tiles.y)
                 if (blocks_sideways(tile_id2)) {
                     log("hit side")
@@ -247,7 +254,7 @@ export async function start() {
                 if(player.vel.x < 0) test_pixels.x += player.size.w
                 player_view.test_point.copy_from(test_pixels)
 
-                let test_tiles = test_pixels.divide_floor(tile_size)
+                let test_tiles = test_pixels.divide_floor(TILE_SIZE)
                 let tile_id = tile_view.map.get_pixel(test_tiles.x,test_tiles.y)
                 // if standing
                 if(!blocks_falling(tile_id)) {
@@ -266,7 +273,7 @@ export async function start() {
                 if(player.vel.x > 0) test_pixels.x += player.size.w
                 player_view.test_point.copy_from(test_pixels)
 
-                let test_tiles = test_pixels.divide_floor(tile_size)
+                let test_tiles = test_pixels.divide_floor(TILE_SIZE)
                 let tile_id = tile_view.map.get_pixel(test_tiles.x,test_tiles.y)
                 // player.vel.y += gravity.y
                 // test_pixels.y += player.vel.y
@@ -288,6 +295,15 @@ export async function start() {
             // if going up
             player.vel.y += gravity.y
             player.position.y += player.vel.y
+        }
+
+        if(player.position.x > 100) {
+            player.scroll.x = (player.position.x - 100)*SCALE
+        } else {
+            player.scroll.x = 0
+        }
+        if(player.position.x < 0) {
+            player.position.x = 0
         }
     }
 
