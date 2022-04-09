@@ -113,7 +113,7 @@ class Player {
     standing: boolean
     size:Size //size in pixels
     constructor() {
-        this.position = new Point(100,100)
+        this.position = new Point(100,50)
         this.vel = new Point(0,0)
         this.standing = false
         this.size = new Size(2*8*SCALE, 1*8*SCALE)
@@ -163,6 +163,7 @@ export async function start() {
             // if(e.key === 'ArrowDown')  turn_to(new Point(+0,+1));
             if (e.code === 'Space') {
                 if (player.standing) {
+                    log("jumping")
                     player.vel.y = -8
                     player.standing = false
                 }
@@ -173,7 +174,7 @@ export async function start() {
     let clock = 0
     let gravity = new Point(0, 0.2)
     let max_vel = new Point(1, 10)
-    let bottom = 15 * 8 * SCALE
+    let bottom = 10 * 8 * SCALE
     player.position.y = bottom
     player.vel.y = -8
 
@@ -202,46 +203,11 @@ export async function start() {
             tile_view.scroll.x = 0
         }
 
-        //update y
-        if(!player.standing) {
-            //if falling
-            player.vel.y += gravity.y
-            // don't fall faster than max velocity
-            if (player.vel.y > max_vel.y) player.vel.y = max_vel.y
-            // move player down
-            player.position.y += player.vel.y
-
-            // check tile below the user
-            {
-                //left edge
-                let player_pos_tiles = player.position.divide_floor(8 * SCALE)
-                // log(player_pos_tiles)
-                let tile_id = tile_view.map.get_pixel(player_pos_tiles.x, player_pos_tiles.y)
-                if (blocks_falling(tile_id)) {
-                    log("hit ground")
-                    player.vel.y = 0
-                    player.standing = true
-                    player.position.y = (player_pos_tiles.y - 1) * 8 * SCALE
-                }
-            }
-            {
-                //right edge
-                let player_pos_tiles = player.position.add(new Point(player.size.w,0)).divide_floor(8 * SCALE)
-                let tile_id = tile_view.map.get_pixel(player_pos_tiles.x, player_pos_tiles.y)
-                if (blocks_falling(tile_id)) {
-                    log("hit ground")
-                    player.vel.y = 0
-                    player.standing = true
-                    player.position.y = (player_pos_tiles.y - 1) * 8 * SCALE
-                }
-            }
-        }
-
         //update x
         {
-            let player_pos_tiles = player.position.divide_floor(8*SCALE)
             if(player.vel.x < 0) {
                 //going left
+                let player_pos_tiles = player.position.divide_floor(8*SCALE)
                 //left side =
                 let test_x = player.position.x + player.vel.x
                 let test_tile_x = Math.floor(test_x / (8 * SCALE))
@@ -253,6 +219,7 @@ export async function start() {
             } else {
                 // log(tile_id2)
                 //going right
+                let player_pos_tiles = player.position.divide_floor(8*SCALE)
                 let test_x = player.position.x + player.vel.x + player.size.w
                 let test_tile_x = Math.floor(test_x / (8 * SCALE))
                 let tile_id2 = tile_view.map.get_pixel(test_tile_x, player_pos_tiles.y)
@@ -261,15 +228,54 @@ export async function start() {
                     player.vel.x = 0
                 }
             }
-            player.position.x += player.vel.x
             if (player.position.x < 0) player.position.x = 0
+            player.position.x += player.vel.x
         }
 
-        // don't fall off the bottom of the screen
-        if(player.position.y > bottom) {
-            player.position.y = bottom
-        }
+        //update y
+        if(player.vel.y >= 0) {
+            //if going down
+            //use bottom left corner
+            let test_pixels = player.position.add(new Point(0,player.size.h))
+            //if going right, use the bottom right corner
+            if(player.vel.x > 0) test_pixels.x += player.size.w
 
+            let test_tiles = test_pixels.divide_floor(8*SCALE)
+            let tile_id = tile_view.map.get_pixel(test_tiles.x,test_tiles.y)
+            if(player.standing) {
+                // if standing
+                if(!blocks_falling(tile_id)) {
+                    log("we need to fall")
+                    player.standing = false
+                    player.vel.y += gravity.y
+                    player.position.y += player.vel.y
+                } else {
+                    log("keep standing")
+                    player.vel.y = 0
+                    // player.position.y += player.vel.y
+                }
+            } else {
+                // player.vel.y += gravity.y
+                // test_pixels.y += player.vel.y
+
+                // if falling
+                if(blocks_falling(tile_id)) {
+                    log('we need to stand')
+                    player.vel.y = 0
+                    // player.position.y += player.vel.y
+                    player.standing = true
+                } else {
+                    //keep falling
+                    log("keep falling")
+                    player.vel.y += gravity.y
+                    player.position.y += player.vel.y
+                }
+            }
+        } else {
+            // if going up
+            player.vel.y += gravity.y
+            player.position.y += player.vel.y
+        }
     }
 
     function restart() {
