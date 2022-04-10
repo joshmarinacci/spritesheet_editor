@@ -1,26 +1,21 @@
 import {LayerView} from "../../lib/src/components";
-import {Point, Rect, Size, SuperArray} from "../../lib/src/common";
-import {CoolEvent, BaseView, BaseParentView, KEYBOARD_DOWN, KeyboardEvent} from "../../lib/src/core";
-import {randi} from "../../common/util";
+import {Point, Rect, Size} from "../../lib/src/common";
+import {BaseView, KEYBOARD_DOWN, KeyboardEvent} from "../../lib/src/core";
 import { CanvasSurface } from "../../lib/src/canvas";
+import {
+    Doc, PICO8,
+    Sheet,
+    Sprite,
+    Tilemap
+} from "../tileeditor/app-model";
+import {do_physics, Physics, Player} from "./physics";
 // @ts-ignore
 import hovercat_json from "./hovercat.json";
 
-import {
-    CHERRY_BLOSSOM,
-    DEMI_CHROME,
-    Doc, DUNE,
-    GRAYSCALE_PALETTE,
-    INVERTED_PALETTE, PICO8,
-    Sheet,
-    Sprite,
-    SpriteFont, Tilemap
-} from "../tileeditor/app-model";
 
 const SCALE = 5
 const CANVAS_SIZE = new Size(20,16)
 const TILE_SIZE = 8
-const gravity = new Point(0, 0.15)
 
 function log(...args) {
     console.log(...args)
@@ -119,118 +114,6 @@ class PlayerView extends BaseView {
     }
 }
 
-class Player {
-    position: Point // position in unscaled pixels
-    vel: Point // velocity in unscaled pixels per tick
-    standing: boolean
-    size:Size //size in unscaled pixels
-    scroll:Point //scroll in actual screen pixels
-    constructor() {
-        this.position = new Point(10,5)
-        this.vel = new Point(0,0)
-        this.standing = false
-        this.size = new Size(1*8, 1*8)
-        this.scroll = new Point(0,0)
-    }
-}
-
-let BLOCKS_FALLING:Sprite[] = []
-let BLOCKS_SIDEWAYS:Sprite[] = []
-
-function blocks_falling(tile_id: string) {
-    return BLOCKS_FALLING.some(sp => sp.id === tile_id)
-}
-
-function blocks_sideways(tile_id:string) {
-    return BLOCKS_SIDEWAYS.some(sp => sp.id === tile_id)
-}
-
-
-function do_physics(player: Player, map: Tilemap, player_view: PlayerView) {
-    {
-        if(player.vel.x < 0) {
-            //going left
-            let player_pos_tiles = player.position.divide_floor(TILE_SIZE)
-            //left side =
-            let test_x = player.position.x + player.vel.x
-            let test_tile_x = Math.floor(test_x / TILE_SIZE)
-            let tile_id2 = map.get_pixel(test_tile_x, player_pos_tiles.y)
-            if (blocks_sideways(tile_id2)) {
-                log("hit side")
-                player.vel.x = 0
-            }
-        } else {
-            // log(tile_id2)
-            //going right
-            let player_pos_tiles = player.position.divide_floor(TILE_SIZE)
-            let test_x = player.position.x + player.vel.x + player.size.w
-            let test_tile_x = Math.floor(test_x / TILE_SIZE)
-            let tile_id2 = map.get_pixel(test_tile_x, player_pos_tiles.y)
-            if (blocks_sideways(tile_id2)) {
-                log("hit side")
-                player.vel.x = 0
-            }
-        }
-        if (player.position.x < 0) player.position.x = 0
-        player.position.x += player.vel.x
-    }
-
-    //update y
-    if(player.vel.y >= 0) {
-        //if going down
-        //use bottom left corner
-        if(player.standing) {
-            let test_pixels = player.position.add(new Point(0,player.size.h))
-            //if going right, use the bottom right corner
-            if(player.vel.x < 0) test_pixels.x += player.size.w
-            player_view.test_point.copy_from(test_pixels)
-
-            let test_tiles = test_pixels.divide_floor(TILE_SIZE)
-            let tile_id = map.get_pixel(test_tiles.x,test_tiles.y)
-            // if standing
-            if(!blocks_falling(tile_id)) {
-                log("we need to fall")
-                player.standing = false
-                player.vel.y += gravity.y
-                player.position.y += player.vel.y
-            } else {
-                log("keep standing")
-                player.vel.y = 0
-                // player.position.y += player.vel.y
-            }
-        } else {
-            let test_pixels = player.position.add(new Point(0,player.size.h))
-            //if going right, use the bottom right corner
-            if(player.vel.x > 0) test_pixels.x += player.size.w
-            player_view.test_point.copy_from(test_pixels)
-
-            let test_tiles = test_pixels.divide_floor(TILE_SIZE)
-            let tile_id = map.get_pixel(test_tiles.x,test_tiles.y)
-            // player.vel.y += gravity.y
-            // test_pixels.y += player.vel.y
-
-            // if falling
-            if(blocks_falling(tile_id)) {
-                log('we need to stand')
-                player.vel.y = 0
-                player.position.y += player.vel.y
-                player.standing = true
-            } else {
-                //keep falling
-                log("keep falling")
-                player.vel.y += gravity.y
-                player.position.y += player.vel.y
-            }
-        }
-    } else {
-        // if going up
-        player.vel.y += gravity.y
-        player.position.y += player.vel.y
-    }
-
-
-}
-
 function do_scroll(player: Player) {
     if(player.position.x > 100) {
         player.scroll.x = (player.position.x - 100)*SCALE
@@ -299,15 +182,15 @@ export async function start() {
     let ground:Sprite = level1_sheet.sprites.find((t: Sprite) => t.name === 'ground')
     let block1:Sprite = level1_sheet.sprites.find((t: Sprite) => t.name === 'block1')
     let block2:Sprite = level1_sheet.sprites.find((t: Sprite) => t.name === 'block2')
-    BLOCKS_FALLING.push(ground)
-    BLOCKS_FALLING.push(block1)
-    BLOCKS_FALLING.push(block2)
-    BLOCKS_SIDEWAYS.push(block1)
-    BLOCKS_SIDEWAYS.push(block2)
+    Physics.BLOCKS_FALLING.push(ground)
+    Physics.BLOCKS_FALLING.push(block1)
+    Physics.BLOCKS_FALLING.push(block2)
+    Physics.BLOCKS_SIDEWAYS.push(block1)
+    Physics.BLOCKS_SIDEWAYS.push(block2)
 
     function process_tick() {
         clock += 1
-        do_physics(player, tile_view.map, player_view)
+        do_physics(player, tile_view.map)
         do_scroll(player);
     }
 
