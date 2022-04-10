@@ -453,8 +453,9 @@ export class Doc extends Observable {
 
     toJsonObj() {
         return {
-            version:2,
+            version:3,
             name: this._name,
+            color_palette:this._color_palette,
             sheets: this.sheets.map(sh => sh.toJsonObj()),
             fonts:  this.fonts.map(fnt => fnt.toJsonObj()),
             maps:   this.maps.map(mp => mp.toJsonObj()),
@@ -479,9 +480,14 @@ export class Doc extends Observable {
                 data.version = 2
             }
         }
-        if(data.version !== 2) throw new Error("we can only parse version 2 json")
+        if(data.version === 2) {
+            data.color_palette = GRAYSCALE_PALETTE
+            data.version = 3
+        }
+        if(data.version !== 3) throw new Error("we can only parse version 3 json")
         // console.log("processing",data);
         if(data.name) this._name = data.name
+        this._color_palette = data.color_palette
 
         this.sheets = data.sheets.map(sh => {
             // console.log("sheet",sh)
