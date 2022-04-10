@@ -110,6 +110,9 @@ export class Rect {
     right() {
         return this.x + this.w;
     }
+    shrink(v:number):Rect {
+        return new Rect(this.x+v,this.y+v,this.w-v-v,this.h-v-v)
+    }
 }
 
 export class Size {

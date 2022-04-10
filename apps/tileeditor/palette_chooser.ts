@@ -22,7 +22,14 @@ export class PaletteChooser extends BaseView {
         if (this.palette) {
             ctx.fillBackgroundSize(this.size(), EMPTY_COLOR)
             for (let i = 0; i < this.palette.length; i++) {
-                ctx.fillRect(i * this.scale + 0.5, 0 + 0.5, this.scale, this.scale, this.palette[i]);
+                let color = this.palette[i]
+                ctx.fillRect(i * this.scale + 0.5, 0 + 0.5, this.scale, this.scale, color);
+                if(color === 'transparent') {
+                    let r = new Rect(i*this.scale+0.5,0.5,this.scale,this.scale);
+                    ctx.fill(r,'black')
+                    ctx.fill(r.shrink(4),'white')
+                    ctx.fill(r.shrink(8),'black')
+                }
             }
             draw_grid(ctx, this.size(), this.scale)
             let i = this.doc.get_selected_color()

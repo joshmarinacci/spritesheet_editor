@@ -52,7 +52,8 @@ export const PICO8 = [
 '#29ADFF',
 '#83769C',
 '#FF77A8',
-'#FFCCAA'
+'#FFCCAA',
+'transparent',
 ]
 export class Sprite {
     id: string
@@ -96,6 +97,7 @@ export class Sprite {
     sync() {
         let c = this._img.getContext('2d')
         let pal = this.doc.get_color_palette()
+        c.clearRect(0,0,this._img.width, this._img.height)
         this.forEachPixel((v,i,j)=>{
             c.fillStyle = pal[v]
             c.fillRect(i, j, 1, 1)
