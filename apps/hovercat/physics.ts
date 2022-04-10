@@ -37,7 +37,7 @@ function blocks_sideways(tile_id:string) {
 }
 
 function log(...args) {
-    console.log(...args)
+    // console.log(...args)
 }
 
 export function do_physics(player: Player, map: Tilemap) {
@@ -128,6 +128,10 @@ export function do_physics(player: Player, map: Tilemap) {
 
     if(player.position.x + player.size.w > map.w * TILE_SIZE) {
         player.position.x = 0
+    }
+    if(player.position.y + player.size.h > map.h * TILE_SIZE) {
+        player.position.y = 20
+        player.position.x = 20
     }
 
 }
