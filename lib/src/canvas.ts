@@ -1,13 +1,24 @@
 import {Callback, Point, Rect, Size} from "./common";
 import {StandardTextColor, StandardTextHeight, StandardTextStyle} from "./style";
 import {
-    CommonEvent, FOCUS_CATEGORY, FOCUS_GAINED, FOCUS_LOST, FocusEvent, KEYBOARD_CATEGORY, KEYBOARD_DOWN, KeyboardEvent,
+    CommonEvent,
+    FOCUS_CATEGORY,
+    FOCUS_GAINED,
+    FOCUS_LOST,
+    FocusEvent,
+    KEYBOARD_CATEGORY,
+    KEYBOARD_DOWN,
+    KEYBOARD_UP,
+    KeyboardEvent,
     ParentView,
     POINTER_CATEGORY,
     POINTER_DOWN,
     POINTER_DRAG,
     POINTER_UP,
-    PointerEvent, SCROLL_CATEGORY, SCROLL_EVENT, ScrollEvent,
+    PointerEvent,
+    SCROLL_CATEGORY,
+    SCROLL_EVENT,
+    ScrollEvent,
     View
 } from "./core";
 import {Sheet, Sprite, SpriteGlyph, Tilemap} from "../../apps/tileeditor/app-model";
@@ -238,6 +249,34 @@ class KeyboardInputService {
             // if (e.key === 'ArrowUp') KBD.fire(EVENTS.UP, {});
             // KBD.fire(EVENTS.KEYDOWN,e)
             // e.preventDefault()
+        })
+        document.addEventListener('keyup',(e)=>{
+            let evt = new KeyboardEvent()
+            evt.category = KEYBOARD_CATEGORY
+            evt.type = KEYBOARD_UP
+            evt.key = e.key
+            evt.code = e.code
+            // @ts-ignore
+            evt.domEvent = e
+            evt.modifiers = {
+                alt: e.altKey,
+                ctrl: e.ctrlKey,
+                meta: e.metaKey,
+                shift: e.shiftKey
+            }
+            evt.ctx = this.surface
+            evt.details = {
+                key:e.key,
+                code:e.code,
+                shift:e.shiftKey,
+                alt:e.altKey,
+                ctrl:e.ctrlKey,
+            }
+            let path = this.calculate_path_to_keyboard_focus(this.surface.get_root(),this.surface._keyboard_focus) as View[]
+            this.surface.propagateKeyboardEvent(evt, path)
+            this.surface.repaint()
+            if(!e.altKey && !e.metaKey) e.preventDefault()
+
         })
     }
 

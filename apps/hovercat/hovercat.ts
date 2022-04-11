@@ -1,6 +1,6 @@
 import {LayerView} from "../../lib/src/components";
 import {Point, Rect, Size} from "../../lib/src/common";
-import {BaseView, KEYBOARD_DOWN, KeyboardEvent} from "../../lib/src/core";
+import {BaseView, KEYBOARD_DOWN, KEYBOARD_UP, KeyboardEvent} from "../../lib/src/core";
 import { CanvasSurface } from "../../lib/src/canvas";
 import {
     Doc, PICO8,
@@ -153,24 +153,21 @@ export async function start() {
     surface.set_root(root);
     surface.setup_keyboard_input()
 
+    let key_map = new Map<string,boolean>();
     surface.on_input((evt) => {
+        if (evt.type === KEYBOARD_UP) {
+            let e = evt as KeyboardEvent
+            key_map.set(e.code,false)
+        }
         if (evt.type === KEYBOARD_DOWN) {
             let e = evt as KeyboardEvent
-            // log(e)
-            if (e.key === 'ArrowLeft') {
-                player.vel.x = -1
-            }
-            if (e.key === 'ArrowRight') {
-                player.vel.x = 1
-            }
-            // if(e.key === 'ArrowUp')    turn_to(new Point(+0,-1));
-            // if(e.key === 'ArrowDown')  turn_to(new Point(+0,+1));
-            if (e.code === 'Space') {
-                if (player.standing) {
-                    player.vel.y = -3.5
-                    player.standing = false
-                }
-            }
+            key_map.set(e.code,true)
+            // if (e.code === 'Space') {
+            //     if (player.standing) {
+            //         player.vel.y = -3.5
+            //         player.standing = false
+            //     }
+            // }
         }
     })
 
@@ -188,8 +185,23 @@ export async function start() {
     Physics.BLOCKS_SIDEWAYS.push(block1)
     Physics.BLOCKS_SIDEWAYS.push(block2)
 
+    function is_down(name: string) {
+        if(!key_map.has(name)) key_map.set(name,false)
+        return key_map.get(name)
+    }
+
+    function do_input() {
+        if(is_down('ArrowLeft')) player.vel.x = -1
+        if(is_down('ArrowRight')) player.vel.x = +1
+        if(is_down('Space') && player.standing === true) {
+            player.vel.y = -3.5
+            player.standing = false
+        }
+    }
+
     function process_tick() {
         clock += 1
+        do_input();
         do_physics(player, tile_view.map)
         do_scroll(player);
     }
