@@ -21,6 +21,8 @@ export function make_sheet_editor_view(doc: Doc) {
     // tile editor, edits the current tile
     let tile_editor = new TileEditor(doc, doc.get_color_palette());
     vb1.add(tile_editor)
+    let label = with_props(new Label("name"),{caption:'name'});
+    vb1.add(label)
     let tile_name_editor = new TextLine()
     tile_name_editor.set_pref_width(200)
     vb1.add(tile_name_editor)
