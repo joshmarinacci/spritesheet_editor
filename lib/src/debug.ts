@@ -11,7 +11,7 @@ import {
 } from "./core";
 import {gen_id, Point, Rect, Size} from "./common";
 import {CanvasSurface, rect_from_pos_size} from "./canvas";
-import {LayerView, ToggleButton, VBox} from "./components";
+import {Label, LayerView, ToggleButton, VBox} from "./components";
 
 export class DebugLensGlass extends BaseView {
     private draw_names: boolean;
@@ -19,13 +19,13 @@ export class DebugLensGlass extends BaseView {
     private draw_bounds: boolean;
     private draw_flex: boolean;
     private draw_align: boolean;
-    private _selected: View | null;
+    private lens: DebugLens;
 
-    constructor(size: Size) {
+    constructor(p: DebugLens, size: Size) {
         super(gen_id('debug-glass'));
+        this.lens = p
         this._name = 'debug-lens-glass'
         this.set_size(size)
-        this._selected = null
     }
 
     layout(g: CanvasSurface, available: Size): Size {
@@ -161,7 +161,7 @@ export class DebugLensGlass extends BaseView {
             }
             this.pick_under_cursor(event.ctx.get_root(),p2, views, should_recurse, should_include);
             this.log("path is",views)
-            this._selected = views[views.length-1]
+            this.lens.set_selected(views[views.length-1])
         }
     }
     private pick_under_cursor(view: View, cursor: Point, views: View[], should_recurse: (view: View) => boolean, should_include: (view: View) => (boolean)) {
@@ -181,13 +181,13 @@ export class DebugLensGlass extends BaseView {
     }
 
     private draw_selected(g: CanvasSurface) {
-        if(!this._selected) return
-        let trans = g.view_to_local(new Point(0,0),this._selected)
+        if(!this.lens._selected) return
+        let trans = g.view_to_local(new Point(0,0),this.lens._selected)
         // this.log("trans",trans)
         // this.log("selected is", this._selected.name())
         // let me_trans = g.view_to_local(new Point(0,0,),this)
         // this.log("me_trans = ", me_trans)
-        let rect = rect_from_pos_size(trans,this._selected.size())
+        let rect = rect_from_pos_size(trans,this.lens._selected.size())
         g.stroke(rect,'red')
     }
 }
@@ -224,10 +224,53 @@ export class ResizeHandle extends BaseView {
 
 }
 
+class DebugPropSheet extends BaseParentView{
+    private lens: DebugLens;
+    private vbox: VBox;
+    constructor(lens:DebugLens) {
+        super("debug-prop-sheet")
+        this.lens = lens
+        this.lens.on('select',()=>this.rebuild())
+        this.vbox = new VBox()
+        this.add(this.vbox);
+    }
+    override draw(g: CanvasSurface) {
+        g.fillBackgroundSize(this.size(),'white')
+    }
+
+    layout(g: CanvasSurface, available: Size): Size {
+        this.get_children().forEach(ch => {
+            ch.layout(g, available)
+        })
+        this.set_size(new Size(this.vbox.size().w,this.vbox.size().h))
+        return this.size()
+    }
+
+    private rebuild() {
+        let sel = this.lens._selected
+        this.log("rebuilding prop sheet for ",sel)
+        this.vbox.clear_children()
+
+        this.vbox.add(new Label("id"))
+        // @ts-ignore
+        this.vbox.add(new Label(sel.id))
+
+        this.vbox.add(new Label("name"))
+        this.vbox.add(new Label(sel.name()))
+
+        this.vbox.add(new Label(`hflex: ${sel.hflex()}`))
+        this.vbox.add(new Label(`vflex: ${sel.vflex()}`))
+
+        this.vbox.add(new Label(`size: ${sel.size().toString()}`))
+    }
+}
+
 export class DebugLens extends BaseParentView {
     private vbox: VBox;
     private glass: DebugLensGlass;
     private resize_handle: ResizeHandle;
+    private propsheet: DebugPropSheet;
+    _selected: View | null;
 
     constructor() {
         super(gen_id('debug-lens'));
@@ -235,29 +278,32 @@ export class DebugLens extends BaseParentView {
         this.set_size(new Size(400, 300))
         let vbox = new VBox()
         vbox.set_name('debug-lens-vbox')
-        vbox.halign = 'center'
+        vbox.halign = 'left'
         this.vbox = vbox
         let names = new ToggleButton('names')
         vbox.add(names)
         names.on('action', () => this.glass.set_draw_names(names.selected))
-        let sizes = new ToggleButton('sizes')
-        vbox.add(sizes)
-        sizes.on('action', () => this.glass.set_draw_sizes(sizes.selected))
+        // let sizes = new ToggleButton('sizes')
+        // vbox.add(sizes)
+        // sizes.on('action', () => this.glass.set_draw_sizes(sizes.selected))
         let bounds = new ToggleButton('bounds')
         vbox.add(bounds)
         bounds.on('action', () => this.glass.set_draw_bounds(bounds.selected))
-        let flex = new ToggleButton('flex')
-        vbox.add(flex)
-        flex.on('action', () => this.glass.set_draw_flex(flex.selected))
-        let align = new ToggleButton('align')
-        vbox.add(align)
-        align.on('action', () => this.glass.set_draw_align(align.selected))
+        // let flex = new ToggleButton('flex')
+        // vbox.add(flex)
+        // flex.on('action', () => this.glass.set_draw_flex(flex.selected))
+        // let align = new ToggleButton('align')
+        // vbox.add(align)
+        // align.on('action', () => this.glass.set_draw_align(align.selected))
 
+        this.propsheet = new DebugPropSheet(this)
+        vbox.add(this.propsheet)
         this.add(vbox)
-        this.glass = new DebugLensGlass(this.size())
+        this.glass = new DebugLensGlass(this,this.size())
         this.add(this.glass)
         this.resize_handle = new ResizeHandle(this)
         this.add(this.resize_handle)
+
     }
 
     override input(event: CoolEvent) {
@@ -307,6 +353,11 @@ export class DebugLens extends BaseParentView {
 
     set_visible(b: boolean) {
         this._visible = b
+    }
+
+    set_selected(view: View | null) {
+        this._selected = view
+        this.fire('select',this._selected)
     }
 }
 

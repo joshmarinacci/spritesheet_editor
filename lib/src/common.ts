@@ -151,4 +151,7 @@ export class Size {
         if(cursor.y > this.h) return false
         return true
     }
+    toString():String {
+        return `${this.w}x${this.h}`
+    }
 }

@@ -369,6 +369,10 @@ export class VBox extends BaseParentView {
     draw(g: CanvasSurface) {
         if (this.fill) g.fillBackgroundSize(this.size(), this.fill)
     }
+
+    clear_children() {
+        this._children = []
+    }
 }
 
 export class HSpacer extends BaseView {
