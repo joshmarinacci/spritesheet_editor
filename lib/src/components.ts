@@ -145,6 +145,68 @@ export class ToggleButton extends BaseView {
     }
 }
 
+abstract class BaseButton extends BaseView {
+    _caption: string
+    selected:boolean
+    selected_icon: number;
+    icon: number;
+    constructor() {
+        super(gen_id("base-button"))
+        this._caption = 'no caption'
+        this.selected = false;
+        this.icon = 65
+        this.selected_icon = 66
+    }
+
+    caption() {
+        return this._caption
+    }
+    set_caption(caption:string) {
+        this._caption = caption
+    }
+    draw(g: CanvasSurface) {
+        let x = StandardLeftPadding
+        let y = StandardLeftPadding
+        g.draw_glyph(this.selected?this.selected_icon:this.icon,x,y,'base','black')
+        x += 16
+        x += StandardLeftPadding
+        g.fillStandardText(this._caption, x, y+StandardTextHeight-2, 'base')
+    }
+
+    input(event: CoolEvent): void {
+        if (event.type === POINTER_DOWN) {
+        }
+        if (event.type === POINTER_UP) {
+            this.selected = !this.selected
+        }
+    }
+
+    layout(g: CanvasSurface, available: Size): Size {
+        let size = g.measureText(this._caption,'base').grow(StandardLeftPadding)
+        size.w += 16
+        size.w += StandardLeftPadding // gap between icon and texst
+        this.set_size(size)
+        return size
+    }
+
+}
+
+export class CheckButton extends BaseButton {
+    constructor() {
+        super();
+        this.icon = 800
+        this.selected_icon = 801
+    }
+}
+
+export class RadioButton extends BaseButton {
+    constructor() {
+        super();
+        this.icon = 802
+        this.selected_icon = 803
+    }
+}
+
 export class SelectList extends BaseView {
     private data: any[];
     private renderer: any;

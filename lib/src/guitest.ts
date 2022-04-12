@@ -1,6 +1,6 @@
 import {CanvasSurface} from "./canvas";
 import {
-    ActionButton,
+    ActionButton, CheckButton,
     DialogContainer,
     DialogLayer,
     FontIcon,
@@ -10,7 +10,7 @@ import {
     Label,
     LayerView,
     PopupContainer,
-    PopupLayer,
+    PopupLayer, RadioButton,
     ScrollView,
     SelectList,
     VBox
@@ -257,6 +257,10 @@ function make_statusbar() {
     status_bar.set_vflex(false)
     status_bar.set_hflex(true)
     status_bar.add(new Label("cool status bar"))
+    status_bar.add(with_props(new CheckButton(), {caption:'Cool?'}))
+    status_bar.add(with_props(new RadioButton(), {caption:'Good?'}))
+    status_bar.add(with_props(new RadioButton(), {caption:'Better.'}))
+    status_bar.add(with_props(new RadioButton(), {caption:'Best!'}))
     status_bar.add(new HSpacer())
     return status_bar
 }

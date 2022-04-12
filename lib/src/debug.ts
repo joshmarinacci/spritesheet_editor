@@ -153,6 +153,7 @@ export class DebugLensGlass extends BaseView {
                 return true
             }
             let should_include = (view:View) => {
+                if(view.name() === 'dialog-layer') return false
                 if(view.name() === 'debug-layer') return false
                 if(view.name() === 'popup-layer') return false
                 if(view.name() === 'debug-lens') return false
