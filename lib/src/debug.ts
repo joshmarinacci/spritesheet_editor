@@ -9,8 +9,8 @@ import {
     PointerEvent,
     View
 } from "./core";
-import {gen_id, Point, Size} from "./common";
-import {CanvasSurface} from "./canvas";
+import {gen_id, Point, Rect, Size} from "./common";
+import {CanvasSurface, rect_from_pos_size} from "./canvas";
 import {LayerView, ToggleButton, VBox} from "./components";
 
 export class DebugLensGlass extends BaseView {
@@ -19,11 +19,13 @@ export class DebugLensGlass extends BaseView {
     private draw_bounds: boolean;
     private draw_flex: boolean;
     private draw_align: boolean;
+    private _selected: View | null;
 
     constructor(size: Size) {
         super(gen_id('debug-glass'));
         this._name = 'debug-lens-glass'
         this.set_size(size)
+        this._selected = null
     }
 
     layout(g: CanvasSurface, available: Size): Size {
@@ -40,6 +42,7 @@ export class DebugLensGlass extends BaseView {
         let trans = g.view_to_local(new Point(0, 0), this)
         g.ctx.translate(-trans.x, -trans.y)
         this.draw_outline(g, root)
+        this.draw_selected(g)
         g.ctx.restore()
     }
 
@@ -123,21 +126,69 @@ export class DebugLensGlass extends BaseView {
     set_draw_names(selected: boolean) {
         this.draw_names = selected
     }
-
     set_draw_sizes(selected: boolean) {
         this.draw_sizes = selected
     }
-
     set_draw_bounds(selected: boolean) {
         this.draw_bounds = selected
     }
-
     set_draw_flex(selected: boolean) {
         this.draw_flex = selected
     }
-
     set_draw_align(selected: boolean) {
         this.draw_align = selected
+    }
+
+    override input(event: CoolEvent) {
+        // this.log(event)
+        if(event.type === POINTER_DOWN) {
+            let p = event as PointerEvent
+            let p2 = event.ctx.view_to_local(p.position, this)
+            this.log("global",p2)
+            let views = []
+            let should_recurse = (view:View) => {
+                if(!view.visible()) return false
+                if(view.name() === 'debug-layer') return false
+                if(view.name() === 'debug-lens') return false
+                return true
+            }
+            let should_include = (view:View) => {
+                if(view.name() === 'debug-layer') return false
+                if(view.name() === 'popup-layer') return false
+                if(view.name() === 'debug-lens') return false
+                if(view.name() === 'debug-lens-glass') return false
+                return true
+            }
+            this.pick_under_cursor(event.ctx.get_root(),p2, views, should_recurse, should_include);
+            this.log("path is",views)
+            this._selected = views[views.length-1]
+        }
+    }
+    private pick_under_cursor(view: View, cursor: Point, views: View[], should_recurse: (view: View) => boolean, should_include: (view: View) => (boolean)) {
+        if(!should_recurse(view)) return
+        if(view.size().contains(cursor) && should_include(view)) {
+            views.push(view)
+        }
+        // @ts-ignore
+        if (view.is_parent_view && view.is_parent_view()) {
+            let parent = view as unknown as ParentView;
+            // this.log("going into parent",view.name())
+            let chs = parent.get_children()
+            chs.forEach(ch => {
+                this.pick_under_cursor(ch, cursor.subtract(ch.position()), views, should_recurse, should_include)
+            })
+        }
+    }
+
+    private draw_selected(g: CanvasSurface) {
+        if(!this._selected) return
+        let trans = g.view_to_local(new Point(0,0),this._selected)
+        // this.log("trans",trans)
+        // this.log("selected is", this._selected.name())
+        // let me_trans = g.view_to_local(new Point(0,0,),this)
+        // this.log("me_trans = ", me_trans)
+        let rect = rect_from_pos_size(trans,this._selected.size())
+        g.stroke(rect,'red')
     }
 }
 
@@ -265,7 +316,7 @@ export class DebugLayer extends LayerView {
         super("debug-layer");
         this._name = 'debug-layer'
         let dl = new DebugLens()
-        dl.set_visible(false)
+        dl.set_visible(true)
         this.add(dl)
         this.button = new ToggleButton('D')
         this.button.on(`action`,() => {
@@ -282,3 +333,12 @@ export class DebugLayer extends LayerView {
         return this.size()
     }
 }
+/*
+//click on debug lens in the middle
+//get list of Views under the cursor
+//pick the first one that isn't the lens
+//draw selection around that item
+show side panel of props (not editable)
+list of name, id, size, position, type, theme values. anything else?
+    flex values.
+ */

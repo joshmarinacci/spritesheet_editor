@@ -80,6 +80,10 @@ export class Point {
             this.y - trans.y
         )
     }
+
+    toString():String {
+        return `Point(${this.x},${this.y})`
+    }
 }
 
 export class Rect {
@@ -138,5 +142,13 @@ export class Size {
 
     add(delta: Point) {
         return new Size(this.w+delta.x,this.h+delta.y)
+    }
+
+    contains(cursor: Point):boolean {
+        if(cursor.x < 0) return false
+        if(cursor.y < 0) return false
+        if(cursor.x > this.w) return false
+        if(cursor.y > this.h) return false
+        return true
     }
 }

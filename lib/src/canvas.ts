@@ -29,7 +29,7 @@ export function log(...args) {
 
 const CLEAR_COLOR = '#f0f0f0'
 
-function rect_from_pos_size(point: Point, size: Size) {
+export function rect_from_pos_size(point: Point, size: Size) {
     return new Rect(
         point.x,
         point.y,
@@ -330,7 +330,7 @@ export class CanvasSurface {
     private global_smoothing = true
     private _pointer_target: View|null;
     private last_point: Point;
-    private mouse: MouseInputService;
+    mouse: MouseInputService;
     private keyboard: KeyboardInputService;
 
     constructor(w: number, h: number, scale?:number) {
