@@ -155,7 +155,7 @@ export class ToggleButton extends BaseView {
     }
 }
 
-abstract class BaseButton extends BaseView {
+abstract class BaseSelectButton extends BaseView {
     _caption: string
     selected:boolean
     selected_icon: number;
@@ -200,18 +200,67 @@ abstract class BaseButton extends BaseView {
     }
 
 }
-export class CheckButton extends BaseButton {
+export class CheckButton extends BaseSelectButton {
     constructor() {
         super();
         this.icon = 800
         this.selected_icon = 801
     }
 }
-export class RadioButton extends BaseButton {
+export class RadioButton extends BaseSelectButton {
     constructor() {
         super();
         this.icon = 802
         this.selected_icon = 803
+    }
+}
+export class IconButton extends BaseView {
+    private active: boolean
+    private _icon:number
+    constructor() {
+        super(gen_id("glyph-button"))
+        this._name = 'glyph-button'
+        this.active = false
+        this._icon = 0
+    }
+    draw(g: CanvasSurface): void {
+        if(this.active) {
+            g.fillBackgroundSize(this.size(), ButtonBackgroundColor_active)
+        } else {
+            g.fillBackgroundSize(this.size(), ButtonBackgroundColor)
+        }
+        g.strokeBackgroundSize(this.size(), ButtonBorderColor)
+        if(this._icon !== 0) {
+            let x = StandardLeftPadding
+            let y = StandardLeftPadding
+            g.draw_glyph(this._icon,x,y,'base','black')
+        }
+    }
+    input(event:CoolEvent) {
+        if(event.category !== POINTER_CATEGORY) return
+        if(event.type === POINTER_DOWN) {
+            this.active = true
+        }
+        if(event.type === POINTER_UP) {
+            this.active = false
+            let ae = new CommandEvent()
+            ae.ctx = event.ctx
+            ae.type = COMMAND_ACTION
+            ae.category = COMMAND_CATEGORY
+            ae.target = this
+            this.fire(ae.type, ae)
+        }
+    }
+    layout(g: CanvasSurface, available: Size): Size {
+        this.set_size(new Size(16,16).grow(StandardLeftPadding))
+        return this.size()
+    }
+
+    icon():number {
+        return this._icon
+    }
+    set_icon(icon: number) {
+        this._icon = icon
     }
 }
 
@@ -986,8 +1035,8 @@ export class TextLine extends BaseView {
 export class NumberTextLine extends HBox {
     private _value:number
     private text_line: TextLine;
-    private up_button: ActionButton;
-    private down_button: ActionButton;
+    private up_button: IconButton;
+    private down_button: IconButton;
     constructor() {
         super()
         this.pad = 1
@@ -1002,13 +1051,13 @@ export class NumberTextLine extends HBox {
                 this.log("invalid!")
             }
         })
-        this.up_button = new ActionButton()
-        this.up_button.set_caption('up')
+        this.up_button = new IconButton()
+        this.up_button.set_icon(8593)
         this.up_button.on('action',() => {
             this.set_value(this.value()+1)
         })
-        this.down_button = new ActionButton("down")
-        this.down_button.set_caption('down')
+        this.down_button = new IconButton()
+        this.down_button.set_icon(8595)
         this.down_button.on('action',() => {
             this.set_value(this.value()-1)
         })
