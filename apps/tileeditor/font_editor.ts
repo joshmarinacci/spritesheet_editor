@@ -1,4 +1,4 @@
-import {ActionButton, CustomLabel, HBox, Label, VBox} from "../../lib/src/components";
+import {ActionButton, CustomLabel, HBox, Label, TextLine, VBox} from "../../lib/src/components";
 import {Doc, draw_sprite, SpriteGlyph} from "./app-model";
 import {CanvasSurface,} from "../../lib/src/canvas";
 import {StandardPanelBackgroundColor} from "../../lib/src/style";
@@ -6,7 +6,7 @@ import {gen_id, Rect, Size} from "../../lib/src/common";
 import {BaseView, CoolEvent, POINTER_DOWN, PointerEvent, with_props} from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
-import {draw_grid, TextLine, wrap_number} from "./common";
+import {draw_grid, wrap_number} from "./common";
 import {draw_selection_rect, PaletteChooser} from "./palette_chooser";
 import {TileEditor} from "./tile_editor";
 

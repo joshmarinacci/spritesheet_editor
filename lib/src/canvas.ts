@@ -519,10 +519,10 @@ export class CanvasSurface {
             this.log("no path, can't propagate")
             return
         }
-        this.log("dispatching keyboard event",evt)
-        this.log('to target,this._keyboard_focus')
-        this.log("along path",path)
-        this.log(path.map(p => p.name()))
+        // this.log("dispatching keyboard event",evt)
+        // this.log('to target,this._keyboard_focus')
+        // this.log("along path",path)
+        // this.log(path.map(p => p.name()))
         let stopped = false
         path.forEach((view:View) => {
             if(stopped) {

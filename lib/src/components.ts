@@ -6,7 +6,9 @@ import {
     ButtonBorderColor,
     StandardLeftPadding,
     StandardSelectionColor,
-    StandardTextHeight
+    StandardTextColor,
+    StandardTextHeight,
+    StandardTextStyle
 } from "./style";
 import {Callback, gen_id, Point, Rect, Size} from "./common";
 import {
@@ -16,7 +18,9 @@ import {
     COMMAND_CATEGORY,
     CommandEvent,
     CoolEvent,
+    FOCUS_CATEGORY,
     KEYBOARD_CATEGORY,
+    KEYBOARD_DOWN,
     KeyboardEvent,
     POINTER_CATEGORY,
     POINTER_DOWN,
@@ -101,13 +105,19 @@ export class ActionButton extends BaseView {
     }
 }
 export class ToggleButton extends BaseView {
-    title: string
+    _caption: string
     selected:boolean
     private active: boolean
-    constructor(title: string) {
+    constructor(caption?: string) {
         super(gen_id("toggle-button"))
-        this.title = title
+        this._caption = caption || "no caption"
         this.selected = false;
+    }
+    caption() {
+        return this._caption
+    }
+    set_caption(caption:string) {
+        this._caption = caption
     }
 
     draw(ctx: CanvasSurface) {
@@ -120,7 +130,7 @@ export class ToggleButton extends BaseView {
         }
         ctx.fillBackgroundSize(this.size(), bg)
         ctx.strokeBackgroundSize(this.size(),ButtonBorderColor)
-        ctx.fillStandardText(this.title, StandardLeftPadding, StandardTextHeight, 'base')
+        ctx.fillStandardText(this._caption, StandardLeftPadding, StandardTextHeight, 'base')
     }
 
     input(event: CoolEvent): void {
@@ -139,7 +149,7 @@ export class ToggleButton extends BaseView {
     }
 
     layout(g: CanvasSurface, available: Size): Size {
-        let size = g.measureText(this.title,'base').grow(StandardLeftPadding)
+        let size = g.measureText(this._caption,'base').grow(StandardLeftPadding)
         this.set_size(size)
         return size
     }
@@ -190,7 +200,6 @@ abstract class BaseButton extends BaseView {
     }
 
 }
-
 export class CheckButton extends BaseButton {
     constructor() {
         super();
@@ -198,7 +207,6 @@ export class CheckButton extends BaseButton {
         this.selected_icon = 801
     }
 }
-
 export class RadioButton extends BaseButton {
     constructor() {
         super();
@@ -275,24 +283,30 @@ export class LayerView extends BaseParentView {
 }
 
 export class Header extends BaseView {
-    private caption: string
+    private _caption: string
     private fill: string;
 
-    constructor(caption: string) {
+    constructor(caption?: string) {
         super(gen_id("header"))
         this._name = 'header'
         this.fill = 'white'
-        this.caption = caption
+        this._caption = caption || "no caption"
         this._hflex = true
+    }
+    caption():string {
+        return this._caption
+    }
+    set_caption(caption:string) {
+        this._caption = caption
     }
     draw(g: CanvasSurface): void {
         g.fillBackgroundSize(this.size(),this.fill)
-        let size = g.measureText(this.caption,'base')
+        let size = g.measureText(this._caption,'base')
         let x = (this.size().w - size.w) / 2
-        g.fillStandardText(this.caption, x, StandardTextHeight,'base');
+        g.fillStandardText(this._caption, x, StandardTextHeight,'base');
     }
     layout(g: CanvasSurface, available: Size): Size {
-        let text_size = g.measureText(this.caption,'base').grow(StandardLeftPadding)
+        let text_size = g.measureText(this._caption,'base').grow(StandardLeftPadding)
         this.set_size(new Size(available.w, text_size.h))
         return this.size()
     }
@@ -768,7 +782,7 @@ export class DialogContainer extends BaseParentView {
 
     layout(g: CanvasSurface, available: Size): Size {
         let box = this._children[0]
-        let size = box.layout(g, new Size(300, 300))
+        let size = box.layout(g, new Size(600, 600))
         this.set_size(size)
         this.set_position(new Point(
             (g.w - size.w) / 2,
@@ -788,15 +802,15 @@ export class KeystrokeCaptureView extends LayerView {
     override input(event: CoolEvent) {
         if (event.category === KEYBOARD_CATEGORY) {
             let kb = event as KeyboardEvent
-            this.log("got kb", kb)
+            // this.log("got kb", kb)
             if (kb.key === 's' && kb.modifiers.meta === true) {
-                console.log("intercepting save")
+                // console.log("intercepting save")
                 // @ts-ignore
                 event.domEvent.preventDefault()
                 kb.stopped = true
             }
             if (kb.key === 'd' && kb.modifiers.meta === true && kb.modifiers.ctrl === true) {
-                console.log("toggling debug")
+                // console.log("toggling debug")
             }
         }
         super.input(event);
@@ -853,5 +867,172 @@ export class DropdownButton extends ActionButton {
 
     set_actions(actions: Action[]) {
         this.actions = actions
+    }
+}
+
+export class TextLine extends BaseView {
+    text: string;
+    private cursor: number;
+    private pref_width: number;
+
+    constructor() {
+        super(gen_id("text-line"));
+        this._name = '@text-line'
+        this.text = "abc"
+        this.pref_width = 100
+        this.cursor = this.text.length
+    }
+
+    draw(g: CanvasSurface): void {
+        let bg = '#ddd'
+        if (g.is_keyboard_focus(this)) bg = 'white'
+        g.fillBackgroundSize(this.size(), bg)
+        g.strokeBackgroundSize(this.size(), 'black')
+        if (g.is_keyboard_focus(this)) {
+            g.ctx.fillStyle = StandardTextColor
+            g.ctx.font = StandardTextStyle
+            let parts = this._parts()
+            let bx = 5
+            let ax = bx + g.measureText(parts.before, 'base').w
+            g.fillStandardText(parts.before, bx, 20, 'base')
+            g.fillStandardText(parts.after, ax, 20, 'base')
+            g.ctx.fillStyle = 'black'
+            g.ctx.fillRect(ax, 2, 2, 20)
+        } else {
+            g.fillStandardText(this.text, 5, 20, 'base');
+        }
+    }
+
+    input(event: CoolEvent) {
+        if (event.category === FOCUS_CATEGORY) {
+            // this.log("got keyboard focus change",event.category)
+        }
+        if (event.type === POINTER_DOWN) {
+            event.ctx.set_keyboard_focus(this)
+        }
+        if (event.type === KEYBOARD_DOWN) {
+            let code = event.details.code
+            let key = event.details.key
+            // this.log("got a keypress",event.details)
+            if (code === 'KeyD' && event.details.ctrl) return this.delete_right()
+            if (code === 'Backspace') return this.delete_left()
+            if (code === 'ArrowLeft') return this.cursor_left()
+            if (code === 'ArrowRight') return this.cursor_right()
+            if (code === 'Enter') {
+                event.ctx.release_keyboard_focus(this)
+                this.fire('action', this.text)
+                return
+            }
+            if (key && key.length === 1) this.insert(key)
+        }
+    }
+
+    layout(g: CanvasSurface, available: Size): Size {
+        this.set_size(new Size(this.pref_width, 26))
+        if (this._hflex) {
+            this.size().w = available.w
+        }
+        return this.size()
+    }
+
+    private insert(key: string) {
+        let parts = this._parts()
+        this.text = `${parts.before}${key}${parts.after}`
+        this.cursor_right()
+        this.fire('change',this.text)
+    }
+
+    private delete_left() {
+        let parts = this._parts()
+        this.text = `${parts.before.slice(0, parts.before.length - 1)}${parts.after}`
+        this.cursor_left()
+        this.fire('change',this.text)
+    }
+
+    private delete_right() {
+        let parts = this._parts()
+        this.text = `${parts.before}${parts.after.slice(1)}`
+        this.fire('change',this.text)
+    }
+
+    private cursor_left() {
+        this.cursor -= 1
+        if (this.cursor < 0) this.cursor = 0
+    }
+
+    private cursor_right() {
+        this.cursor += 1
+        if (this.cursor > this.text.length) this.cursor = this.text.length
+    }
+
+    private _parts() {
+        return {
+            before: this.text.slice(0, this.cursor),
+            after: this.text.slice(this.cursor),
+        }
+    }
+
+    set_text(name: string) {
+        this.text = name
+        this.cursor = this.text.length
+        this.fire('change',this.text)
+    }
+
+    set_pref_width(w: number) {
+        this.pref_width = w
+    }
+}
+
+export class NumberTextLine extends HBox {
+    private _value:number
+    private text_line: TextLine;
+    private up_button: ActionButton;
+    private down_button: ActionButton;
+    constructor() {
+        super()
+        this.pad = 1
+        this._value = 0
+        this.text_line = new TextLine()
+        this.add(this.text_line)
+        this.text_line.on('change',() => {
+            let v = parseInt(this.text_line.text,10);
+            if(Number.isInteger(v)) {
+                this._value = v
+            } else {
+                this.log("invalid!")
+            }
+        })
+        this.up_button = new ActionButton()
+        this.up_button.set_caption('up')
+        this.up_button.on('action',() => {
+            this.set_value(this.value()+1)
+        })
+        this.down_button = new ActionButton("down")
+        this.down_button.set_caption('down')
+        this.down_button.on('action',() => {
+            this.set_value(this.value()-1)
+        })
+        this.add(this.up_button)
+        this.add(this.down_button)
+    }
+    override draw(g):void {
+        super.draw(g)
+        if(!this.is_valid()) {
+            g.strokeBackgroundSize(this.size(),'red')
+        }
+    }
+
+    public set_value(value:number) {
+        this._value = value
+        this.text_line.set_text(''+value)
+    }
+
+    private is_valid() {
+        let v = parseInt(this.text_line.text)
+        return Number.isInteger(v)
+    }
+
+    value():number {
+        return this._value
     }
 }

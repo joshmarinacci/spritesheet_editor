@@ -1,11 +1,11 @@
-import {ActionButton, HBox, Label, ScrollView, ToggleButton, VBox} from "../../lib/src/components";
+import {ActionButton, HBox, Label, ScrollView, TextLine, ToggleButton, VBox} from "../../lib/src/components";
 import {CanvasSurface,} from "../../lib/src/canvas";
 import {Callback, Size} from "../../lib/src/common";
 import {BaseView, CoolEvent, POINTER_DOWN, POINTER_DRAG, PointerEvent, with_props} from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
 import {Doc, Sprite, Tilemap} from "./app-model";
-import {draw_grid, TextLine} from "./common";
+import {draw_grid} from "./common";
 import {TileSelector} from "./tile_selector";
 import {EMPTY_COLOR} from "./font_editor";
 

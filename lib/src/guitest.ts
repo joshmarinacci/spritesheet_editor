@@ -4,15 +4,16 @@ import {
     DialogContainer,
     DialogLayer,
     FontIcon,
-    HBox,
+    HBox, Header,
     HSpacer,
     KeystrokeCaptureView,
     Label,
-    LayerView,
+    LayerView, NumberTextLine,
     PopupContainer,
     PopupLayer, RadioButton,
     ScrollView,
-    SelectList,
+    SelectList, TextLine, ToggleButton,
+
     VBox
 } from "./components";
 import {gen_id, Point, Size} from "./common";
@@ -124,10 +125,37 @@ class DropdownButton extends ActionButton {
 function open_songs_dialog(surf:CanvasSurface) {
     return ()=>{
         let dialog = new DialogContainer()
-        let box = new VBox()
-        box.set_vflex(true)
-        box.halign = 'stretch'
-        box.add(new ActionButton("dialog header"))
+        let vbox = new VBox()
+        vbox.set_vflex(true)
+        vbox.halign = 'stretch'
+        vbox.add(with_props(new Header(),{caption:"dialog header"}))
+
+        let top_body = new VBox()
+        {
+            let hbox = new HBox()
+            hbox.add(with_props(new ActionButton(),{caption:"action"}))
+            hbox.add(with_props(new ToggleButton(),{caption:'toggle'}))
+            hbox.add(with_props(new CheckButton(),{caption:"check"}))
+            hbox.add(with_props(new RadioButton(),{caption:"radio"}))
+            top_body.add(hbox)
+        }
+        {
+            let hbox = new HBox()
+            let text_input = with_props(new TextLine(),{text:"some text"}) as TextLine
+            text_input.set_pref_width(100)
+            hbox.add(text_input)
+
+            let number_input = with_props(new NumberTextLine(), { value:45}) as NumberTextLine
+            hbox.add(number_input)
+            top_body.add(hbox)
+        }
+        // text input
+        // number input
+        // range with label
+        // radio button group: hbox or vbox?
+
+
+        vbox.add(top_body)
         let body = new VBox()
         body.halign = 'right'
         body.set_vflex(true)
@@ -138,20 +166,22 @@ function open_songs_dialog(surf:CanvasSurface) {
         scroll.set_vflex(true)
         scroll.set_content(new FixedGridPanel(new Size(600,600)))
         body.add(scroll)
-        box.add(body)
-        let tb = new HBox()
-        tb.add(new ActionButton("okay"))
-        tb.add(new HSpacer())
-        let cancel = new ActionButton('cancel')
+
+
+        vbox.add(body)
+
+        let bottom_bar = new HBox()
+        let cancel = with_props(new ActionButton(),{caption:'Cancel'})
         cancel.on('action',()=>{
             let dialog_layer = surf.find_by_name('dialog-layer') as LayerView
             dialog_layer.remove(dialog)
         })
-        tb.add(cancel)
-        box.add(tb)
-        dialog.add(box)
-        let dialog_layer = surf.find_by_name('dialog-layer')
-        // @ts-ignore
+        bottom_bar.add(cancel)
+        bottom_bar.add(new HSpacer())
+        bottom_bar.add(with_props(new ActionButton(),{caption:'Okay'}))
+        vbox.add(bottom_bar)
+        dialog.add(vbox)
+        let dialog_layer = surf.find_by_name('dialog-layer') as LayerView
         dialog_layer.add(dialog)
     }
 }
@@ -351,8 +381,13 @@ export function start() {
     main.add(dl)
     surface.set_root(new KeystrokeCaptureView(main))
     surface.setup_mouse_input()
+    surface.setup_keyboard_input()
     surface.addToPage();
     surface.repaint()
+
+    open_songs_dialog(surface)()
+    surface.repaint()
+
 
     // unit test 1
     //click button1 with a fake mouse click through the canvas.

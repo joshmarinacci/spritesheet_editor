@@ -1,4 +1,4 @@
-import {ActionButton, HBox, Label, VBox} from "../../lib/src/components";
+import {ActionButton, HBox, Label, TextLine, VBox} from "../../lib/src/components";
 import {Doc, Sprite, Tilemap} from "./app-model";
 import {gen_id} from "../../lib/src/common";
 import {with_props} from "../../lib/src/core";
@@ -6,7 +6,6 @@ import {with_props} from "../../lib/src/core";
 import basefont_data from "../../lib/src/base_font.json";
 import {TileSelector} from "./tile_selector";
 import {MapEditor} from "./map_editor";
-import {TextLine} from "./common";
 import {PaletteChooser} from "./palette_chooser";
 import {TileEditor} from "./tile_editor";
 

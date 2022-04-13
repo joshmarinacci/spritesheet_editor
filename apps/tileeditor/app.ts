@@ -6,7 +6,7 @@ import {
     Header,
     KeystrokeCaptureView,
     LayerView,
-    SelectList,
+    SelectList, TextLine,
     VBox,
 } from "../../lib/src/components";
 import {DebugLayer} from "../../lib/src/debug";
@@ -30,7 +30,6 @@ import {gen_id, Point, Size} from "../../lib/src/common";
 import {BaseParentView, with_props} from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
-import {TextLine} from "./common";
 import {make_map_view} from "./map_editor";
 import {make_font_view} from "./font_editor";
 import {make_sheet_editor_view} from "./sheet_editor";
