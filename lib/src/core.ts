@@ -67,6 +67,7 @@ export const COMMAND_CATEGORY:EventCategory = "COMMAND_CATEGORY"
 export const COMMAND_ACTION:EventType = "action"
 export class CommandEvent extends CoolEvent {
 }
+export const COMMAND_CHANGE:EventType = "change"
 
 export const CLIPBOARD_CATEGORY:EventCategory = "CLIPBOARD_CATEGORY"
 export const ClipboardCopy:EventType = "ClipboardCopy"

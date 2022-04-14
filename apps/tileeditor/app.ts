@@ -313,7 +313,6 @@ export function start() {
 
     let map_view = make_map_view(doc)
     panel_view.add(map_view)
-
     panel_view.add(make_font_view(doc))
 
 

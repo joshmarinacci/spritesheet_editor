@@ -368,7 +368,7 @@ export class DebugLayer extends LayerView {
         super("debug-layer");
         this._name = 'debug-layer'
         let dl = new DebugLens()
-        dl.set_visible(true)
+        dl.set_visible(false)
         this.add(dl)
         this.button = new ToggleButton('D')
         this.button.on(`action`,() => {

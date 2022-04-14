@@ -15,7 +15,7 @@ import {
     BaseParentView,
     BaseView,
     COMMAND_ACTION,
-    COMMAND_CATEGORY,
+    COMMAND_CATEGORY, COMMAND_CHANGE,
     CommandEvent,
     CoolEvent,
     FOCUS_CATEGORY,
@@ -33,20 +33,26 @@ import {
 } from "./core";
 
 export class Label extends BaseView {
-    protected caption: string
+    protected _caption: string
 
-    constructor(caption: string) {
+    constructor(caption?: string) {
         super(gen_id("label"))
         this._name = 'label'
-        this.caption = caption
+        this._caption = caption || "no caption"
+    }
+    caption():string {
+        return this._caption
+    }
+    set_caption(caption:string) {
+        this._caption = caption
     }
 
     draw(g: CanvasSurface): void {
-        g.fillStandardText(this.caption, StandardLeftPadding, StandardTextHeight,'base');
+        g.fillStandardText(this._caption, StandardLeftPadding, StandardTextHeight,'base');
     }
 
     layout(g: CanvasSurface, available: Size): Size {
-        this.set_size(g.measureText(this.caption,'base').grow(StandardLeftPadding))
+        this.set_size(g.measureText(this._caption,'base').grow(StandardLeftPadding))
         return this.size()
     }
 }
@@ -58,7 +64,7 @@ export class CustomLabel extends Label {
         this.cb = cb
     }
     override draw(ctx: CanvasSurface) {
-        this.caption = this.cb({})
+        this._caption = this.cb({})
         super.draw(ctx);
     }
 }
@@ -157,17 +163,23 @@ export class ToggleButton extends BaseView {
 
 abstract class BaseSelectButton extends BaseView {
     _caption: string
-    selected:boolean
+    _selected:boolean
     selected_icon: number;
     icon: number;
     constructor() {
         super(gen_id("base-button"))
         this._caption = 'no caption'
-        this.selected = false;
+        this._selected = false;
         this.icon = 65
         this.selected_icon = 66
     }
 
+    selected():boolean {
+        return this._selected
+    }
+    set_selected(sel:boolean) {
+        this._selected = sel
+    }
     caption() {
         return this._caption
     }
@@ -177,20 +189,23 @@ abstract class BaseSelectButton extends BaseView {
     draw(g: CanvasSurface) {
         let x = StandardLeftPadding
         let y = StandardLeftPadding
-        g.draw_glyph(this.selected?this.selected_icon:this.icon,x,y,'base','black')
+        g.draw_glyph(this._selected?this.selected_icon:this.icon,x,y,'base','black')
         x += 16
         x += StandardLeftPadding
         g.fillStandardText(this._caption, x, y+StandardTextHeight-2, 'base')
     }
-
     input(event: CoolEvent): void {
         if (event.type === POINTER_DOWN) {
         }
         if (event.type === POINTER_UP) {
-            this.selected = !this.selected
+            this._selected = !this._selected
+            let ae = new CommandEvent()
+            ae.type = COMMAND_CHANGE
+            ae.category = COMMAND_CATEGORY
+            ae.target = this
+            this.fire(ae.type, ae)
         }
     }
-
     layout(g: CanvasSurface, available: Size): Size {
         let size = g.measureText(this._caption,'base').grow(StandardLeftPadding)
         size.w += 16
@@ -432,15 +447,20 @@ export class HBox extends BaseParentView {
 
 export type HAlign = "left"|"center"|"right"|"stretch"
 export class VBox extends BaseParentView {
-    fill: string;
+    private _fill: string;
     pad: number;
     halign: HAlign;
-
     constructor() {
         super(gen_id('vbox'));
-        this.fill = null
+        this._fill = null
         this.halign = "left"
         this.pad = 0
+    }
+    fill():string {
+        return this._fill
+    }
+    set_fill(fill:string) {
+        this._fill = fill
     }
     layout(g: CanvasSurface, real_available: Size): Size {
         let available = real_available.shrink(this.pad);
@@ -490,11 +510,9 @@ export class VBox extends BaseParentView {
         }
         return this.size()
     }
-
     draw(g: CanvasSurface) {
-        if (this.fill) g.fillBackgroundSize(this.size(), this.fill)
+        if (this._fill) g.fillBackgroundSize(this.size(), this._fill)
     }
-
     clear_children() {
         this._children = []
     }
