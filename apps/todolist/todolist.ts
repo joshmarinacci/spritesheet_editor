@@ -50,7 +50,7 @@ let DOC:Paragraph[] = [
     {
         runs:[
             { text:"This is some very cool and long text to read that will definitely need to be wrapped." },
-            { text:"And this is some more text"},
+            { text:"And this is some more text."},
         ]
     },
     {
@@ -102,6 +102,66 @@ type RootBox = {
     background_color:string,
     blocks:BlockBox[],
 }
+
+type ItRes = {
+    value:any,
+    done:boolean,
+}
+class WhitespaceIterator {
+    n:number
+    private text: string;
+    private done: boolean;
+    constructor(text: string) {
+        this.n = 0;
+        this.text = text;
+        this.done = false
+    }
+    next():ItRes {
+        if(this.done) return { value:null, done:true}
+        let chunk = ""
+        while(true) {
+            let ch = this.text[this.n]
+            this.n++
+            if(this.n > this.text.length) {
+                this.done = true
+                return {
+                    value:chunk,
+                    done:false
+                }
+            }
+            if(ch === ' ') {
+                return {
+                    value:chunk,
+                    done:false
+                }
+            } else {
+                chunk += ch
+            }
+        }
+    }
+
+}
+
+function make_line(txt: string, w:number, h:number, x: number, y: number):LineBox {
+    let line:LineBox = {
+        type: "line",
+        background_color: "transparent",
+        position: new Point(x,y),
+        size: new Size(w,h),
+        spans: [],
+    }
+    let span:SpanBox = {
+        color: "black",
+        font: "base",
+        position: new Point(0,h),
+        text: txt,
+        type: "span",
+        weight: "plain"
+    }
+    line.spans.push(span)
+    return line
+}
+
 function do_layout(doc: Paragraph[], size: Size, g: CanvasSurface) {
     let pad = 5
     log('doc',doc)
@@ -118,98 +178,58 @@ function do_layout(doc: Paragraph[], size: Size, g: CanvasSurface) {
     doc.forEach(para => {
         // log("para",para)
         let block:BlockBox = {
-            background_color: "blue",
+            background_color: "white",
             lines: [],
             position: new Point(x,y),
-            size: new Size(root.size.w-pad*2, 50),
+            size: new Size(root.size.w-pad*2, 100),
             type: "block",
         }
         // log('text is',para.runs)
         let ly = pad
         let lh = 20
+
+        function to_chunks(text: string) {
+            return new WhitespaceIterator(text)
+        }
+
+        let curr_text = ""
+        let curr_x = 0
+        let curr_w = 0
+        let avail_w = block.size.w
+
         para.runs.forEach((run:TextRun) => {
-            log('run',run)
-            let m = g.measureText(run.text,'base')
-            log(m)
-            let line:LineBox = {
-                type: "line",
-                background_color: "red",
-                position: new Point(pad,pad+ly),
-                size: new Size(m.w,lh),
-                spans: [
-                ],
+            let chunks = to_chunks(run.text)
+            let res = chunks.next()
+
+
+            while(res.done === false) {
+                let m = g.measureText(res.value,'base')
+                if(curr_x + curr_w + m.w < avail_w) {
+                    curr_text += ' ' + res.value
+                    curr_w += m.w + g.measureText(" ",'base').w
+                } else {
+                    let line = make_line(curr_text, curr_w, lh, curr_x, ly)
+                    block.lines.push(line)
+                    curr_text = res.value
+                    curr_w = m.w
+                    curr_x = 0
+                    ly += lh
+                }
+                res = chunks.next()
             }
-            let span:SpanBox = {
-                color: "black",
-                font: "base",
-                position: new Point(pad,lh),
-                text: run.text,
-                type: "span",
-                weight: "plain"
+            if(curr_w > 0) {
+                block.lines.push(make_line(curr_text,curr_w, lh, curr_x,ly))
+                curr_text = ""
+                curr_x = curr_w
+                curr_w = 0
             }
-            line.spans.push(span)
-            block.lines.push(line)
-            ly += 20
         })
+        block.size.h = ly + lh + pad + pad
         root.blocks.push(block)
         y = block.position.y + block.size.h + pad
     })
 
     return root
-/*
-    let pad = 5
-    let line_height = 30
-    let root:RootBox = {
-        type:'root',
-        size: size.add(new Point(0,0)),
-        position:new Point(0,0),
-        background_color:'yellow',
-        blocks:[
-            {
-                type:'block',
-                position: new Point(pad,pad),
-                size: new Size(size.w-pad*2,line_height*2+pad*2),
-                background_color:'blue',
-                lines:[
-                    {
-                        type:'line',
-                        position: new Point(pad,pad+line_height*0),
-                        size: new Size(size.w - pad*4, line_height-5),
-                        background_color: 'red',
-                        spans:[
-                            {
-                                type:'span',
-                                position: new Point(5,20),
-                                text:'This is some text',
-                                font:'base',
-                                color:'black',
-                                weight:'plain',
-                            }
-                        ]
-                    },
-                    {
-                        type:'line',
-                        position: new Point(5,pad+line_height*1),
-                        size: new Size(size.w - pad*4, line_height-5),
-                        background_color: 'red',
-                        spans:[
-                            {
-                                type:'span',
-                                position: new Point(5,20),
-                                text:'This is some other text that is also cool',
-                                font:'base',
-                                color:'black',
-                                weight:'plain',
-                            }
-                        ]
-                    },
-                ]
-            }
-        ]
-    }
-    return root
-
- */
 }
 
 function do_render(root: any, g: CanvasSurface) {
