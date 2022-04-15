@@ -271,10 +271,12 @@ export class SpriteFont {
     glyphs:SpriteGlyph[]
     private id: string;
     name: string;
+    private _selected_glyph_index: number;
     constructor(id,name, doc:Doc) {
         this.id = id || gen_id('unknown');
         this.name = name || 'unknown'
         this.glyphs = []
+        this._selected_glyph_index = 0
     }
     toJsonObj() {
         return {
@@ -287,6 +289,20 @@ export class SpriteFont {
 
     add(spriteGlyph: SpriteGlyph) {
         this.glyphs.push(spriteGlyph)
+    }
+
+    set_selected_glyph_index(val: number) {
+        console.log("set to",val)
+        this._selected_glyph_index = val
+    }
+    selected_glyph_index():number {
+        return this._selected_glyph_index
+    }
+    get_selected_glyph():SpriteGlyph {
+        return this.glyphs[this._selected_glyph_index]
+    }
+    set_selected_glyph(target: SpriteGlyph) {
+        this._selected_glyph_index = this.glyphs.indexOf(target)
     }
 }
 
@@ -409,13 +425,13 @@ export class Doc extends Observable {
         if (!sheet) return null
         return sheet.sprites[this._selected_tile_index]
     }
-    get_selected_glyph_index():number {
-        return this.selected_glyph_index
-    }
-    set_selected_glyph_index(val: number) {
-        this.selected_glyph_index = val;
-        this.fire('change', this.selected_glyph_index)
-    }
+    // get_selected_glyph_index():number {
+    //     return this.selected_glyph_index
+    // }
+    // set_selected_glyph_index(val: number) {
+    //     this.selected_glyph_index = val;
+    //     this.fire('change', this.selected_glyph_index)
+    // }
     get_selected_map():Tilemap {
         return this.maps[this.selected_map]
     }
@@ -429,16 +445,6 @@ export class Doc extends Observable {
     set_selected_font(target: SpriteFont) {
         this.selected_font = this.fonts.indexOf(target)
         this.fire('main-selection',this.selected_font)
-    }
-    get_selected_glyph():SpriteGlyph {
-        let font = this.get_selected_font()
-        if(!font) return  null
-        return font.glyphs[this.selected_glyph_index]
-    }
-    set_selected_glyph(target: SpriteGlyph) {
-        let font = this.get_selected_font()
-        if(!font) return
-        this.selected_glyph_index = font.glyphs.indexOf(target)
     }
     get_font_palette():string[] {
         return this.font_palette;
