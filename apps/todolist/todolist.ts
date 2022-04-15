@@ -72,12 +72,94 @@ let DOC:Paragraph[] = [
     }
 ]
 
+type SpanBox = {
+    type:string,
+    position:Point,
+    text:string,
+    font:string,
+    color:string,
+    weight:string,
+}
 
-function do_layout(_doc: Paragraph[], size: Size, g: CanvasSurface) {
+type LineBox = {
+    type:string,
+    size:Size,
+    position:Point,
+    background_color:string,
+    spans:SpanBox[],
+}
+type BlockBox = {
+    type:string,
+    size:Size,
+    position:Point,
+    background_color:string,
+    lines:LineBox[],
+}
+type RootBox = {
+    type:string,
+    size:Size,
+    position:Point,
+    background_color:string,
+    blocks:BlockBox[],
+}
+function do_layout(doc: Paragraph[], size: Size, g: CanvasSurface) {
+    let pad = 5
+    log('doc',doc)
+    let root:RootBox = {
+        background_color: "yellow",
+        blocks: [],
+        position: new Point(pad,pad),
+        size: new Size(size.w-pad*2,size.h-pad*2),
+        type: "root"
+    }
 
+    let y = pad
+    let x = pad
+    doc.forEach(para => {
+        // log("para",para)
+        let block:BlockBox = {
+            background_color: "blue",
+            lines: [],
+            position: new Point(x,y),
+            size: new Size(root.size.w-pad*2, 50),
+            type: "block",
+        }
+        // log('text is',para.runs)
+        let ly = pad
+        let lh = 20
+        para.runs.forEach((run:TextRun) => {
+            log('run',run)
+            let m = g.measureText(run.text,'base')
+            log(m)
+            let line:LineBox = {
+                type: "line",
+                background_color: "red",
+                position: new Point(pad,pad+ly),
+                size: new Size(m.w,lh),
+                spans: [
+                ],
+            }
+            let span:SpanBox = {
+                color: "black",
+                font: "base",
+                position: new Point(pad,lh),
+                text: run.text,
+                type: "span",
+                weight: "plain"
+            }
+            line.spans.push(span)
+            block.lines.push(line)
+            ly += 20
+        })
+        root.blocks.push(block)
+        y = block.position.y + block.size.h + pad
+    })
+
+    return root
+/*
     let pad = 5
     let line_height = 30
-    let root = {
+    let root:RootBox = {
         type:'root',
         size: size.add(new Point(0,0)),
         position:new Point(0,0),
@@ -126,6 +208,8 @@ function do_layout(_doc: Paragraph[], size: Size, g: CanvasSurface) {
         ]
     }
     return root
+
+ */
 }
 
 function do_render(root: any, g: CanvasSurface) {
