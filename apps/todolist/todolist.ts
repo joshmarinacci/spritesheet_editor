@@ -1,11 +1,13 @@
 import {
+    ActionButton,
     CheckButton,
     HBox,
     KeystrokeCaptureView, Label,
-    LayerView,
+    LayerView, TextLine,
     VBox,
 } from "../../lib/src/components";
-import {COMMAND_CHANGE, View, with_props} from "../../lib/src/core"
+import {BaseView, COMMAND_CHANGE, View, with_props} from "../../lib/src/core"
+import {Point, Size} from "../../lib/src/common"
 import {DebugLayer} from "../../lib/src/debug";
 
 import {CanvasSurface, log,} from "../../lib/src/canvas";
@@ -35,6 +37,156 @@ let DATA:TodoItem[] = [
     },
 ]
 
+let TEXT = "this is some very cool and long text to read"
+
+
+type TextRun = {
+    text:string
+}
+type Paragraph = {
+    runs:TextRun[]
+}
+let DOC:Paragraph[] = [
+    {
+        runs:[
+            { text:"This is some very cool and long text to read that will definitely need to be wrapped." },
+            { text:"And this is some more text"},
+        ]
+    },
+    {
+        runs:[
+            {
+                text:"In the second paragraph."
+            },
+            {
+                text: "Text is cool here too."
+            }
+        ]
+    },
+    {
+        runs:[
+            {
+                text:"Third paragraph just has a single run of text in it."
+            }
+        ]
+    }
+]
+
+
+function do_layout(_doc: Paragraph[], size: Size, g: CanvasSurface) {
+
+    let pad = 5
+    let line_height = 30
+    let root = {
+        type:'root',
+        size: size.add(new Point(0,0)),
+        position:new Point(0,0),
+        background_color:'yellow',
+        blocks:[
+            {
+                type:'block',
+                position: new Point(pad,pad),
+                size: new Size(size.w-pad*2,line_height*2+pad*2),
+                background_color:'blue',
+                lines:[
+                    {
+                        type:'line',
+                        position: new Point(pad,pad+line_height*0),
+                        size: new Size(size.w - pad*4, line_height-5),
+                        background_color: 'red',
+                        spans:[
+                            {
+                                type:'span',
+                                position: new Point(5,20),
+                                text:'This is some text',
+                                font:'base',
+                                color:'black',
+                                weight:'plain',
+                            }
+                        ]
+                    },
+                    {
+                        type:'line',
+                        position: new Point(5,pad+line_height*1),
+                        size: new Size(size.w - pad*4, line_height-5),
+                        background_color: 'red',
+                        spans:[
+                            {
+                                type:'span',
+                                position: new Point(5,20),
+                                text:'This is some other text that is also cool',
+                                font:'base',
+                                color:'black',
+                                weight:'plain',
+                            }
+                        ]
+                    },
+                ]
+            }
+        ]
+    }
+    return root
+}
+
+function do_render(root: any, g: CanvasSurface) {
+    let pos = root.position as Point
+    let size = root.size as Size
+    g.fillRect(pos.x,pos.y,size.w,size.h,root.background_color)
+    g.ctx.save()
+    g.ctx.translate(pos.x,pos.y)
+    root.blocks.forEach(blk => {
+        let pos = blk.position as Point
+        let size = blk.size as Size
+        g.fillRect(pos.x,pos.y,size.w,size.h,blk.background_color)
+        g.ctx.save()
+        g.ctx.translate(pos.x,pos.y)
+        blk.lines.forEach(ln => {
+            let pos = ln.position as Point
+            let size = ln.size as Size
+            g.fillRect(pos.x,pos.y,size.w,size.h,ln.background_color)
+            g.ctx.save()
+            g.ctx.translate(pos.x,pos.y);
+            ln.spans.forEach(spn => {
+                let pos = spn.position
+                g.fillStandardText(spn.text,pos.x,pos.y, 'base')
+            })
+            g.ctx.restore()
+        })
+        g.ctx.restore()
+    })
+    g.ctx.restore()
+}
+
+class RichTextArea extends BaseView {
+    _doc:Paragraph[]
+    render_tree_root:any
+    constructor() {
+        super("rich-text-area");
+        this._doc = []
+    }
+
+    doc():Paragraph[] {
+        return this._doc
+    }
+    set_doc(doc:Paragraph[]) {
+        this._doc = doc
+        this.log("doc was set")
+        // Hard coded doc with three paragraphs, only plain text. Do layout to render tree and draw it. Redo-layout when width changes.
+    }
+
+    draw(g: CanvasSurface): void {
+        g.fillBackgroundSize(this.size(),'green')
+        do_render(this.render_tree_root, g)
+    }
+
+    layout(g: CanvasSurface, available: Size): Size {
+        this.set_size(available)
+        this.render_tree_root = do_layout(this._doc, this.size(), g)
+
+        return this.size()
+    }
+
+}
 
 function make_item_view(td: TodoItem):View {
     let box = with_props(new VBox(),{fill:'yellow'}) as VBox
@@ -51,15 +203,15 @@ function make_item_view(td: TodoItem):View {
 }
 
 function make_main_view():View {
-    let main_view = with_props(new VBox(), {name:'main-view', hflex:true, vflex:true}) as VBox
-    DATA.forEach(td => main_view.add(make_item_view(td)))
-    // let td:TodoItem = {
-    //     completed: false,
-    //     desc: "really cool",
-    //     tags: []
-    // }
-    // main_view.add(make_item_view(td))
-    return main_view
+    let root = with_props(new HBox(), {hflex:true, vflex:true}) as HBox
+
+    root.add(with_props(new RichTextArea(), {doc:DOC}))
+    // let list_view = with_props(new VBox(), {name:'main-view', vflex:true}) as VBox
+    // DATA.forEach(td => list_view.add(make_item_view(td)))
+    // root.add(list_view)
+
+    root.add(with_props(new TextLine(),{text:'stuff here'}))
+    return root
 }
 
 export function start() {
@@ -70,7 +222,7 @@ export function start() {
     let popup_layer = new LayerView('popup-layer')
     root.add(popup_layer)
     root.add(new DebugLayer())
-    let surface = new CanvasSurface(400, 600);
+    let surface = new CanvasSurface(600, 400);
     surface.set_root(root)
     surface.load_jsonfont(basefont_data,'somefont','base')
     surface.addToPage();
