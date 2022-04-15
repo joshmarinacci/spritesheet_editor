@@ -159,7 +159,7 @@ function open_songs_dialog(surf:CanvasSurface) {
         let body = new VBox()
         body.halign = 'right'
         body.set_vflex(true)
-        body.fill = 'white'
+        body.set_fill('white')
         body.add(new ActionButton("dialog body"))
         let scroll = new ScrollView()
         scroll.set_hflex(true)
@@ -336,7 +336,7 @@ function make_song_list(surface: CanvasSurface) {
 
 export function start() {
     let surface = new CanvasSurface(1024,720, 1.0);
-    surface.load_jsonfont(basefont_data,'somefont','base')
+    surface.load_jsonfont(basefont_data,'base','base')
     surface.debug = false
 
     let main = new LayerView();

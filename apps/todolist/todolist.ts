@@ -92,7 +92,7 @@ export function start() {
     root.add(new DebugLayer())
     let surface = new CanvasSurface(600, 400);
     surface.set_root(root)
-    surface.load_jsonfont(basefont_data,'somefont','base')
+    surface.load_jsonfont(basefont_data,'base','base')
     surface.addToPage();
     surface.setup_mouse_input()
     surface.setup_keyboard_input()

@@ -337,7 +337,7 @@ export function start() {
     root.add(popup_layer)
     root.add(new DebugLayer())
     surface.set_root(root)
-    surface.load_jsonfont(basefont_data,'somefont','base')
+    surface.load_jsonfont(basefont_data,'base','base')
     surface.addToPage();
     surface.setup_mouse_input()
     surface.setup_keyboard_input()
