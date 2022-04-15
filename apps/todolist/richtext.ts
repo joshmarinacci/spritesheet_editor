@@ -5,10 +5,13 @@ import {CanvasSurface,} from "../../lib/src/canvas";
 type TextRun = {
     text: string,
     color?: string,
+    weight?:string,
 }
 export type Paragraph = {
     runs: TextRun[]
 }
+
+
 type SpanBox = {
     type: string,
     position: Point,
@@ -80,7 +83,7 @@ class WhitespaceIterator {
 
 }
 
-function make_line_box(txt: string, w: number, h: number, pt: Point, color?: string): LineBox {
+function make_line_box(txt: string, w: number, h: number, pt: Point, color?: string, weight?:string): LineBox {
     let line: LineBox = {
         type: "line",
         background_color: color || "transparent",
@@ -90,7 +93,7 @@ function make_line_box(txt: string, w: number, h: number, pt: Point, color?: str
     }
     let span: SpanBox = {
         color: "black",
-        font: "base",
+        font: (weight==='bold')?"bold":"base",
         position: new Point(0, h),
         text: txt,
         type: "span",
@@ -128,15 +131,16 @@ function do_layout(doc: Paragraph[], size: Size, g: CanvasSurface) {
         let avail_w = block.size.w
 
         para.runs.forEach((run: TextRun) => {
+            let font = (run.weight === 'bold')?'bold':'base'
             let chunks = new WhitespaceIterator(run.text)
             let res = chunks.next()
             while (res.done === false) {
-                let m = g.measureText(res.value, 'base')
+                let m = g.measureText(res.value, font)
                 if (curr_pos.x + curr_w + m.w < avail_w) {
                     curr_text += ' ' + res.value
-                    curr_w += m.w + g.measureText(" ", 'base').w
+                    curr_w += m.w + g.measureText(" ", font).w
                 } else {
-                    let line = make_line_box(curr_text, curr_w, line_height, curr_pos, run.color)
+                    let line = make_line_box(curr_text, curr_w, line_height, curr_pos, run.color, run.weight)
                     block.lines.push(line)
                     curr_text = res.value
                     curr_w = m.w
@@ -146,7 +150,7 @@ function do_layout(doc: Paragraph[], size: Size, g: CanvasSurface) {
                 res = chunks.next()
             }
             if (curr_w > 0) {
-                block.lines.push(make_line_box(curr_text, curr_w, line_height, curr_pos, run.color))
+                block.lines.push(make_line_box(curr_text, curr_w, line_height, curr_pos, run.color, run.weight))
                 curr_text = ""
                 curr_pos.x = curr_w
                 curr_w = 0
@@ -180,7 +184,7 @@ function do_render(root: any, g: CanvasSurface) {
             g.ctx.translate(pos.x, pos.y);
             ln.spans.forEach(spn => {
                 let pos = spn.position
-                g.fillStandardText(spn.text, pos.x, pos.y, 'base')
+                g.fillStandardText(spn.text, pos.x, pos.y, spn.font)
             })
             g.ctx.restore()
         })

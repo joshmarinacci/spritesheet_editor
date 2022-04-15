@@ -34,7 +34,7 @@ let DOC:Paragraph[] = [
     {
         runs:[
             { text:"This is some very cool and long text to read that will definitely need to be wrapped." },
-            { text:"And this is some more text.", color:'red'},
+            { text:"AND THIS IS SOME MORE TEXT", color:'red', weight:'bold'},
         ]
     },
     {
@@ -93,6 +93,7 @@ export function start() {
     let surface = new CanvasSurface(600, 400);
     surface.set_root(root)
     surface.load_jsonfont(basefont_data,'base','base')
+    surface.load_jsonfont(basefont_data,'bold','bold')
     surface.addToPage();
     surface.setup_mouse_input()
     surface.setup_keyboard_input()

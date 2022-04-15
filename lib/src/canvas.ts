@@ -751,6 +751,9 @@ class CanvasFont {
                 let sw = glyph.w - glyph.meta.left - glyph.meta.right
                 xoff += sw + 1
                 h = Math.max(h,glyph.h)
+            } else {
+                xoff += 10
+                h = Math.max(h,10)
             }
         }
         return new Size(xoff*this.scale,h*this.scale)
@@ -765,6 +768,7 @@ class CanvasFont {
         // ctx.fillRect(x+xoff, y+yoff, size.w, size.h)
         for (let i = 0; i < text.length; i++) {
             let cp = text.codePointAt(i)
+            let dx = x + xoff*this.scale*scale
             if (this.metas.has(cp)) {
                 let glyph = this.metas.get(cp)
                 ctx.imageSmoothingEnabled = false
@@ -774,12 +778,18 @@ class CanvasFont {
                 let sy = 0
                 let sw = glyph.w - glyph.meta.left - glyph.meta.right
                 let sh = glyph.h //- glyph.meta.baseline
-                let dx = x + xoff*this.scale*scale
                 let dy = y + (yoff+glyph.meta.baseline-1)*this.scale*scale
                 let dw = sw*this.scale*scale
                 let dh = sh*this.scale*scale
                 ctx.drawImage(img, sx,sy,sw,sh, dx,dy, dw,dh)
                 xoff += sw + 1
+            } else {
+                //missing the glyph
+                let ew = 8
+                let dy = y + (yoff)*this.scale*scale
+                ctx.strokeRect(dx,dy,ew*this.scale*scale,ew*this.scale*scale)
+                xoff += ew + 1
+
             }
         }
     }
