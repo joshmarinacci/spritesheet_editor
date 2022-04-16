@@ -34,7 +34,7 @@ let DOC:Paragraph[] = [
     {
         runs:[
             { text:"This is some very cool and long text to read that will definitely need to be wrapped." },
-            { text:"AND THIS IS SOME MORE TEXT", color:'red', weight:'bold'},
+            { text:"And this is some more text to read, now in BOLD!", weight:'bold'},
         ]
     },
     {
