@@ -1,10 +1,10 @@
 import {CheckButton, HBox, KeystrokeCaptureView, Label, LayerView, TextLine, VBox,} from "../../lib/src/components";
 import {
-    BaseParentView,
+    BaseParentView, BaseView,
     COMMAND_CHANGE,
     CoolEvent, KEYBOARD_CATEGORY,
-    KEYBOARD_DOWN, KeyboardEvent,
-    POINTER_DOWN,
+    KEYBOARD_DOWN, KeyboardEvent, POINTER_CATEGORY,
+    POINTER_DOWN, POINTER_DRAG, PointerEvent,
     View,
     with_props
 } from "../../lib/src/core"
@@ -151,6 +151,10 @@ class CompoundListView extends BaseParentView {
         }
     }
 
+    override draw(g: CanvasSurface) {
+        g.fillBackgroundSize(this.size(),'#f0f0f0')
+    }
+
     layout(g: CanvasSurface, available: Size): Size {
         this.get_children().forEach(ch => {
             ch.layout(g,available)
@@ -180,13 +184,91 @@ class CompoundListView extends BaseParentView {
     }
 }
 
+class DividerView extends BaseView {
+    private splitView: SplitView;
+    constructor(splitView: SplitView) {
+        super("divider-view");
+        this.splitView = splitView
+    }
+    input(event: CoolEvent) {
+        if(event.category === POINTER_CATEGORY) {
+            if(event.type === POINTER_DRAG) {
+                let e = event as PointerEvent
+                this.splitView.split_value += e.delta.x
+            }
+        }
+    }
+
+    draw(g: CanvasSurface): void {
+        g.fillBackgroundSize(this.size(),'blue')
+    }
+
+    layout(g: CanvasSurface, available: Size): Size {
+        this.set_size(new Size(10,available.h))
+        return this.size()
+    }
+}
+
+class SplitView extends BaseView {
+    first:View
+    divider:View
+    second:View
+    split_value: number;
+    constructor() {
+        super("split-view");
+        this.divider = new DividerView(this)
+        this.split_value = 200
+    }
+
+    override draw(g: CanvasSurface) {
+        g.fillBackgroundSize(this.size(),'red')
+    }
+
+    clip_children(): boolean {
+        return false;
+    }
+    is_parent_view(): boolean {
+        return true
+    }
+    get_children(): View[] {
+        return [this.first,this.divider,this.second]
+    }
+
+    layout(g: CanvasSurface, available: Size): Size {
+        this.set_size(available)
+        let ch_w = this.split_value
+        let ch_h = available.h
+        if(this.first) {
+            this.first.layout(g, new Size(ch_w,ch_h))
+            this.first.set_position(new Point(0,0))
+        }
+        let dsize = this.divider.layout(g, new Size(10,available.h))
+        this.divider.set_position(new Point(ch_w,0))
+        if(this.second) {
+            this.second.layout(g, new Size(this.size().w - dsize.w - ch_w,ch_h))
+            this.second.set_position(new Point(ch_w+dsize.w,0))
+        }
+        return this.size()
+    }
+    can_receive_mouse(): boolean {
+        return false;
+    }
+
+    set_first(view: View) {
+        this.first = view
+    }
+
+    set_second(view: View) {
+        this.second = view
+    }
+}
+
 function make_main_view():View {
-    let root = with_props(new HBox(), {hflex:true, vflex:true}) as HBox
-    root.add(with_props(new RichTextArea(), {doc:DOC}))
+    let root = with_props(new SplitView(), {hflex:true, vflex:true, name:'banana-split'}) as SplitView
+    root.set_first(with_props(new RichTextArea(), {doc:DOC}))
     let list_view = with_props(new CompoundListView(), {name:'main-view', vflex:true, hflex:true}) as CompoundListView
     DATA.forEach(td => list_view.add_item(make_item_view(td)))
-    root.add(list_view)
-    // root.add(with_props(new TextLine(),{text:'stuff here'}))
+    root.set_second(list_view)
     return root
 }
 
@@ -194,7 +276,6 @@ export function start() {
     let root = new LayerView('root-layer')
     let main_view:View = make_main_view();
     root.add(new KeystrokeCaptureView(main_view))
-
     let popup_layer = new LayerView('popup-layer')
     root.add(popup_layer)
     root.add(new DebugLayer())

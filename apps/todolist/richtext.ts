@@ -216,7 +216,7 @@ export class RichTextArea extends BaseView {
     }
 
     layout(g: CanvasSurface, available: Size): Size {
-        this.set_size(new Size(200,available.h))
+        this.set_size(new Size(available.w,available.h))
         this.render_tree_root = do_layout(this._doc, this.size(), g)
         return this.size()
     }
