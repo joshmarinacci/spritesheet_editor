@@ -13,7 +13,7 @@ import {
     ParentView,
     POINTER_CATEGORY,
     POINTER_DOWN,
-    POINTER_DRAG,
+    POINTER_DRAG, POINTER_MOVE,
     POINTER_UP,
     PointerEvent,
     SCROLL_CATEGORY,
@@ -47,6 +47,7 @@ class MouseInputService {
     constructor(surface: CanvasSurface) {
         this.surface = surface
         this.down = false
+        this.last_point = new Point(0,0)
         this.surface.canvas.addEventListener('contextmenu',(e)=>{
             e.preventDefault();
             return false;
@@ -70,13 +71,26 @@ class MouseInputService {
             domEvent.preventDefault()
         })
         this.surface.canvas.addEventListener('mousemove',(domEvent)=>{
+            let position = this.surface.screen_to_local(domEvent)
+            let delta = position.subtract(this.last_point)
+            this.last_point = position.clone()
             if(this.down) {
-                let position = this.surface.screen_to_local(domEvent)
-                let delta = position.subtract(this.last_point)
-                this.last_point = position.clone()
-
                 let evt = new PointerEvent()
                 evt.type = POINTER_DRAG
+                evt.button = domEvent.button
+                evt.category = POINTER_CATEGORY
+                evt.position = position
+                evt.ctx = this.surface
+                evt.target = this.path[this.path.length - 1] // last
+                evt.direction = "down"
+                evt.delta = delta
+                this.propagatePointerEvent(evt, this.path)
+                this.surface.repaint()
+                domEvent.preventDefault()
+            } else {
+                this.path = this.scan_path(position)
+                let evt = new PointerEvent()
+                evt.type = POINTER_MOVE
                 evt.button = domEvent.button
                 evt.category = POINTER_CATEGORY
                 evt.position = position

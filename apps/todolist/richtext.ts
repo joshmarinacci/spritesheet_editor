@@ -1,5 +1,14 @@
-import {BaseView, COMMAND_CHANGE, View, with_props} from "../../lib/src/core"
-import {Point, Size} from "../../lib/src/common"
+import {
+    BaseView,
+    COMMAND_CHANGE,
+    CoolEvent,
+    POINTER_DOWN,
+    POINTER_MOVE,
+    PointerEvent,
+    View,
+    with_props
+} from "../../lib/src/core"
+import {Point, Rect, Size} from "../../lib/src/common"
 import {CanvasSurface,} from "../../lib/src/canvas";
 
 type TextRun = {
@@ -164,12 +173,69 @@ function do_layout(doc: Paragraph[], size: Size, g: CanvasSurface) {
     return root
 }
 
-function do_render(root: any, g: CanvasSurface) {
+class JLogger {
+    private _indent: number;
+    constructor() {
+        this._indent = 0
+    }
+    l(...args) {
+        this.log(...args)
+    }
+
+    private log(...param: any[]) {
+        console.log(this.tab(),...param)
+    }
+
+    private tab() {
+        let str = ": "
+        for(let i=0; i<this._indent; i++) {
+            str += " "
+        }
+        return str
+    }
+}
+
+const u = new JLogger()
+
+function box_contains(root: any, position: Point) {
+    let r = new Rect(root.position.x,root.position.y, root.size.w, root.size.h)
+    return r.contains(position)
+}
+
+function find_box(root: RootBox, position: Point):any {
+    if(box_contains(root,position)) {
+        let pos2 = position.subtract(root.position)
+        for(let i=0; i<root.blocks.length; i++) {
+            let blk = root.blocks[i]
+            if(box_contains(blk,pos2)) {
+                let pos3 = pos2.subtract(blk.position)
+                for(let j=0; j<blk.lines.length; j++) {
+                    let line = blk.lines[j]
+                    if(box_contains(line,pos3)) {
+                        return line
+                    }
+                }
+                return blk
+            }
+        }
+        return root
+    }
+    return null
+}
+
+function do_render(root: any, g: CanvasSurface, selected_box: any) {
     let pos = root.position as Point
     let size = root.size as Size
     g.fillRect(pos.x, pos.y, size.w, size.h, root.background_color)
     g.ctx.save()
     g.ctx.translate(pos.x, pos.y)
+
+    function stroke_box(g: CanvasSurface, blk:any, color:string) {
+        let pos = blk.position as Point
+        let size = blk.size as Size
+        g.stroke(new Rect(pos.x,pos.y,size.w,size.h),color)
+    }
+
     root.blocks.forEach(blk => {
         let pos = blk.position as Point
         let size = blk.size as Size
@@ -187,8 +253,14 @@ function do_render(root: any, g: CanvasSurface) {
                 g.fillStandardText(spn.text, pos.x, pos.y, spn.font)
             })
             g.ctx.restore()
+            if(ln === selected_box) {
+                stroke_box(g,ln, 'red')
+            }
         })
         g.ctx.restore()
+        if(blk === selected_box) {
+            stroke_box(g,blk, 'red')
+        }
     })
     g.ctx.restore()
 }
@@ -196,6 +268,7 @@ function do_render(root: any, g: CanvasSurface) {
 export class RichTextArea extends BaseView {
     _doc: Paragraph[]
     render_tree_root: any
+    private selected_box: any;
 
     constructor() {
         super("rich-text-area");
@@ -210,14 +283,24 @@ export class RichTextArea extends BaseView {
         this._doc = doc
     }
 
+    override input(event: CoolEvent) {
+        if(event.type === POINTER_MOVE) {
+            let e = event as PointerEvent
+            this.selected_box = find_box(this.render_tree_root as RootBox, e.position)
+            event.ctx.repaint()
+        }
+    }
+
     draw(g: CanvasSurface): void {
         g.fillBackgroundSize(this.size(), 'green')
-        do_render(this.render_tree_root, g)
+        do_render(this.render_tree_root, g, this.selected_box)
     }
 
     layout(g: CanvasSurface, available: Size): Size {
-        this.set_size(new Size(available.w,available.h))
-        this.render_tree_root = do_layout(this._doc, this.size(), g)
+        if(!this.size().equals(available)) {
+            this.set_size(new Size(available.w, available.h))
+            this.render_tree_root = do_layout(this._doc, this.size(), g)
+        }
         return this.size()
     }
 }

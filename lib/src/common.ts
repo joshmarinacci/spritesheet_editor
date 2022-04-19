@@ -154,4 +154,8 @@ export class Size {
     toString():String {
         return `${this.w}x${this.h}`
     }
+
+    equals(s: Size) {
+        return this.w === s.w && this.h === s.h
+    }
 }
