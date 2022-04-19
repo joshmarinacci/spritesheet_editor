@@ -45,6 +45,12 @@ let plain:TextStyle = {
     color:'black',
     weight:'plain'
 }
+let link:TextStyle = {
+    font:"base",
+    underline: true,
+    color: 'blue',
+    weight:'plain',
+}
 let bold:TextStyle = {
     font: "base",
     underline: false,
@@ -52,7 +58,16 @@ let bold:TextStyle = {
     weight:'bold'
 }
 let block_plain:BlockStyle = {
-    background_color: "white"
+    background_color: "white",
+    border_width: 0,
+    border_color: "black",
+    padding_width: 5,
+}
+let block_header:BlockStyle = {
+    background_color: 'cyan',
+    border_width: 1,
+    border_color: "#444444",
+    padding_width: 10
 }
 let DOC:Paragraph[] = [
     {
@@ -61,7 +76,10 @@ let DOC:Paragraph[] = [
                 text:"This is some very cool and long text to read that will definitely need to be wrapped.",
                 style: plain,
             },
-            { text:"And this is some more text to read, now in BOLD!", style: bold },
+            {
+                text:"And this is some more text to read, now in BOLD!",
+                style: bold
+            },
         ],
         style: block_plain,
     },
@@ -71,7 +89,7 @@ let DOC:Paragraph[] = [
                 text:"In the second paragraph.", style: plain
             },
             {
-                text: "Text is cool here too.", style: plain
+                text: "Text can be underlined too.", style: link
             }
         ],
         style: block_plain,
@@ -79,10 +97,11 @@ let DOC:Paragraph[] = [
     {
         runs:[
             {
-                text:"Third paragraph just has a single run of text in it.", style: plain
+                text:"Third paragraph just has a single run of text in it.",
+                style: plain
             }
         ],
-        style: block_plain,
+        style: block_header,
     }
 ]
 
@@ -221,7 +240,7 @@ class DividerView extends BaseView {
     }
 
     draw(g: CanvasSurface): void {
-        g.fillBackgroundSize(this.size(),'blue')
+        g.fillBackgroundSize(this.size(),'#888888')
     }
 
     layout(g: CanvasSurface, available: Size): Size {

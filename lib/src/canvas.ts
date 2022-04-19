@@ -453,6 +453,7 @@ export class CanvasSurface {
     }
 
     stroke(rect: Rect, color: string) {
+        this.ctx.lineWidth = 1 * this.scale
         this.ctx.strokeStyle = color
         this.ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
     }
