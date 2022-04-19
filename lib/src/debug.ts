@@ -9,7 +9,7 @@ import {
     PointerEvent,
     View
 } from "./core";
-import {gen_id, Point, Rect, Size} from "./common";
+import {Callback, gen_id, Point, Rect, Size} from "./common";
 import {CanvasSurface, rect_from_pos_size} from "./canvas";
 import {Label, LayerView, ToggleButton, VBox} from "./components";
 
@@ -266,8 +266,15 @@ class DebugPropSheet extends BaseParentView{
     }
 }
 
+function with_action(view: View, cb: Callback):View {
+    view.on('action',cb)
+    return view
+}
+
 export class DebugLens extends BaseParentView {
     private vbox: VBox;
+    private sidebar_width:number
+    private sidebar_right:boolean
     private glass: DebugLensGlass;
     private resize_handle: ResizeHandle;
     private propsheet: DebugPropSheet;
@@ -281,22 +288,18 @@ export class DebugLens extends BaseParentView {
         vbox.set_name('debug-lens-vbox')
         vbox.halign = 'left'
         this.vbox = vbox
+        this.sidebar_right = false
+        this.sidebar_width = 200
+        vbox.add(with_action(new ToggleButton('right'), ()=>{
+            this.log("toggling")
+            this.sidebar_right = !this.sidebar_right
+        }))
         let names = new ToggleButton('names')
         vbox.add(names)
         names.on('action', () => this.glass.set_draw_names(names.selected))
-        // let sizes = new ToggleButton('sizes')
-        // vbox.add(sizes)
-        // sizes.on('action', () => this.glass.set_draw_sizes(sizes.selected))
         let bounds = new ToggleButton('bounds')
         vbox.add(bounds)
         bounds.on('action', () => this.glass.set_draw_bounds(bounds.selected))
-        // let flex = new ToggleButton('flex')
-        // vbox.add(flex)
-        // flex.on('action', () => this.glass.set_draw_flex(flex.selected))
-        // let align = new ToggleButton('align')
-        // vbox.add(align)
-        // align.on('action', () => this.glass.set_draw_align(align.selected))
-
         this.propsheet = new DebugPropSheet(this)
         vbox.add(this.propsheet)
         this.add(vbox)
@@ -304,7 +307,6 @@ export class DebugLens extends BaseParentView {
         this.add(this.glass)
         this.resize_handle = new ResizeHandle(this)
         this.add(this.resize_handle)
-
     }
 
     override input(event: CoolEvent) {
@@ -323,21 +325,26 @@ export class DebugLens extends BaseParentView {
 
     override draw(g: CanvasSurface) {
         g.ctx.save()
-        g.ctx.fillStyle = '#888'
+        g.ctx.fillStyle = '#a0a0a0'
         let s = this.size()
         g.ctx.fillRect(0, 0, s.w, 20)
-        g.ctx.fillRect(0, 0, 80, s.h)
-        g.ctx.fillRect(s.w - 20, 0, 20, s.h)
+        if(this.sidebar_right) {
+            g.ctx.fillRect(0, 0, 20, s.h)
+            g.ctx.fillRect(s.w - this.sidebar_width, 0, this.sidebar_width, s.h)
+            g.ctx.strokeRect(20, 20, this.size().w-this.sidebar_width-20, this.size().h-20-20)
+        } else {
+            g.ctx.fillRect(0, 0, this.sidebar_width, s.h)
+            g.ctx.fillRect(s.w - 20, 0, 20, s.h)
+            g.ctx.strokeRect(this.sidebar_width, 20, this.size().w-this.sidebar_width-20, this.size().h-20-20)
+        }
         g.ctx.fillRect(0, s.h - 20, s.w, 20)
         g.ctx.strokeStyle = '#444'
         g.ctx.strokeRect(0, 0, this.size().w, this.size().h)
-        g.fillStandardText('debug lens', 10, 15, 'base')
+        g.fillStandardText('debug lens', 10, 20, 'base')
         let txt = `size: ${this.glass.size().w} x ${this.glass.size().h}`
         let metrics = g.measureText(txt,'base')
         g.fillStandardText(txt, (this.size().w-metrics.w)/2,this.size().h,'base')
         g.ctx.restore()
-
-        // g.fillBackgroundSize(this.size(),'#ccc')
     }
 
     layout(g: CanvasSurface, available: Size): Size {
@@ -345,9 +352,14 @@ export class DebugLens extends BaseParentView {
             ch.layout(g, available)
         })
         let s = this.size()
-        this.vbox.set_position(new Point(0, 20))
-        this.glass.set_position(new Point(80, 20))
-        this.glass.set_size(new Size(s.w - 80 - 20, s.h - 20 - 20))
+        if(this.sidebar_right) {
+            this.vbox.set_position(new Point(s.w-this.sidebar_width, 20))
+            this.glass.set_position(new Point(20, 20))
+        } else {
+            this.vbox.set_position(new Point(0, 20))
+            this.glass.set_position(new Point(this.sidebar_width, 20))
+        }
+        this.glass.set_size(new Size(s.w - this.sidebar_width - 20, s.h - 20 - 20))
         this.resize_handle.set_position(new Point(s.w - 20, s.h - 20))
         return this.size()
     }
@@ -385,12 +397,3 @@ export class DebugLayer extends LayerView {
         return this.size()
     }
 }
-/*
-//click on debug lens in the middle
-//get list of Views under the cursor
-//pick the first one that isn't the lens
-//draw selection around that item
-show side panel of props (not editable)
-list of name, id, size, position, type, theme values. anything else?
-    flex values.
- */
