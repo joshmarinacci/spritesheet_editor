@@ -11,13 +11,23 @@ import {
 import {Point, Rect, Size} from "../../lib/src/common"
 import {CanvasSurface,} from "../../lib/src/canvas";
 
+export type TextStyle = {
+    font: string,
+    color:string,
+    weight:string,
+    underline:boolean
+}
+export type BlockStyle = {
+    background_color: string,
+}
+
 type TextRun = {
     text: string,
-    color?: string,
-    weight?:string,
+    style: TextStyle,
 }
 export type Paragraph = {
     runs: TextRun[]
+    style: BlockStyle,
 }
 
 
@@ -25,29 +35,27 @@ type SpanBox = {
     type: string,
     position: Point,
     text: string,
-    font: string,
-    color: string,
-    weight: string,
+    style: TextStyle,
 }
+
 type LineBox = {
     type: string,
     size: Size,
     position: Point,
-    background_color: string,
     spans: SpanBox[],
 }
 type BlockBox = {
     type: string,
     size: Size,
     position: Point,
-    background_color: string,
+    style: BlockStyle,
     lines: LineBox[],
 }
 type RootBox = {
     type: string,
     size: Size,
     position: Point,
-    background_color: string,
+    style: BlockStyle,
     blocks: BlockBox[],
 }
 type ItRes = {
@@ -92,21 +100,18 @@ class WhitespaceIterator {
 
 }
 
-function make_line_box(txt: string, w: number, h: number, pt: Point, color?: string, weight?:string): LineBox {
+function make_line_box(txt: string, w: number, h: number, pt: Point, style:TextStyle): LineBox {
     let line: LineBox = {
         type: "line",
-        background_color: color || "transparent",
         position: pt.clone(),
         size: new Size(w, h),
         spans: [],
     }
     let span: SpanBox = {
-        color: "black",
-        font: (weight==='bold')?"bold":"base",
+        style: style,
         position: new Point(0, h),
         text: txt,
         type: "span",
-        weight: "plain"
     }
     line.spans.push(span)
     return line
@@ -115,7 +120,9 @@ function make_line_box(txt: string, w: number, h: number, pt: Point, color?: str
 function do_layout(doc: Paragraph[], size: Size, g: CanvasSurface) {
     let pad = 5
     let root: RootBox = {
-        background_color: "yellow",
+        style: {
+           background_color: 'yellow'
+        },
         blocks: [],
         position: new Point(pad, pad),
         size: new Size(size.w - pad * 2, size.h - pad * 2),
@@ -126,7 +133,7 @@ function do_layout(doc: Paragraph[], size: Size, g: CanvasSurface) {
     let x = pad
     doc.forEach(para => {
         let block: BlockBox = {
-            background_color: "white",
+            style: para.style,
             lines: [],
             position: new Point(x, y),
             size: new Size(root.size.w - pad * 2, 100),
@@ -140,7 +147,7 @@ function do_layout(doc: Paragraph[], size: Size, g: CanvasSurface) {
         let avail_w = block.size.w
 
         para.runs.forEach((run: TextRun) => {
-            let font = (run.weight === 'bold')?'bold':'base'
+            let font = (run.style.weight === 'bold')?'bold':'base'
             let chunks = new WhitespaceIterator(run.text)
             let res = chunks.next()
             while (res.done === false) {
@@ -149,7 +156,7 @@ function do_layout(doc: Paragraph[], size: Size, g: CanvasSurface) {
                     curr_text += ' ' + res.value
                     curr_w += m.w + g.measureText(" ", font).w
                 } else {
-                    let line = make_line_box(curr_text, curr_w, line_height, curr_pos, run.color, run.weight)
+                    let line = make_line_box(curr_text, curr_w, line_height, curr_pos, run.style)
                     block.lines.push(line)
                     curr_text = res.value
                     curr_w = m.w
@@ -159,7 +166,7 @@ function do_layout(doc: Paragraph[], size: Size, g: CanvasSurface) {
                 res = chunks.next()
             }
             if (curr_w > 0) {
-                block.lines.push(make_line_box(curr_text, curr_w, line_height, curr_pos, run.color, run.weight))
+                block.lines.push(make_line_box(curr_text, curr_w, line_height, curr_pos, run.style))
                 curr_text = ""
                 curr_pos.x = curr_w
                 curr_w = 0
@@ -223,10 +230,10 @@ function find_box(root: RootBox, position: Point):any {
     return null
 }
 
-function do_render(root: any, g: CanvasSurface, selected_box: any) {
+function do_render(root: RootBox, g: CanvasSurface, selected_box: any) {
     let pos = root.position as Point
     let size = root.size as Size
-    g.fillRect(pos.x, pos.y, size.w, size.h, root.background_color)
+    g.fillRect(pos.x, pos.y, size.w, size.h, root.style.background_color)
     g.ctx.save()
     g.ctx.translate(pos.x, pos.y)
 
@@ -239,18 +246,17 @@ function do_render(root: any, g: CanvasSurface, selected_box: any) {
     root.blocks.forEach(blk => {
         let pos = blk.position as Point
         let size = blk.size as Size
-        g.fillRect(pos.x, pos.y, size.w, size.h, blk.background_color)
+        g.fillRect(pos.x, pos.y, size.w, size.h, blk.style.background_color)
         g.ctx.save()
         g.ctx.translate(pos.x, pos.y)
-        blk.lines.forEach(ln => {
+        blk.lines.forEach((ln:LineBox) => {
             let pos = ln.position as Point
-            let size = ln.size as Size
-            g.fillRect(pos.x, pos.y, size.w, size.h, ln.background_color)
             g.ctx.save()
             g.ctx.translate(pos.x, pos.y);
-            ln.spans.forEach(spn => {
+            ln.spans.forEach((spn:SpanBox) => {
                 let pos = spn.position
-                g.fillStandardText(spn.text, pos.x, pos.y, spn.font)
+                let font = (spn.style.weight === 'bold')?'bold':'base'
+                g.fillStandardText(spn.text, pos.x, pos.y, font)
             })
             g.ctx.restore()
             if(ln === selected_box) {

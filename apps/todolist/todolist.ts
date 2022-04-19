@@ -14,7 +14,7 @@ import {DebugLayer} from "../../lib/src/debug";
 import {CanvasSurface,} from "../../lib/src/canvas";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
-import {Paragraph, RichTextArea} from "./richtext";
+import {BlockStyle, Paragraph, RichTextArea, TextStyle} from "./richtext";
 
 type TodoItem = {
     desc:string,
@@ -39,29 +39,50 @@ let DATA:TodoItem[] = [
     },
 ]
 
+let plain:TextStyle = {
+    font: "base",
+    underline: false,
+    color:'black',
+    weight:'plain'
+}
+let bold:TextStyle = {
+    font: "base",
+    underline: false,
+    color:'black',
+    weight:'bold'
+}
+let block_plain:BlockStyle = {
+    background_color: "white"
+}
 let DOC:Paragraph[] = [
     {
         runs:[
-            { text:"This is some very cool and long text to read that will definitely need to be wrapped." },
-            { text:"And this is some more text to read, now in BOLD!", weight:'bold'},
-        ]
+            {
+                text:"This is some very cool and long text to read that will definitely need to be wrapped.",
+                style: plain,
+            },
+            { text:"And this is some more text to read, now in BOLD!", style: bold },
+        ],
+        style: block_plain,
     },
     {
         runs:[
             {
-                text:"In the second paragraph."
+                text:"In the second paragraph.", style: plain
             },
             {
-                text: "Text is cool here too."
+                text: "Text is cool here too.", style: plain
             }
-        ]
+        ],
+        style: block_plain,
     },
     {
         runs:[
             {
-                text:"Third paragraph just has a single run of text in it."
+                text:"Third paragraph just has a single run of text in it.", style: plain
             }
-        ]
+        ],
+        style: block_plain,
     }
 ]
 
