@@ -353,3 +353,8 @@ export function with_props(comp: View, json: any): View {
     })
     return comp
 }
+
+export function with_action(view: View, cb: Callback): View {
+    view.on('action', cb)
+    return view
+}

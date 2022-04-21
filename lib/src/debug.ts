@@ -1,20 +1,21 @@
 import {
     BaseParentView,
     BaseView,
-    CommonEvent,
     CoolEvent,
-    ParentView, POINTER_CATEGORY,
+    ParentView,
+    POINTER_CATEGORY,
     POINTER_DOWN,
     POINTER_DRAG,
     PointerEvent,
-    View
+    View,
+    with_action
 } from "./core";
-import {Callback, gen_id, Point, Rect, Size} from "./common";
+import {gen_id, Point, Size} from "./common";
 import {CanvasSurface, rect_from_pos_size} from "./canvas";
 import {Label, LayerView, ToggleButton, VBox} from "./components";
 
 export class DebugLensGlass extends BaseView {
-    private draw_names: boolean;
+    private _draw_names: boolean;
     private draw_sizes: boolean;
     private draw_bounds: boolean;
     private draw_flex: boolean;
@@ -76,7 +77,7 @@ export class DebugLensGlass extends BaseView {
             g.ctx.restore()
         }
 
-        if (this.draw_names) {
+        if (this._draw_names) {
             draw_debug_text(g, pos.add(new Point(5, 5)), view.name())
         }
         if (this.draw_sizes) {
@@ -123,8 +124,11 @@ export class DebugLensGlass extends BaseView {
         g.ctx.restore()
     }
 
+    draw_names():boolean {
+        return this._draw_names
+    }
     set_draw_names(selected: boolean) {
-        this.draw_names = selected
+        this._draw_names = selected
     }
     set_draw_sizes(selected: boolean) {
         this.draw_sizes = selected
@@ -266,11 +270,6 @@ class DebugPropSheet extends BaseParentView{
     }
 }
 
-function with_action(view: View, cb: Callback):View {
-    view.on('action',cb)
-    return view
-}
-
 export class DebugLens extends BaseParentView {
     private vbox: VBox;
     private sidebar_width:number
@@ -290,16 +289,12 @@ export class DebugLens extends BaseParentView {
         this.vbox = vbox
         this.sidebar_right = false
         this.sidebar_width = 200
-        vbox.add(with_action(new ToggleButton('right'), ()=>{
-            this.log("toggling")
-            this.sidebar_right = !this.sidebar_right
-        }))
-        let names = new ToggleButton('names')
-        vbox.add(names)
-        names.on('action', () => this.glass.set_draw_names(names.selected))
-        let bounds = new ToggleButton('bounds')
-        vbox.add(bounds)
-        bounds.on('action', () => this.glass.set_draw_bounds(bounds.selected))
+        vbox.add(with_action(new ToggleButton('right'),
+            (e)=> this.sidebar_right = !this.sidebar_right))
+        vbox.add(with_action(new ToggleButton('names'),
+            (e) => this.glass.set_draw_names(e.target.selected)))
+        vbox.add(with_action(new ToggleButton('bounds'),
+            (e) => this.glass.set_draw_bounds(e.target.selected)))
         this.propsheet = new DebugPropSheet(this)
         vbox.add(this.propsheet)
         this.add(vbox)
