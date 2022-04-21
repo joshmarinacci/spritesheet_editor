@@ -10,25 +10,24 @@ import {
     StandardTextHeight,
     StandardTextStyle
 } from "./style";
-import {Callback, gen_id, Point, Rect, Size} from "./common";
 import {
     BaseParentView,
-    BaseView,
+    BaseView, Callback,
     COMMAND_ACTION,
     COMMAND_CATEGORY, COMMAND_CHANGE,
     CommandEvent,
     CoolEvent,
-    FOCUS_CATEGORY,
+    FOCUS_CATEGORY, gen_id,
     KEYBOARD_CATEGORY,
     KEYBOARD_DOWN,
-    KeyboardEvent,
+    KeyboardEvent, Point,
     POINTER_CATEGORY,
     POINTER_DOWN,
     POINTER_DRAG,
     POINTER_UP,
-    PointerEvent,
+    PointerEvent, Rect,
     SCROLL_EVENT,
-    ScrollEvent,
+    ScrollEvent, Size,
     View
 } from "./core";
 

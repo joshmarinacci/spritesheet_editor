@@ -1,8 +1,17 @@
 import {CanvasSurface, EVENTS} from "../../lib/src/canvas";
 import {GridModel} from "../../common/models";
 import {LayerView} from "../../lib/src/components";
-import {Callback, Rect, Size} from "../../lib/src/common";
-import {CommonEvent, BaseView, View, CoolEvent, POINTER_DOWN, PointerEvent} from "../../lib/src/core";
+import {
+    CommonEvent,
+    BaseView,
+    View,
+    CoolEvent,
+    POINTER_DOWN,
+    PointerEvent,
+    Size,
+    Rect,
+    Callback
+} from "../../lib/src/core";
 
 /*
 

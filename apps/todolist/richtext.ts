@@ -1,14 +1,13 @@
 import {
     BaseView,
     COMMAND_CHANGE,
-    CoolEvent,
+    CoolEvent, Point,
     POINTER_DOWN,
     POINTER_MOVE,
-    PointerEvent,
+    PointerEvent, Rect, Size,
     View,
     with_props
 } from "../../lib/src/core"
-import {Point, Rect, Size} from "../../lib/src/common"
 import {CanvasSurface,} from "../../lib/src/canvas";
 
 export type TextStyle = {

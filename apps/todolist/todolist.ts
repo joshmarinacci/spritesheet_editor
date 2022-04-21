@@ -3,12 +3,11 @@ import {
     BaseParentView, BaseView,
     COMMAND_CHANGE,
     CoolEvent, KEYBOARD_CATEGORY,
-    KEYBOARD_DOWN, KeyboardEvent, POINTER_CATEGORY,
-    POINTER_DOWN, POINTER_DRAG, PointerEvent,
+    KEYBOARD_DOWN, KeyboardEvent, Point, POINTER_CATEGORY,
+    POINTER_DOWN, POINTER_DRAG, PointerEvent, Size,
     View,
     with_props
 } from "../../lib/src/core"
-import {Point, Size} from "../../lib/src/common"
 import {DebugLayer} from "../../lib/src/debug";
 
 import {CanvasSurface,} from "../../lib/src/canvas";

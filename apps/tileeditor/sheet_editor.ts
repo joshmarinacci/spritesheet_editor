@@ -1,7 +1,6 @@
 import {ActionButton, HBox, Label, TextLine, VBox} from "../../lib/src/components";
 import {Doc, Sprite, Tilemap} from "./app-model";
-import {gen_id} from "../../lib/src/common";
-import {with_props} from "../../lib/src/core";
+import {gen_id, with_props} from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
 import {TileSelector} from "./tile_selector";

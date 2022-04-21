@@ -1,7 +1,6 @@
 import {Doc} from "./app-model";
-import {BaseView, CoolEvent, POINTER_DOWN, PointerEvent} from "../../lib/src/core";
+import {BaseView, CoolEvent, POINTER_DOWN, PointerEvent, Rect, Size} from "../../lib/src/core";
 import {CanvasSurface,} from "../../lib/src/canvas";
-import {Rect, Size} from "../../lib/src/common";
 import {draw_grid} from "./common";
 import {EMPTY_COLOR} from "./font_editor";
 

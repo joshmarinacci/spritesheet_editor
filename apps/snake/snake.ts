@@ -8,8 +8,17 @@ import {
 } from "../../lib/src/canvas";
 import {GridModel} from "../../common/models";
 import {LayerView} from "../../lib/src/components";
-import {Point, Rect, Size, SuperArray} from "../../lib/src/common";
-import {CoolEvent, BaseView, BaseParentView, KEYBOARD_DOWN, KeyboardEvent} from "../../lib/src/core";
+import {
+    CoolEvent,
+    BaseView,
+    BaseParentView,
+    KEYBOARD_DOWN,
+    KeyboardEvent,
+    Size,
+    Rect,
+    Point,
+    SuperArray
+} from "../../lib/src/core";
 import {
     CHERRY_BLOSSOM,
     DEMI_CHROME,

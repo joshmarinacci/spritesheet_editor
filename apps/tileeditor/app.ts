@@ -26,8 +26,7 @@ import {
 } from "./app-model";
 import {CanvasSurface, log,} from "../../lib/src/canvas";
 import {StandardPanelBackgroundColor} from "../../lib/src/style";
-import {gen_id, Point, Size} from "../../lib/src/common";
-import {BaseParentView, with_props} from "../../lib/src/core";
+import {BaseParentView, gen_id, Point, Size, with_props} from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
 import {make_map_view} from "./map_editor";

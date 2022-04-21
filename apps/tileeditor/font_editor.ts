@@ -2,8 +2,7 @@ import {ActionButton, CustomLabel, HBox, Label, TextLine, VBox} from "../../lib/
 import {Doc, draw_sprite, SpriteFont, SpriteGlyph} from "./app-model";
 import {CanvasSurface,} from "../../lib/src/canvas";
 import {StandardPanelBackgroundColor} from "../../lib/src/style";
-import {gen_id, Rect, Size} from "../../lib/src/common";
-import {BaseView, CoolEvent, POINTER_DOWN, PointerEvent, with_props} from "../../lib/src/core";
+import {BaseView, CoolEvent, gen_id, POINTER_DOWN, PointerEvent, Rect, Size, with_props} from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
 import {draw_grid, wrap_number} from "./common";

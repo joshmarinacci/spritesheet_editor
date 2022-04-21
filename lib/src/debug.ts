@@ -1,16 +1,15 @@
 import {
     BaseParentView,
     BaseView,
-    CoolEvent,
-    ParentView,
+    CoolEvent, gen_id,
+    ParentView, Point,
     POINTER_CATEGORY,
     POINTER_DOWN,
     POINTER_DRAG,
-    PointerEvent,
+    PointerEvent, Size,
     View,
     with_action
 } from "./core";
-import {gen_id, Point, Size} from "./common";
 import {CanvasSurface, rect_from_pos_size} from "./canvas";
 import {Label, LayerView, ToggleButton, VBox} from "./components";
 

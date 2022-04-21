@@ -1,7 +1,14 @@
 import {Doc, Sprite} from "./app-model";
-import {BaseView, CoolEvent, POINTER_CATEGORY, POINTER_DOWN, PointerEvent, SECONDARY_BUTTON} from "../../lib/src/core";
+import {
+    BaseView,
+    CoolEvent, Point,
+    POINTER_CATEGORY,
+    POINTER_DOWN,
+    PointerEvent,
+    SECONDARY_BUTTON,
+    Size
+} from "../../lib/src/core";
 import {CanvasSurface,} from "../../lib/src/canvas";
-import {Point, Size} from "../../lib/src/common";
 import {draw_grid} from "./common";
 
 

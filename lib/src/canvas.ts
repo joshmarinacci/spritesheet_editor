@@ -1,6 +1,6 @@
-import {Callback, Point, Rect, Size} from "./common";
 import {StandardTextColor, StandardTextHeight, StandardTextStyle} from "./style";
 import {
+    Callback,
     CommonEvent,
     FOCUS_CATEGORY,
     FOCUS_GAINED,
@@ -10,15 +10,15 @@ import {
     KEYBOARD_DOWN,
     KEYBOARD_UP,
     KeyboardEvent,
-    ParentView,
+    ParentView, Point,
     POINTER_CATEGORY,
     POINTER_DOWN,
     POINTER_DRAG, POINTER_MOVE,
     POINTER_UP,
-    PointerEvent,
+    PointerEvent, Rect,
     SCROLL_CATEGORY,
     SCROLL_EVENT,
-    ScrollEvent,
+    ScrollEvent, Size,
     View
 } from "./core";
 import {Sheet, Sprite, SpriteGlyph, Tilemap} from "../../apps/tileeditor/app-model";

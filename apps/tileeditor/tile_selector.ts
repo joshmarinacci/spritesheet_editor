@@ -1,6 +1,5 @@
 import {CanvasSurface,} from "../../lib/src/canvas";
-import {Rect, Size} from "../../lib/src/common";
-import {BaseView, CoolEvent, POINTER_DOWN, PointerEvent} from "../../lib/src/core";
+import {BaseView, CoolEvent, POINTER_DOWN, PointerEvent, Rect, Size} from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
 import {Doc, draw_sprite} from "./app-model";

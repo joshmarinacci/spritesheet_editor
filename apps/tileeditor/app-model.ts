@@ -1,5 +1,4 @@
 import {CanvasSurface} from "../../lib/src/canvas";
-import {gen_id} from "../../lib/src/common";
 
 export const GRAYSCALE_PALETTE = [
     '#ff00ff',

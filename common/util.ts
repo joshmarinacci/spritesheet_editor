@@ -1,4 +1,4 @@
-import {Callback} from "../lib/src/common";
+import {Callback} from "../lib/src/core";
 
 function wait(msec: number, cb: Callback) {
     setTimeout(() => {

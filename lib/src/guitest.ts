@@ -16,8 +16,7 @@ import {
 
     VBox
 } from "./components";
-import {gen_id, Point, Size} from "./common";
-import {BaseView, COMMAND_ACTION, CommonEvent, View, with_props} from "./core";
+import {BaseView, COMMAND_ACTION, CommonEvent, gen_id, Point, Size, View, with_props} from "./core";
 // @ts-ignore
 import basefont_data from "./base_font.json";
 // @ts-ignore

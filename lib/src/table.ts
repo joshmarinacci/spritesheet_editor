@@ -1,5 +1,4 @@
-import {BaseParentView, BaseView, View} from "./core";
-import {gen_id, Point, Size} from "./common";
+import {BaseParentView, BaseView, gen_id, Point, Size, View} from "./core";
 import {CanvasSurface} from "./canvas";
 import {ScrollView} from "./components";
 
