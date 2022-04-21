@@ -58,12 +58,8 @@ class MouseInputService {
             this.last_point = position
             this.path = this.scan_path(position)
             this.target = this.path[this.path.length-1] // last
-            let evt = new PointerEvent()
+            let evt = new PointerEvent(this.surface, POINTER_DOWN, position, new Point(0,0))
             evt.button = domEvent.button
-            evt.type = POINTER_DOWN
-            evt.category = POINTER_CATEGORY
-            evt.position = position
-            evt.ctx = this.surface
             evt.direction = "down"
             evt.target = this.target
             this.propagatePointerEvent(evt,this.path)
@@ -74,44 +70,25 @@ class MouseInputService {
             let position = this.surface.screen_to_local(domEvent)
             let delta = position.subtract(this.last_point)
             this.last_point = position.clone()
+            let evt
             if(this.down) {
-                let evt = new PointerEvent()
-                evt.type = POINTER_DRAG
-                evt.button = domEvent.button
-                evt.category = POINTER_CATEGORY
-                evt.position = position
-                evt.ctx = this.surface
-                evt.target = this.path[this.path.length - 1] // last
-                evt.direction = "down"
-                evt.delta = delta
-                this.propagatePointerEvent(evt, this.path)
-                this.surface.repaint()
-                domEvent.preventDefault()
+                evt = new PointerEvent(this.surface, POINTER_DRAG, position, delta)
             } else {
                 this.path = this.scan_path(position)
-                let evt = new PointerEvent()
-                evt.type = POINTER_MOVE
-                evt.button = domEvent.button
-                evt.category = POINTER_CATEGORY
-                evt.position = position
-                evt.ctx = this.surface
-                evt.target = this.path[this.path.length - 1] // last
-                evt.direction = "down"
-                evt.delta = delta
-                this.propagatePointerEvent(evt, this.path)
-                this.surface.repaint()
-                domEvent.preventDefault()
+                evt = new PointerEvent(this.surface, POINTER_MOVE, position, delta)
             }
+            evt.button = domEvent.button
+            evt.target = this.path[this.path.length - 1] // last
+            evt.direction = "down"
+            this.propagatePointerEvent(evt, this.path)
+            this.surface.repaint()
+            domEvent.preventDefault()
         })
         this.surface.canvas.addEventListener('mouseup',(domEvent)=>{
             this.down = false
             let position = this.surface.screen_to_local(domEvent)
-            let evt = new PointerEvent()
+            let evt = new PointerEvent(this.surface, POINTER_UP, position, new Point(0,0))
             evt.button = domEvent.button
-            evt.type = POINTER_UP
-            evt.category = POINTER_CATEGORY
-            evt.position = position
-            evt.ctx = this.surface
             evt.target = this.path[this.path.length-1] // last
             evt.direction = "down"
             this.propagatePointerEvent(evt,this.path)
@@ -121,12 +98,7 @@ class MouseInputService {
         this.surface.canvas.addEventListener('wheel',(domEvent)=>{
             let position = this.surface.screen_to_local(domEvent)
             this.path = this.scan_path(position)
-            let evt = new ScrollEvent()
-            evt.type = SCROLL_EVENT
-            evt.category = SCROLL_CATEGORY
-            evt.position = position
-            evt.delta = new Point(domEvent.deltaX, domEvent.deltaY)
-            evt.ctx = this.surface
+            let evt = new ScrollEvent(this.surface, SCROLL_EVENT, position, new Point(domEvent.deltaX, domEvent.deltaY))
             this.propagateScrollEvent(evt,this.path)
             domEvent.preventDefault()
         });
@@ -231,7 +203,7 @@ class KeyboardInputService {
     constructor(surface:CanvasSurface) {
         this.surface = surface
         document.addEventListener('keydown', (e) => {
-            let evt = new KeyboardEvent()
+            let evt = new KeyboardEvent(this.surface)
             evt.category = KEYBOARD_CATEGORY
             evt.type = KEYBOARD_DOWN
             evt.key = e.key
@@ -244,7 +216,6 @@ class KeyboardInputService {
                 meta: e.metaKey,
                 shift: e.shiftKey
             }
-            evt.ctx = this.surface
 
             evt.details = {
                 key:e.key,
@@ -265,7 +236,7 @@ class KeyboardInputService {
             // e.preventDefault()
         })
         document.addEventListener('keyup',(e)=>{
-            let evt = new KeyboardEvent()
+            let evt = new KeyboardEvent(this.surface)
             evt.category = KEYBOARD_CATEGORY
             evt.type = KEYBOARD_UP
             evt.key = e.key
@@ -278,7 +249,6 @@ class KeyboardInputService {
                 meta: e.metaKey,
                 shift: e.shiftKey
             }
-            evt.ctx = this.surface
             evt.details = {
                 key:e.key,
                 code:e.code,
@@ -295,17 +265,15 @@ class KeyboardInputService {
     }
 
     dispatch_keyboard_focus_change(old_focus: View, new_focus: View) {
-        let e_old = new FocusEvent()
+        let e_old = new FocusEvent(this.surface)
         e_old.type = FOCUS_LOST
         e_old.category = FOCUS_CATEGORY
-        e_old.ctx = this.surface
         //send focus lost to old focus
         if(old_focus) old_focus.input(e_old)
         //send focus gained to new focus
-        let e_new = new FocusEvent()
+        let e_new = new FocusEvent(this.surface)
         e_new.type = FOCUS_GAINED
         e_new.category = FOCUS_CATEGORY
-        e_new.ctx = this.surface
         if(new_focus) new_focus.input(e_new)
         //don't use a path, no one can intercept?
     }

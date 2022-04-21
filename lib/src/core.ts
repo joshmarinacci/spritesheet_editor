@@ -13,6 +13,10 @@ export class CoolEvent {
     target:any
     direction:EventDirection
     stopped: any;
+
+    constructor(ctx: CanvasSurface) {
+        this.ctx = ctx
+    }
 }
 
 type Modifiers = {
@@ -199,6 +203,14 @@ export class PointerEvent extends CoolEvent {
     delta:Point
     button:number
     modifiers:Modifiers
+
+    constructor(ctx:CanvasSurface, type: string, position: Point, delta:Point) {
+        super(ctx);
+        this.category = POINTER_CATEGORY
+        this.type = type
+        this.position = position
+        this.delta = delta
+    }
 }
 
 export const KEYBOARD_CATEGORY:EventCategory = "KEYBOARD_CATEGORY"
@@ -216,6 +228,14 @@ export class ScrollEvent extends CoolEvent {
     delta:Point
     position:Point
     modifiers:Modifiers
+
+    constructor(surface: CanvasSurface, type: EventType, position: Point, delta: Point) {
+        super(surface)
+        this.category = SCROLL_CATEGORY
+        this.type = type
+        this.position = position
+        this.delta = delta
+    }
 }
 
 export const FOCUS_CATEGORY:EventCategory = "FOCUS_CATEGORY"
