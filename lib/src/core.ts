@@ -267,29 +267,6 @@ export class ClipboardEvent extends CoolEvent {
     mimetype:string
 }
 
-export class CommonEvent {
-    type: string
-    pt: Point
-    button: number
-    ctx: CanvasSurface
-    details?: any
-    delta?: Point;
-
-    constructor(type: string, pt: Point, ctx: CanvasSurface) {
-        this.type = type
-        this.pt = pt
-        this.ctx = ctx
-    }
-
-    translate(x: number, y: number): CommonEvent {
-        let ce = new CommonEvent(this.type, this.pt.translate(x, y), this.ctx)
-        ce.button = this.button
-        ce.details = this.details
-        ce.delta = this.delta
-        return ce
-    }
-}
-
 export interface View {
     hflex(): boolean
     vflex(): boolean

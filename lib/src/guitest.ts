@@ -16,7 +16,7 @@ import {
 
     VBox
 } from "./components";
-import {BaseView, COMMAND_ACTION, CommonEvent, gen_id, Point, Size, View, with_props} from "./core";
+import {BaseView, COMMAND_ACTION, CommandEvent, gen_id, Point, Size, View, with_props} from "./core";
 // @ts-ignore
 import basefont_data from "./base_font.json";
 // @ts-ignore
@@ -87,7 +87,7 @@ class DropdownButton extends ActionButton {
         if(this.selected_index >= 0 && this.selected_index < this.data.length) {
             this.caption = this.renderer(this.data[this.selected_index])
         }
-        this.on('action',(evt:CommonEvent)=>{
+        this.on('action',(evt:CommandEvent)=>{
             let popup = new PopupContainer();
             let popup_box = new VBox()
             this.data.map(item => with_props(new ActionButton(),{caption:this.renderer(item)}))
