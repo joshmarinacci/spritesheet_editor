@@ -14,7 +14,7 @@ import {
     BaseParentView,
     BaseView, Callback,
     COMMAND_ACTION,
-    COMMAND_CATEGORY, COMMAND_CHANGE,
+    COMMAND_CHANGE,
     CommandEvent,
     CoolEvent,
     FOCUS_CATEGORY, gen_id,
@@ -96,11 +96,7 @@ export class ActionButton extends BaseView {
         }
         if(event.type === POINTER_UP) {
             this.active = false
-            let ae = new CommandEvent()
-            ae.ctx = event.ctx
-            ae.type = COMMAND_ACTION
-            ae.category = COMMAND_CATEGORY
-            ae.target = this
+            let ae = new CommandEvent(event.ctx, COMMAND_ACTION, this)
             this.fire(ae.type, ae)
         }
     }
@@ -145,10 +141,7 @@ export class ToggleButton extends BaseView {
         if (event.type === POINTER_UP) {
             this.selected = !this.selected
             this.active = false
-            let ae = new CommandEvent()
-            ae.type = COMMAND_ACTION
-            ae.category = COMMAND_CATEGORY
-            ae.target = this
+            let ae = new CommandEvent(event.ctx, COMMAND_ACTION, this)
             this.fire(ae.type, ae)
         }
     }
@@ -198,10 +191,7 @@ abstract class BaseSelectButton extends BaseView {
         }
         if (event.type === POINTER_UP) {
             this._selected = !this._selected
-            let ae = new CommandEvent()
-            ae.type = COMMAND_CHANGE
-            ae.category = COMMAND_CATEGORY
-            ae.target = this
+            let ae = new CommandEvent(event.ctx, COMMAND_CHANGE, this)
             this.fire(ae.type, ae)
         }
     }
@@ -257,11 +247,7 @@ export class IconButton extends BaseView {
         }
         if(event.type === POINTER_UP) {
             this.active = false
-            let ae = new CommandEvent()
-            ae.ctx = event.ctx
-            ae.type = COMMAND_ACTION
-            ae.category = COMMAND_CATEGORY
-            ae.target = this
+            let ae = new CommandEvent(event.ctx, COMMAND_ACTION, this)
             this.fire(ae.type, ae)
         }
     }

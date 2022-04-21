@@ -3,8 +3,7 @@ import {randi} from "../../common/util";
 import snake_json from "./snake.json";
 
 import {
-    CanvasSurface, EVENTS,
-    log,
+    CanvasSurface, log,
 } from "../../lib/src/canvas";
 import {GridModel} from "../../common/models";
 import {LayerView} from "../../lib/src/components";

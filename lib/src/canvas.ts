@@ -203,9 +203,7 @@ class KeyboardInputService {
     constructor(surface:CanvasSurface) {
         this.surface = surface
         document.addEventListener('keydown', (e) => {
-            let evt = new KeyboardEvent(this.surface)
-            evt.category = KEYBOARD_CATEGORY
-            evt.type = KEYBOARD_DOWN
+            let evt = new KeyboardEvent(this.surface, KEYBOARD_DOWN)
             evt.key = e.key
             evt.code = e.code
             // @ts-ignore
@@ -236,9 +234,7 @@ class KeyboardInputService {
             // e.preventDefault()
         })
         document.addEventListener('keyup',(e)=>{
-            let evt = new KeyboardEvent(this.surface)
-            evt.category = KEYBOARD_CATEGORY
-            evt.type = KEYBOARD_UP
+            let evt = new KeyboardEvent(this.surface, KEYBOARD_UP)
             evt.key = e.key
             evt.code = e.code
             // @ts-ignore
@@ -265,15 +261,11 @@ class KeyboardInputService {
     }
 
     dispatch_keyboard_focus_change(old_focus: View, new_focus: View) {
-        let e_old = new FocusEvent(this.surface)
-        e_old.type = FOCUS_LOST
-        e_old.category = FOCUS_CATEGORY
+        let e_old = new FocusEvent(this.surface, FOCUS_LOST)
         //send focus lost to old focus
         if(old_focus) old_focus.input(e_old)
         //send focus gained to new focus
-        let e_new = new FocusEvent(this.surface)
-        e_new.type = FOCUS_GAINED
-        e_new.category = FOCUS_CATEGORY
+        let e_new = new FocusEvent(this.surface, FOCUS_GAINED)
         if(new_focus) new_focus.input(e_new)
         //don't use a path, no one can intercept?
     }
@@ -577,11 +569,11 @@ export class CanvasSurface {
         }
     }
 
-    dispatch_fake_mouse_event(type: string, pos: Point) {
-        let e = new CommonEvent('mousedown',pos,this)
-        e.button = 0;
+    // dispatch_fake_mouse_event(type: string, pos: Point) {
+    //     let e = new CommonEvent('mousedown',pos,this)
+    //     e.button = 0;
         // this.dispatch_pointer_event(this.root,e)
-    }
+    // }
 
     private log(...args) {
         console.log("CANVAS: ", ...args)
@@ -702,15 +694,14 @@ export class SpriteSlice {
         this.rect = rect
     }
 }
-export const EVENTS = {
-    START:'start',
-    LEFT:'left',
-    RIGHT:'right',
-    DOWN:'down',
-    UP:'up',
-    KEYDOWN:'keydown'
-}
-
+// export const EVENTS = {
+//     START:'start',
+//     LEFT:'left',
+//     RIGHT:'right',
+//     DOWN:'down',
+//     UP:'up',
+//     KEYDOWN:'keydown'
+// }
 
 class CanvasFont {
     private data: any;

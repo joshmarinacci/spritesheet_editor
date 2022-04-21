@@ -14,8 +14,10 @@ export class CoolEvent {
     direction:EventDirection
     stopped: any;
 
-    constructor(ctx: CanvasSurface) {
+    constructor(ctx: CanvasSurface, category:EventCategory, type:EventType) {
         this.ctx = ctx
+        this.category = category
+        this.type = type
     }
 }
 
@@ -204,10 +206,8 @@ export class PointerEvent extends CoolEvent {
     button:number
     modifiers:Modifiers
 
-    constructor(ctx:CanvasSurface, type: string, position: Point, delta:Point) {
-        super(ctx);
-        this.category = POINTER_CATEGORY
-        this.type = type
+    constructor(ctx:CanvasSurface, type: EventType, position: Point, delta:Point) {
+        super(ctx, POINTER_CATEGORY, type);
         this.position = position
         this.delta = delta
     }
@@ -220,6 +220,9 @@ export class KeyboardEvent extends CoolEvent {
     key:string
     code:string
     modifiers:Modifiers
+    constructor(surface: CanvasSurface, type:EventType) {
+        super(surface, KEYBOARD_CATEGORY, type);
+    }
 }
 
 export const SCROLL_CATEGORY:EventCategory = "SCROLL_CATEGORY"
@@ -230,9 +233,7 @@ export class ScrollEvent extends CoolEvent {
     modifiers:Modifiers
 
     constructor(surface: CanvasSurface, type: EventType, position: Point, delta: Point) {
-        super(surface)
-        this.category = SCROLL_CATEGORY
-        this.type = type
+        super(surface, SCROLL_CATEGORY, type)
         this.position = position
         this.delta = delta
     }
@@ -242,18 +243,25 @@ export const FOCUS_CATEGORY:EventCategory = "FOCUS_CATEGORY"
 export const FOCUS_GAINED:EventType = "FOCUS_GAINED"
 export const FOCUS_LOST:EventType = "FOCUS_LOST"
 export class FocusEvent extends CoolEvent {
+    constructor(surface: CanvasSurface, FOCUS_GAINED: EventType) {
+        super(surface, FOCUS_CATEGORY, FOCUS_GAINED);
+    }
 }
 
 export const COMMAND_CATEGORY:EventCategory = "COMMAND_CATEGORY"
 export const COMMAND_ACTION:EventType = "action"
 export class CommandEvent extends CoolEvent {
+    constructor(ctx: CanvasSurface, type: EventType, target: any) {
+        super(ctx, COMMAND_CATEGORY, type);
+        this.target = target
+    }
 }
 export const COMMAND_CHANGE:EventType = "change"
 
 export const CLIPBOARD_CATEGORY:EventCategory = "CLIPBOARD_CATEGORY"
-export const ClipboardCopy:EventType = "ClipboardCopy"
-export const ClipboardCut:EventType = "ClipboardCut"
-export const ClipboardPaste:EventType = "ClipboardPaste"
+export const CLIPBOARD_COPY:EventType = "ClipboardCopy"
+export const CLIPBOARD_CUT:EventType = "ClipboardCut"
+export const CLIPBOARD_PASTE:EventType = "ClipboardPaste"
 export class ClipboardEvent extends CoolEvent {
     content:any
     mimetype:string
