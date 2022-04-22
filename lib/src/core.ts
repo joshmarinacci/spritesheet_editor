@@ -257,6 +257,7 @@ export class CommandEvent extends CoolEvent {
     }
 }
 export const COMMAND_CHANGE:EventType = "change"
+export type Action = { caption: string }
 
 export const CLIPBOARD_CATEGORY:EventCategory = "CLIPBOARD_CATEGORY"
 export const CLIPBOARD_COPY:EventType = "ClipboardCopy"

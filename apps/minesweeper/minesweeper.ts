@@ -1,6 +1,6 @@
 import {CanvasSurface} from "../../lib/src/canvas";
+import {LayerView} from "../../lib/src/containers";
 import {GridModel} from "../../common/models";
-import {LayerView} from "../../lib/src/components";
 import {
     BaseView,
     CoolEvent,

@@ -1,12 +1,13 @@
-import {ActionButton, HBox, Label, TextLine, VBox} from "../../lib/src/components";
+import {ActionButton, Label, TextLine} from "../../lib/src/components";
 import {Doc, Sprite, Tilemap} from "./app-model";
-import {gen_id, with_props} from "../../lib/src/core";
+import {COMMAND_CHANGE, gen_id, with_props} from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
 import {TileSelector} from "./tile_selector";
 import {MapEditor} from "./map_editor";
 import {PaletteChooser} from "./palette_chooser";
 import {TileEditor} from "./tile_editor";
+import {HBox, VBox} from "../../lib/src/containers";
 
 export function make_sheet_editor_view(doc: Doc) {
     let sheet_editor = new HBox()
@@ -24,7 +25,7 @@ export function make_sheet_editor_view(doc: Doc) {
     let tile_name_editor = new TextLine()
     tile_name_editor.set_pref_width(200)
     vb1.add(tile_name_editor)
-    tile_name_editor.on('action', (text) => {
+    tile_name_editor.on(COMMAND_CHANGE, (text) => {
         let tile = doc.get_selected_tile()
         if (tile) {
             tile.name = text

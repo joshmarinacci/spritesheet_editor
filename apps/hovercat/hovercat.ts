@@ -1,5 +1,6 @@
-import {LayerView} from "../../lib/src/components";
+
 import {BaseView, KEYBOARD_DOWN, KEYBOARD_UP, KeyboardEvent, Point, Rect, Size} from "../../lib/src/core";
+import {LayerView} from "../../lib/src/containers";
 import { CanvasSurface } from "../../lib/src/canvas";
 import {
     Doc, PICO8,

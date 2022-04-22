@@ -1,6 +1,6 @@
 import {BaseParentView, BaseView, gen_id, Point, Size, View} from "./core";
 import {CanvasSurface} from "./canvas";
-import {ScrollView} from "./components";
+import {ScrollView} from "./containers";
 
 class TableHeaderView extends BaseView {
     private table: TableView;

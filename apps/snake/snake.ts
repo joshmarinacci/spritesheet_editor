@@ -5,8 +5,11 @@ import snake_json from "./snake.json";
 import {
     CanvasSurface, log,
 } from "../../lib/src/canvas";
+import {
+    LayerView
+
+} from "../../lib/src/containers";
 import {GridModel} from "../../common/models";
-import {LayerView} from "../../lib/src/components";
 import {
     CoolEvent,
     BaseView,

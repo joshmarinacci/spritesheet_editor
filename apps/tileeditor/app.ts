@@ -2,12 +2,8 @@ import {
     ActionButton,
     CustomLabel,
     DropdownButton,
-    HBox,
     Header,
-    KeystrokeCaptureView,
-    LayerView,
     SelectList, TextLine,
-    VBox,
 } from "../../lib/src/components";
 import {DebugLayer} from "../../lib/src/debug";
 import {canvasToPNGBlob, fileToJSON, forceDownloadBlob, jsonObjToBlob} from "../../common/util";
@@ -32,7 +28,7 @@ import basefont_data from "../../lib/src/base_font.json";
 import {make_map_view} from "./map_editor";
 import {make_font_view} from "./font_editor";
 import {make_sheet_editor_view} from "./sheet_editor";
-
+import {HBox, KeystrokeCaptureView, LayerView, VBox} from "../../lib/src/containers"
 function setup_toolbar(doc: Doc):HBox {
     let toolbar = new HBox();
     toolbar.pad = 0

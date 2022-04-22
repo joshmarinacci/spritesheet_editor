@@ -1,22 +1,17 @@
 import {StandardTextColor, StandardTextHeight, StandardTextStyle} from "./style";
 import {
     Callback,
-    CommonEvent,
-    FOCUS_CATEGORY,
     FOCUS_GAINED,
     FOCUS_LOST,
     FocusEvent,
-    KEYBOARD_CATEGORY,
     KEYBOARD_DOWN,
     KEYBOARD_UP,
     KeyboardEvent,
     ParentView, Point,
-    POINTER_CATEGORY,
     POINTER_DOWN,
     POINTER_DRAG, POINTER_MOVE,
     POINTER_UP,
     PointerEvent, Rect,
-    SCROLL_CATEGORY,
     SCROLL_EVENT,
     ScrollEvent, Size,
     View
@@ -694,14 +689,6 @@ export class SpriteSlice {
         this.rect = rect
     }
 }
-// export const EVENTS = {
-//     START:'start',
-//     LEFT:'left',
-//     RIGHT:'right',
-//     DOWN:'down',
-//     UP:'up',
-//     KEYDOWN:'keydown'
-// }
 
 class CanvasFont {
     private data: any;

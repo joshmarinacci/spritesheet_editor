@@ -1,20 +1,13 @@
 import {CanvasSurface} from "./canvas";
 import {
     ActionButton, CheckButton,
-    DialogContainer,
-    DialogLayer,
     FontIcon,
-    HBox, Header,
+    Header,
     HSpacer,
-    KeystrokeCaptureView,
     Label,
-    LayerView, NumberTextLine,
-    PopupContainer,
-    PopupLayer, RadioButton,
-    ScrollView,
-    SelectList, TextLine, ToggleButton,
-
-    VBox
+    NumberTextLine,
+    RadioButton,
+    SelectList, TextLine, ToggleButton
 } from "./components";
 import {BaseView, COMMAND_ACTION, CommandEvent, gen_id, Point, Size, View, with_props} from "./core";
 // @ts-ignore
@@ -24,6 +17,15 @@ import toolbar_json from "./toolbar.json"
 import {DebugLayer} from "./debug";
 import {randi} from "../../common/util";
 import {TableView} from "./table";
+import {
+    DialogContainer,
+    DialogLayer, HBox,
+    KeystrokeCaptureView, LayerView,
+    PopupContainer,
+    PopupLayer,
+    ScrollView,
+    VBox
+} from "./containers";
 
 class FixedGridPanel extends BaseView {
     private sw: number;

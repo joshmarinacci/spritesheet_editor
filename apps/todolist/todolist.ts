@@ -1,4 +1,4 @@
-import {CheckButton, HBox, KeystrokeCaptureView, Label, LayerView, TextLine, VBox,} from "../../lib/src/components";
+import {CheckButton, Label, TextLine, } from "../../lib/src/components";
 import {
     BaseParentView, BaseView,
     COMMAND_CHANGE,
@@ -14,6 +14,7 @@ import {CanvasSurface,} from "../../lib/src/canvas";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
 import {BlockStyle, Paragraph, RichTextArea, TextStyle} from "./richtext";
+import {HBox, KeystrokeCaptureView, LayerView, VBox} from "../../lib/src/containers";
 
 type TodoItem = {
     desc:string,
@@ -326,5 +327,4 @@ export function start() {
     surface.setup_mouse_input()
     surface.setup_keyboard_input()
     surface.repaint()
-
 }

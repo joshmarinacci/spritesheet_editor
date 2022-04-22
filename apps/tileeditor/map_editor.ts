@@ -1,4 +1,5 @@
-import {ActionButton, HBox, Label, ScrollView, TextLine, ToggleButton, VBox} from "../../lib/src/components";
+import {HBox, ScrollView, VBox} from "../../lib/src/containers";
+import {ActionButton, Label, TextLine, ToggleButton} from "../../lib/src/components";
 import {CanvasSurface,} from "../../lib/src/canvas";
 import {
     BaseView,
@@ -120,7 +121,7 @@ export function make_map_view(doc: Doc) {
     let grid_toggle = new ToggleButton("grid")
     grid_toggle.on('action', () => {
         doc.set_map_grid_visible(!doc.get_map_grid_visible());
-        grid_toggle.selected = doc.get_map_grid_visible();
+        grid_toggle.set_selected(doc.get_map_grid_visible());
     });
     toolbar.add(grid_toggle)
 

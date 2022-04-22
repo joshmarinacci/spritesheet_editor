@@ -1,6 +1,6 @@
 import {
     BaseParentView,
-    BaseView,
+    BaseView, COMMAND_CHANGE,
     CoolEvent, gen_id,
     ParentView, Point,
     POINTER_CATEGORY,
@@ -11,7 +11,8 @@ import {
     with_action
 } from "./core";
 import {CanvasSurface, rect_from_pos_size} from "./canvas";
-import {Label, LayerView, ToggleButton, VBox} from "./components";
+import {Label, ToggleButton} from "./components";
+import {LayerView, VBox} from "./containers";
 
 export class DebugLensGlass extends BaseView {
     private _draw_names: boolean;
@@ -377,7 +378,7 @@ export class DebugLayer extends LayerView {
         dl.set_visible(false)
         this.add(dl)
         this.button = new ToggleButton('D')
-        this.button.on(`action`,() => {
+        this.button.on(COMMAND_CHANGE,() => {
             dl.set_visible(!dl.visible())
         })
         this.add(this.button)
