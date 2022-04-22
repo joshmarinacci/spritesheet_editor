@@ -1,4 +1,4 @@
-import {CanvasSurface} from "../../lib/src/canvas";
+import {CanvasSurface, SurfaceContext} from "../../lib/src/canvas";
 import {LayerView} from "../../lib/src/containers";
 import {GridModel} from "../../common/models";
 import {
@@ -98,7 +98,7 @@ class MinesweeperView extends BaseView {
         this.scale = 32
         this.set_size(new Size(this.model.grid.w*this.scale,this.model.grid.h*this.scale))
     }
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
         g.fillBackgroundSize(this.size(),'black')
         this.model.grid.forEach((w,x,y)=>{
             let color = '#ccc'
@@ -108,9 +108,12 @@ class MinesweeperView extends BaseView {
             if(w.covered) {
                 color = 'red'
             }
+            // @ts-ignore
             g.fillRect(x*this.scale,y*this.scale,this.scale-1,this.scale-1,color)
             if(!w.covered) {
+                // @ts-ignore
                 g.ctx.fillStyle = 'black'
+                // @ts-ignore
                 g.ctx.fillText(`${w.adjacent}`, x * this.scale+8, y * this.scale+16)
             }
         })
@@ -129,7 +132,7 @@ class MinesweeperView extends BaseView {
         }
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         return this.size()
     }
 }
@@ -146,9 +149,6 @@ export function start() {
     board_layer.add(new MinesweeperView(model))
     root.add(board_layer)
 
-    surface.setup_mouse_input()
     surface.set_root(root)
-    surface.addToPage()
-    surface.debug = false
-    surface.repaint()
+    surface.start()
 }

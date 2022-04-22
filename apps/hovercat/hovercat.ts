@@ -1,7 +1,7 @@
 
 import {BaseView, KEYBOARD_DOWN, KEYBOARD_UP, KeyboardEvent, Point, Rect, Size} from "../../lib/src/core";
 import {LayerView} from "../../lib/src/containers";
-import { CanvasSurface } from "../../lib/src/canvas";
+import {CanvasSurface, SurfaceContext} from "../../lib/src/canvas";
 import {
     Doc, PICO8,
     Sheet,
@@ -38,7 +38,7 @@ class TilemapView extends BaseView {
         log('size is',this.map.w,this.map.h)
         this.cache = new Map()
     }
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
         let tile_w = TILE_SIZE
         let w = this.size().w/SCALE/tile_w
         let h = this.size().h/SCALE/tile_w
@@ -46,6 +46,7 @@ class TilemapView extends BaseView {
         let map_w_pixels = this.map.w * SCALE * tile_w
 
         g.fillBackgroundSize(this.size(),'rgba(255,255,255,0.7)')
+        // @ts-ignore
         g.ctx.imageSmoothingEnabled = false
         let tile_x_off = Math.floor(this.player.scroll.x/tile_w/SCALE)
         let scroll_x =  (tile_x_off*tile_w*SCALE)- this.player.scroll.x
@@ -63,12 +64,13 @@ class TilemapView extends BaseView {
                 let tile = this.cache.get(tile_id)
                 let scale = tile_w*SCALE
                 if(tile) {
+                    // @ts-ignore
                     g.ctx.drawImage(tile._img,x,y, scale, scale)
                 }
             }
         }
     }
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.set_size(available)
         return this.size()
     }
@@ -90,11 +92,13 @@ class PlayerView extends BaseView {
         this.set_size(new Size(TILE_SIZE,TILE_SIZE))
         this.test_point = new Point(0,0)
     }
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
+        // @ts-ignore
         g.ctx.imageSmoothingEnabled = false
         // g.draw_sprite(0,0,this.sprite1,SCALE)
         let x = 0 - this.player.scroll.x;
         let y = 0;
+        // @ts-ignore
         g.draw_sprite(x,0,this.sprite2,SCALE)
         //draw the bounds
         g.stroke(new Rect(x,0,this.player.size.w*SCALE,this.player.size.h*SCALE), 'red')
@@ -109,7 +113,7 @@ class PlayerView extends BaseView {
         )
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         return this.size()
     }
 }
@@ -149,9 +153,8 @@ export async function start() {
     let player_view = new PlayerView(player, level1_sheet)
     root.add(player_view)
 
-    surface.addToPage();
     surface.set_root(root);
-    surface.setup_keyboard_input()
+    surface.start()
 
     let key_map = new Map<string,boolean>();
     surface.on_input((evt) => {

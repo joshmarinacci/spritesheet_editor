@@ -20,7 +20,7 @@ import {
     SpriteGlyph,
     Tilemap
 } from "./app-model";
-import {CanvasSurface, log,} from "../../lib/src/canvas";
+import {CanvasSurface, log, SurfaceContext,} from "../../lib/src/canvas";
 import {StandardPanelBackgroundColor} from "../../lib/src/style";
 import {BaseParentView, gen_id, Point, Size, with_props} from "../../lib/src/core";
 // @ts-ignore
@@ -179,11 +179,11 @@ class SinglePanel extends BaseParentView {
         this._name = 'single-panel'
         this.pad = 0
     }
-    override draw(g: CanvasSurface) {
+    override draw(g: SurfaceContext) {
         g.fillBackgroundSize(this.size(),StandardPanelBackgroundColor)
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         let av = available.shrink(this.pad)
         this._children.forEach(ch => {
             ch.layout(g,av)
@@ -333,8 +333,5 @@ export function start() {
     root.add(new DebugLayer())
     surface.set_root(root)
     surface.load_jsonfont(basefont_data,'base','base')
-    surface.addToPage();
-    surface.setup_mouse_input()
-    surface.setup_keyboard_input()
-    surface.repaint()
+    surface.start();
 }

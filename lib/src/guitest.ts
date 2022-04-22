@@ -381,8 +381,7 @@ export function start() {
     dl.set_visible(true)
     main.add(dl)
     surface.set_root(new KeystrokeCaptureView(main))
-    surface.addToPage();
-    surface.repaint()
+    surface.start()
 
     open_songs_dialog(surface)()
     surface.repaint()

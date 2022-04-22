@@ -1,4 +1,4 @@
-import {CanvasSurface} from "./canvas";
+import {SurfaceContext} from "./canvas";
 
 type EventCategory = string
 type EventType = string
@@ -9,19 +9,19 @@ export class CoolEvent {
     category:EventCategory
     timestamp:number
     details:any
-    ctx:CanvasSurface
+    ctx:SurfaceContext
     target:any
     direction:EventDirection
     stopped: any;
 
-    constructor(ctx: CanvasSurface, category:EventCategory, type:EventType) {
+    constructor(ctx: SurfaceContext, category:EventCategory, type:EventType) {
         this.ctx = ctx
         this.category = category
         this.type = type
     }
 }
 
-type Modifiers = {
+export type Modifiers = {
     shift:boolean
     alt:boolean
     ctrl:boolean
@@ -206,7 +206,7 @@ export class PointerEvent extends CoolEvent {
     button:number
     modifiers:Modifiers
 
-    constructor(ctx:CanvasSurface, type: EventType, position: Point, delta:Point) {
+    constructor(ctx:SurfaceContext, type: EventType, position: Point, delta:Point) {
         super(ctx, POINTER_CATEGORY, type);
         this.position = position
         this.delta = delta
@@ -221,7 +221,7 @@ export class KeyboardEvent extends CoolEvent {
     key:string
     code:string
     modifiers:Modifiers
-    constructor(surface: CanvasSurface, type:EventType) {
+    constructor(surface: SurfaceContext, type:EventType) {
         super(surface, KEYBOARD_CATEGORY, type);
     }
 }
@@ -233,7 +233,7 @@ export class ScrollEvent extends CoolEvent {
     position:Point
     modifiers:Modifiers
 
-    constructor(surface: CanvasSurface, type: EventType, position: Point, delta: Point) {
+    constructor(surface: SurfaceContext, type: EventType, position: Point, delta: Point) {
         super(surface, SCROLL_CATEGORY, type)
         this.position = position
         this.delta = delta
@@ -244,7 +244,7 @@ export const FOCUS_CATEGORY:EventCategory = "FOCUS_CATEGORY"
 export const FOCUS_GAINED:EventType = "FOCUS_GAINED"
 export const FOCUS_LOST:EventType = "FOCUS_LOST"
 export class FocusEvent extends CoolEvent {
-    constructor(surface: CanvasSurface, FOCUS_GAINED: EventType) {
+    constructor(surface: SurfaceContext, FOCUS_GAINED: EventType) {
         super(surface, FOCUS_CATEGORY, FOCUS_GAINED);
     }
 }
@@ -252,7 +252,7 @@ export class FocusEvent extends CoolEvent {
 export const COMMAND_CATEGORY:EventCategory = "COMMAND_CATEGORY"
 export const COMMAND_ACTION:EventType = "action"
 export class CommandEvent extends CoolEvent {
-    constructor(ctx: CanvasSurface, type: EventType, target: any) {
+    constructor(ctx: SurfaceContext, type: EventType, target: any) {
         super(ctx, COMMAND_CATEGORY, type);
         this.target = target
     }
@@ -276,8 +276,8 @@ export interface View {
     set_size(size:Size)
     position():Point
     set_position(point:Point)
-    layout(g: CanvasSurface, available: Size): Size
-    draw(g: CanvasSurface): void
+    layout(g: SurfaceContext, available: Size): Size
+    draw(g: SurfaceContext): void
     visible(): boolean
     input(event: CoolEvent): void
     on(type: string, cb: Callback): void
@@ -354,7 +354,7 @@ export abstract class BaseParentView implements View, ParentView {
         return false;
     }
 
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
     }
 
     get_children(): View[] {
@@ -404,7 +404,7 @@ export abstract class BaseParentView implements View, ParentView {
         return this._visible
     }
 
-    abstract layout(g: CanvasSurface, available: Size): Size
+    abstract layout(g: SurfaceContext, available: Size): Size
 
     private _get_listeners(type: string) {
         if (!this._listeners.has(type)) this._listeners.set(type, [])
@@ -492,9 +492,9 @@ export abstract class BaseView implements View {
         return this._visible
     }
 
-    abstract layout(g: CanvasSurface, available: Size): Size
+    abstract layout(g: SurfaceContext, available: Size): Size
 
-    abstract draw(g: CanvasSurface): void
+    abstract draw(g: SurfaceContext): void
 }
 
 export function with_props(comp: View, json: any): View {

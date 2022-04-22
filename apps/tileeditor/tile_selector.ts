@@ -1,4 +1,4 @@
-import {CanvasSurface,} from "../../lib/src/canvas";
+import {CanvasSurface, SurfaceContext} from "../../lib/src/canvas";
 import {BaseView, CoolEvent, POINTER_DOWN, PointerEvent, Rect, Size} from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
@@ -19,16 +19,16 @@ export class TileSelector extends BaseView {
         this._hflex = false
     }
 
-    draw(g: CanvasSurface) {
+    draw(g: SurfaceContext) {
         g.fillBackgroundSize(this.size(), EMPTY_COLOR);
         let sheet = this.doc.get_selected_sheet()
         if (sheet) {
             sheet.sprites.forEach((sprite, s) => {
                 let pt = wrap_number(s, 8);
-                draw_sprite(sprite, g, pt.x * this.scale, pt.y * this.scale, 4, this.doc.get_color_palette())
+                draw_sprite(sprite, g as CanvasSurface, pt.x * this.scale, pt.y * this.scale, 4, this.doc.get_color_palette())
             })
         }
-        draw_grid(g, this.size(), this.scale);
+        draw_grid(g as CanvasSurface, this.size(), this.scale);
         let pt = wrap_number(this.doc.get_selected_tile_index(), 8);
         draw_selection_rect(g, new Rect(pt.x * this.scale, pt.y * this.scale, this.scale, this.scale));
     }
@@ -46,7 +46,7 @@ export class TileSelector extends BaseView {
         }
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.set_size(new Size(8 * this.scale, 8 * this.scale))
         return this.size()
     }

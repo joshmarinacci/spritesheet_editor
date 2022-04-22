@@ -1,4 +1,5 @@
 import {CanvasSurface,} from "../../lib/src/canvas";
+import {Size, Point} from "../../lib/src/core";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
 

@@ -1,6 +1,6 @@
 import {Doc} from "./app-model";
 import {BaseView, CoolEvent, POINTER_DOWN, PointerEvent, Rect, Size} from "../../lib/src/core";
-import {CanvasSurface,} from "../../lib/src/canvas";
+import {CanvasSurface, SurfaceContext} from "../../lib/src/canvas";
 import {draw_grid} from "./common";
 import {EMPTY_COLOR} from "./font_editor";
 
@@ -17,11 +17,12 @@ export class PaletteChooser extends BaseView {
         this._name = 'palette-chooser'
     }
 
-    draw(ctx: CanvasSurface) {
+    draw(ctx: SurfaceContext) {
         if (this.palette) {
             ctx.fillBackgroundSize(this.size(), EMPTY_COLOR)
             for (let i = 0; i < this.palette.length; i++) {
                 let color = this.palette[i]
+                // @ts-ignore
                 ctx.fillRect(i * this.scale + 0.5, 0 + 0.5, this.scale, this.scale, color);
                 if(color === 'transparent') {
                     let r = new Rect(i*this.scale+0.5,0.5,this.scale,this.scale);
@@ -30,7 +31,7 @@ export class PaletteChooser extends BaseView {
                     ctx.fill(r.shrink(8),'black')
                 }
             }
-            draw_grid(ctx, this.size(), this.scale)
+            draw_grid(ctx as CanvasSurface, this.size(), this.scale)
             let i = this.doc.get_selected_color()
             let rect = new Rect(i * this.scale + 1, 1, this.scale - 2, this.scale - 2);
             draw_selection_rect(ctx, rect)
@@ -49,7 +50,7 @@ export class PaletteChooser extends BaseView {
         }
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         let size = new Size(this.scale * this.palette.length, this.scale)
         this.set_size(size)
         return size
@@ -60,9 +61,11 @@ export class PaletteChooser extends BaseView {
     }
 }
 
-export function draw_selection_rect(g: CanvasSurface, rect: Rect) {
+export function draw_selection_rect(g: SurfaceContext, rect: Rect) {
     ['red', 'white', 'black'].forEach((color, i) => {
+        // @ts-ignore
         g.ctx.strokeStyle = color
+        // @ts-ignore
         g.ctx.strokeRect(rect.x + i + 0.5, rect.y + i + 0.5, rect.w - i * 2, rect.h - i * 2);
     })
 }

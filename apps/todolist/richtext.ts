@@ -8,7 +8,7 @@ import {
     View,
     with_props
 } from "../../lib/src/core"
-import {CanvasSurface,} from "../../lib/src/canvas";
+import {SurfaceContext } from "../../lib/src/canvas";
 
 export type TextStyle = {
     font: string,
@@ -119,7 +119,7 @@ function make_line_box(txt: string, w: number, h: number, pt: Point, style:TextS
     return line
 }
 
-function do_layout(doc: Paragraph[], size: Size, g: CanvasSurface) {
+function do_layout(doc: Paragraph[], size: Size, g: SurfaceContext) {
     let root_style:BlockStyle = {
         background_color: 'white',
         border_width: 0,
@@ -235,14 +235,17 @@ function find_box(root: RootBox, position: Point):any {
     return null
 }
 
-function do_render(root: RootBox, g: CanvasSurface, selected_box: any) {
+function do_render(root: RootBox, g: SurfaceContext, selected_box: any) {
     let pos = root.position as Point
     let size = root.size as Size
-    g.fillRect(pos.x, pos.y, size.w, size.h, root.style.background_color)
-    g.ctx.save()
-    g.ctx.translate(pos.x, pos.y)
+    //@ts-ignore
+    let ctx:CanvasRenderingContext2D = g.ctx
+    ctx.fillStyle =root.style.background_color
+    ctx.fillRect(pos.x, pos.y, size.w, size.h)
+    ctx.save()
+    ctx.translate(pos.x, pos.y)
 
-    function stroke_box(g: CanvasSurface, blk:any, color:string) {
+    function stroke_box(g: SurfaceContext, blk:any, color:string) {
         let pos = blk.position as Point
         let size = blk.size as Size
         g.stroke(new Rect(pos.x,pos.y,size.w,size.h),color)
@@ -256,33 +259,34 @@ function do_render(root: RootBox, g: CanvasSurface, selected_box: any) {
             g.fill(r, blk.style.border_color)
             g.fill(r.shrink(blk.style.border_width*2),blk.style.background_color)
         } else {
-            g.fillRect(pos.x, pos.y, size.w, size.h, blk.style.background_color)
+            ctx.fillStyle = blk.style.background_color
+            ctx.fillRect(pos.x, pos.y, size.w, size.h)
         }
-        g.ctx.save()
-        g.ctx.translate(pos.x, pos.y)
+        ctx.save()
+        ctx.translate(pos.x, pos.y)
         blk.lines.forEach((ln:LineBox) => {
             let pos = ln.position as Point
-            g.ctx.save()
-            g.ctx.translate(pos.x, pos.y);
+            ctx.save()
+            ctx.translate(pos.x, pos.y);
             ln.spans.forEach((spn:SpanBox) => {
                 let pos = spn.position
                 let font = (spn.style.weight === 'bold')?'bold':'base'
                 g.fillStandardText(spn.text, pos.x, pos.y, font)
                 if(spn.style.underline) {
-                    g.fillRect(pos.x,pos.y, ln.size.w,2, spn.style.color)
+                    g.fill(new Rect(pos.x,pos.y,ln.size.w,2), spn.style.color)
                 }
             })
-            g.ctx.restore()
+            ctx.restore()
             if(ln === selected_box) {
                 stroke_box(g,ln, 'red')
             }
         })
-        g.ctx.restore()
+        ctx.restore()
         if(blk === selected_box) {
             stroke_box(g,blk, 'red')
         }
     })
-    g.ctx.restore()
+    ctx.restore()
 }
 
 export class RichTextArea extends BaseView {
@@ -311,12 +315,12 @@ export class RichTextArea extends BaseView {
         }
     }
 
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
         g.fillBackgroundSize(this.size(), 'white')
         do_render(this.render_tree_root, g, this.selected_box)
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         if(!this.size().equals(available)) {
             this.set_size(new Size(available.w, available.h))
             this.render_tree_root = do_layout(this._doc, this.size(), g)

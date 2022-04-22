@@ -4,11 +4,11 @@ import {
     CoolEvent, Point,
     POINTER_CATEGORY,
     POINTER_DOWN,
-    PointerEvent,
+    PointerEvent, Rect,
     SECONDARY_BUTTON,
     Size
 } from "../../lib/src/core";
-import {CanvasSurface,} from "../../lib/src/canvas";
+import {CanvasSurface, SurfaceContext} from "../../lib/src/canvas";
 import {draw_grid} from "./common";
 
 
@@ -28,19 +28,18 @@ export class TileEditor extends BaseView {
         this._next_click_fill = false
     }
 
-    draw(g: CanvasSurface) {
+    draw(g: SurfaceContext) {
         //clear the background
         g.fillBackgroundSize(this.size(), 'white');
         //draw each pixel in the tile as a rect
         let palette = this.palette
         if (this.sprite) {
             this.sprite.forEachPixel((val: number, i: number, j: number) => {
-                g.ctx.fillStyle = palette[val]
-                g.ctx.fillRect(i * this.scale, j * this.scale, this.scale, this.scale)
+                g.fill(new Rect(i * this.scale, j * this.scale, this.scale, this.scale), palette[val])
             });
         }
 
-        draw_grid(g, this.size(), this.scale)
+        draw_grid(g as CanvasSurface, this.size(), this.scale)
     }
 
     input(event: CoolEvent): void {
@@ -69,7 +68,7 @@ export class TileEditor extends BaseView {
         this.doc.fire('change', "tile edited");
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.set_size(new Size(32 * 8 + 1, 32 * 8 + 1))
         return this.size()
     }

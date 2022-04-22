@@ -10,7 +10,7 @@ import {
 } from "../../lib/src/core"
 import {DebugLayer} from "../../lib/src/debug";
 
-import {CanvasSurface,} from "../../lib/src/canvas";
+import {CanvasSurface, SurfaceContext} from "../../lib/src/canvas";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
 import {BlockStyle, Paragraph, RichTextArea, TextStyle} from "./richtext";
@@ -137,7 +137,7 @@ class ListItemView extends BaseParentView {
         }
     }
 
-    draw(g: CanvasSurface) {
+    draw(g: SurfaceContext) {
         if(this.list.selected_view() === this) {
             g.fillBackgroundSize(this.size(), 'blue')
         } else {
@@ -145,7 +145,7 @@ class ListItemView extends BaseParentView {
         }
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.get_children().forEach(ch => {
             ch.layout(g,new Size(available.w-LIST_ITEM_PAD*2,available.h))
             ch.set_position(new Point(LIST_ITEM_PAD,LIST_ITEM_PAD))
@@ -191,11 +191,11 @@ class CompoundListView extends BaseParentView {
         }
     }
 
-    override draw(g: CanvasSurface) {
+    override draw(g: SurfaceContext) {
         g.fillBackgroundSize(this.size(),'#f0f0f0')
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.get_children().forEach(ch => {
             ch.layout(g,available)
         })
@@ -239,11 +239,11 @@ class DividerView extends BaseView {
         }
     }
 
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
         g.fillBackgroundSize(this.size(),'#888888')
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.set_size(new Size(10,available.h))
         return this.size()
     }
@@ -260,7 +260,7 @@ class SplitView extends BaseView {
         this.split_value = 200
     }
 
-    override draw(g: CanvasSurface) {
+    override draw(g: SurfaceContext) {
         g.fillBackgroundSize(this.size(),'red')
     }
 
@@ -274,7 +274,7 @@ class SplitView extends BaseView {
         return [this.first,this.divider,this.second]
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.set_size(available)
         let ch_w = this.split_value
         let ch_h = available.h
@@ -323,8 +323,5 @@ export function start() {
     surface.set_root(root)
     surface.load_jsonfont(basefont_data,'base','base')
     surface.load_jsonfont(basefont_data,'bold','bold')
-    surface.addToPage();
-    surface.setup_mouse_input()
-    surface.setup_keyboard_input()
-    surface.repaint()
+    surface.start()
 }

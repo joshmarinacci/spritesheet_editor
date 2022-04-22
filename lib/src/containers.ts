@@ -16,7 +16,7 @@ import {
     Size,
     View
 } from "./core";
-import {CanvasSurface} from "./canvas";
+import {SurfaceContext} from "./canvas";
 import {ActionButton} from "./components";
 
 export class LayerView extends BaseParentView {
@@ -30,10 +30,10 @@ export class LayerView extends BaseParentView {
         }
     }
 
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this._children.forEach(ch => ch.layout(g, available))
         this.set_size(available)
         return available
@@ -66,7 +66,7 @@ export class HBox extends BaseParentView {
         this._valign = valign
     }
 
-    layout(g: CanvasSurface, real_available: Size): Size {
+    layout(g: SurfaceContext, real_available: Size): Size {
         let available = real_available.shrink(this.pad);
         //split out flex and non-flex children
         let yes_flex = this._children.filter(ch => ch.hflex())
@@ -111,7 +111,7 @@ export class HBox extends BaseParentView {
         return this.size()
     }
 
-    draw(g: CanvasSurface) {
+    draw(g: SurfaceContext) {
         if (this._fill) g.fillBackgroundSize(this.size(), this._fill)
     }
 }
@@ -138,7 +138,7 @@ export class VBox extends BaseParentView {
         this._fill = fill
     }
 
-    layout(g: CanvasSurface, real_available: Size): Size {
+    layout(g: SurfaceContext, real_available: Size): Size {
         let available = real_available.shrink(this.pad);
 
         let yes_flex = this.get_children().filter(ch => ch.vflex())
@@ -187,7 +187,7 @@ export class VBox extends BaseParentView {
         return this.size()
     }
 
-    draw(g: CanvasSurface) {
+    draw(g: SurfaceContext) {
         if (this._fill) g.fillBackgroundSize(this.size(), this._fill)
     }
 
@@ -206,12 +206,12 @@ export class GrowPanel extends BaseParentView {
         this._vflex = true
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.set_size(available)
         return this.size()
     }
 
-    draw(g: CanvasSurface) {
+    draw(g: SurfaceContext) {
         if (this.fill) g.fillBackgroundSize(this.size(), this.fill)
     }
 
@@ -236,7 +236,7 @@ class ScrollWrapper extends BaseParentView {
         return true
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         if (this.yoff > 0) this.yoff = 0
         if (this.xoff > 0) this.xoff = 0
         this.set_size(available)
@@ -287,7 +287,7 @@ class ScrollBar extends BaseView {
         }
     }
 
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
         //draw the gutter
         g.fillBackgroundSize(this.size(), '#888')
         //draw the thumb
@@ -369,7 +369,7 @@ class ScrollBar extends BaseView {
         }
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         return this.size()
     }
 }
@@ -403,7 +403,7 @@ export class ScrollView extends BaseParentView {
     }
 
 
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
         g.fillBackgroundSize(this.size(), '#aaa')
     }
 
@@ -411,7 +411,7 @@ export class ScrollView extends BaseParentView {
         this._pref_width = num
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.set_size(new Size(this._pref_width, 300))
         if (this.hflex()) {
             this.size().w = available.w
@@ -446,11 +446,11 @@ export class PopupContainer extends BaseParentView {
         this._name = "popup_container"
     }
 
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
         g.fillBackgroundSize(this.size(), 'gray')
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         let box = this._children[0]
         let size = box.layout(g, new Size(1000, 1000))
         this.set_size(size)
@@ -473,7 +473,7 @@ export class PopupLayer extends LayerView {
         this._name = 'popup-layer'
     }
 
-    draw(g: CanvasSurface) {
+    draw(g: SurfaceContext) {
         if (this._children.length > 0) g.fillBackgroundSize(this.size(), 'rgba(255,255,255,0.7)')
     }
 
@@ -496,7 +496,7 @@ export class DialogLayer extends LayerView {
         this._name = 'dialog-layer'
     }
 
-    draw(g: CanvasSurface) {
+    draw(g: SurfaceContext) {
         if (this._children.length > 0) g.fillBackgroundSize(this.size(), 'rgba(255,255,255,0.7)')
     }
 }
@@ -507,17 +507,17 @@ export class DialogContainer extends BaseParentView {
         this._name = 'dialog-container'
     }
 
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
         g.fillBackgroundSize(this.size(), 'gray')
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         let box = this._children[0]
         let size = box.layout(g, new Size(600, 600))
         this.set_size(size)
         this.set_position(new Point(
-            (g.w - size.w) / 2,
-            (g.h - size.h) / 2
+            (g.size().w - size.w) / 2,
+            (g.size().h - size.h) / 2
         ))
         return new Size(size.w, size.h)
     }

@@ -3,7 +3,7 @@ import {randi} from "../../common/util";
 import snake_json from "./snake.json";
 
 import {
-    CanvasSurface, log,
+    SurfaceContext, log, CanvasSurface,
 } from "../../lib/src/canvas";
 import {
     LayerView
@@ -115,7 +115,8 @@ class GridView extends BaseParentView {
         this.heart = sheet.sprites.find(s => s.name === 'heart')
         this.shrink = sheet.sprites.find(s => s.name === 'potion')
     }
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
+        // @ts-ignore
         g.ctx.imageSmoothingEnabled = false
         g.fillBackgroundSize(this.size(),'white')
         this.model.forEach((w,x,y)=>{
@@ -129,24 +130,28 @@ class GridView extends BaseParentView {
             let xx = x*8*SCALE
             let yy = y*8*SCALE
             g.fill(new Rect(xx,yy,1*8*SCALE,1*8*SCALE),color);
-            if (w === EMPTY) g.draw_sprite(xx,yy,this.empty,SCALE)
-            if (w === WALL) {
-                if(x === 0) g.draw_sprite(xx, yy, this.wall_left, SCALE)
-                if(x === this.model.w-1) g.draw_sprite(xx, yy, this.wall_right, SCALE)
-                if(y === 0) g.draw_sprite(xx, yy, this.wall_top, SCALE)
-                if(y === this.model.w-1) g.draw_sprite(xx, yy, this.wall_bottom, SCALE)
+            const draw_sprite = (x,y,e, s) => {
+                // @ts-ignore
+                g.draw_sprite(x,y,e,s)
             }
-            if (w === TAIL) g.draw_sprite(xx,yy,this.tail,SCALE)
-            if (w === FOOD) g.draw_sprite(xx,yy,this.food,SCALE)
-            if (w === HEART) g.draw_sprite(xx,yy,this.heart,SCALE)
-            if (w === SHRINK) g.draw_sprite(xx,yy,this.shrink,SCALE)
+            if (w === EMPTY) draw_sprite(xx,yy,this.empty, SCALE)
+            if (w === WALL) {
+                if(x === 0) draw_sprite(xx, yy, this.wall_left, SCALE)
+                if(x === this.model.w-1) draw_sprite(xx, yy, this.wall_right, SCALE)
+                if(y === 0) draw_sprite(xx, yy, this.wall_top, SCALE)
+                if(y === this.model.w-1) draw_sprite(xx, yy, this.wall_bottom, SCALE)
+            }
+            if (w === TAIL) draw_sprite(xx,yy,this.tail,SCALE)
+            if (w === FOOD) draw_sprite(xx,yy,this.food,SCALE)
+            if (w === HEART) draw_sprite(xx,yy,this.heart,SCALE)
+            if (w === SHRINK) draw_sprite(xx,yy,this.shrink,SCALE)
 
         })
     }
     input(event: CoolEvent): void {
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.set_size(new Size(this.model.w*8*SCALE,this.model.h*8*SCALE))
         return this.size()
     }
@@ -160,9 +165,11 @@ class SnakeView extends BaseView {
         this.sprite_slice = spritesheet.sprites.find(sp => sp.name === 'head')
         this.set_size(new Size(8*SCALE,8*SCALE))
     }
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
+        // @ts-ignore
         g.ctx.imageSmoothingEnabled = false
         // g.fill(new Rect(0,0,16,16),'yellow')
+        // @ts-ignore
         g.draw_sprite(0,0,this.sprite_slice,SCALE)
     }
     position(): Point {
@@ -172,7 +179,7 @@ class SnakeView extends BaseView {
         )
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         return this.size()
     }
 }
@@ -188,8 +195,10 @@ class ScoreView extends BaseView{
         this.font = font
         this.set_size(new Size(32,16))
     }
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
+        // @ts-ignore
         g.ctx.save()
+        // @ts-ignore
         g.ctx.translate(this.position().x,this.position().y)
         // g.fillBackgroundSize(this.size(),'red')
         let lines = [
@@ -201,9 +210,10 @@ class ScoreView extends BaseView{
         lines.forEach((str,i) => {
             g.fillStandardText(str, 10, 16*i*4+32, 'base', 2)
         })
+        // @ts-ignore
         g.ctx.restore()
     }
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         return this.size()
     }
 }
@@ -211,12 +221,17 @@ class SplashView extends BaseView {
     constructor() {
         super('splash-view');
     }
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
         g.fillBackgroundSize(this.size(),'rgba(255,255,255,1.0)')
+        // @ts-ignore
         g.ctx.save()
+        // @ts-ignore
         g.ctx.strokeStyle = 'black'
+        // @ts-ignore
         g.ctx.lineWidth = 4
+        // @ts-ignore
         g.ctx.strokeRect(4,4,this.size().w-4*2,this.size().h-4*2)
+        // @ts-ignore
         g.ctx.restore()
         let x = 150
         g.fillStandardText('Snake 2: The Snakening', x,150,'base',2)
@@ -233,7 +248,7 @@ class SplashView extends BaseView {
         // g.fillStandardText('press any key to play',x,260,'base',1)
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.set_size(available)
         return this.size()
     }
@@ -252,7 +267,7 @@ class DialogView extends BaseView {
         this.sheet = sheet
         this.text = 'dialog text here'
     }
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
         g.fillBackgroundSize(this.size(),'rgba(255,255,255,0.7)')
         let sprite_w = this.sheet.sprites[0].w
         let map_w = this.map.w * sprite_w * SCALE
@@ -260,10 +275,11 @@ class DialogView extends BaseView {
         let map_x = (this.size().w - map_w)/2
         let text_w = g.measureText(this.text,'base').w *2
         let text_x = (this.size().w - text_w)/2
+        // @ts-ignore
         g.draw_tilemap(this.map,this.sheet,map_x,16,map_scale)
         g.fillStandardText(this.text, text_x,150,'base',2)
     }
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.set_size(available)
         return this.size()
     }
@@ -327,7 +343,6 @@ export async function start() {
 
     surface.addToPage();
     surface.set_root(root);
-    surface.setup_keyboard_input()
 
     let current_palette = 0
     function cycle_palette() {
@@ -459,7 +474,7 @@ export async function start() {
             return
         }
     }
-
+    surface.start()
     restart()
 
     function refresh() {

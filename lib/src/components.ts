@@ -1,4 +1,4 @@
-import {CanvasSurface} from "./canvas";
+import {SurfaceContext} from "./canvas";
 import {
     ButtonBackgroundColor,
     ButtonBackgroundColor_active,
@@ -20,12 +20,12 @@ import {
     CoolEvent,
     FOCUS_CATEGORY,
     gen_id,
-    KEYBOARD_DOWN,
+    KEYBOARD_DOWN, KeyboardEvent,
     Point,
     POINTER_CATEGORY,
     POINTER_DOWN,
     POINTER_UP,
-    PointerEvent,
+    PointerEvent, Rect,
     Size
 } from "./core";
 import {HBox, PopupContainer, VBox} from "./containers";
@@ -45,11 +45,11 @@ export class Label extends BaseView {
         this._caption = caption
     }
 
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
         g.fillStandardText(this._caption, StandardLeftPadding, StandardTextHeight,'base');
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.set_size(g.measureText(this._caption,'base').grow(StandardLeftPadding))
         return this.size()
     }
@@ -61,7 +61,7 @@ export class CustomLabel extends Label {
         super(text);
         this.cb = cb
     }
-    override draw(ctx: CanvasSurface) {
+    override draw(ctx: SurfaceContext) {
         this._caption = this.cb({})
         super.draw(ctx);
     }
@@ -79,7 +79,7 @@ export class ActionButton extends BaseView {
     set_caption(caption:string) {
         this.caption = caption
     }
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
         if(this.active) {
             g.fillBackgroundSize(this.size(), ButtonBackgroundColor_active)
         } else {
@@ -99,7 +99,7 @@ export class ActionButton extends BaseView {
             this.fire(ae.type, ae)
         }
     }
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.set_size(g.measureText(this.caption,'base').grow(StandardLeftPadding))
         return this.size()
     }
@@ -131,7 +131,7 @@ abstract class BaseSelectButton extends BaseView {
     set_caption(caption:string) {
         this._caption = caption
     }
-    draw(g: CanvasSurface) {
+    draw(g: SurfaceContext) {
         let x = StandardLeftPadding
         let y = StandardLeftPadding
         if(this.has_icon()) {
@@ -152,7 +152,7 @@ abstract class BaseSelectButton extends BaseView {
             this.fire(ae.type, ae)
         }
     }
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         let size = g.measureText(this._caption,'base').grow(StandardLeftPadding)
         if(this.has_icon()) {
             size.w += 16
@@ -172,7 +172,7 @@ export class ToggleButton extends BaseSelectButton {
         super()
         if(caption)this.set_caption(caption)
     }
-    draw(ctx: CanvasSurface) {
+    draw(ctx: SurfaceContext) {
         let bg = ButtonBackgroundColor
         if(this.selected()) {
             bg = ButtonBackgroundColor_selected
@@ -210,7 +210,7 @@ export class IconButton extends BaseView {
         this.active = false
         this._icon = 0
     }
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
         if(this.active) {
             g.fillBackgroundSize(this.size(), ButtonBackgroundColor_active)
         } else {
@@ -234,7 +234,7 @@ export class IconButton extends BaseView {
             this.fire(ae.type, ae)
         }
     }
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.set_size(new Size(16,16).grow(StandardLeftPadding))
         return this.size()
     }
@@ -259,11 +259,11 @@ export class SelectList extends BaseView {
         this.selected_index = -1
         this._vflex = true
     }
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
         g.fillBackgroundSize(this.size(),'#ddd')
         this.data.forEach((item,i) => {
             if (i === this.selected_index) {
-                g.fillRect(0,30*i,this.size().w,25, StandardSelectionColor)
+                g.fill(new Rect(0,30*i,this.size().w,25), StandardSelectionColor)
             }
             let str = this.renderer(item)
             g.fillStandardText(str,StandardLeftPadding,i*30 + 20, 'base')
@@ -283,7 +283,7 @@ export class SelectList extends BaseView {
     set_data(data: any[]) {
         this.data = data
     }
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         if(this.hflex()) {
             this.set_size(new Size(available.w, available.h))
         } else {
@@ -310,13 +310,13 @@ export class Header extends BaseView {
     set_caption(caption:string) {
         this._caption = caption
     }
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
         g.fillBackgroundSize(this.size(),this.fill)
         let size = g.measureText(this._caption,'base')
         let x = (this.size().w - size.w) / 2
         g.fillStandardText(this._caption, x, StandardTextHeight,'base');
     }
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         let text_size = g.measureText(this._caption,'base').grow(StandardLeftPadding)
         this.set_size(new Size(available.w, text_size.h))
         return this.size()
@@ -329,11 +329,11 @@ export class HSpacer extends BaseView {
         this._hflex = true
         this._name = 'h-spacer'
     }
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.set_size(new Size(available.w, 0))
         return this.size()
     }
-    draw(g: CanvasSurface) {
+    draw(g: SurfaceContext) {
     }
 }
 
@@ -345,11 +345,11 @@ export class FontIcon extends BaseView {
         this.codepoint = codepoint
     }
 
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
         g.draw_glyph(this.codepoint, 0, 0, 'base', 'black')
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.set_size(new Size(16, 16))
         return this.size()
     }
@@ -400,20 +400,24 @@ export class TextLine extends BaseView {
         this.cursor = this.text.length
     }
 
-    draw(g: CanvasSurface): void {
+    draw(g: SurfaceContext): void {
         let bg = '#ddd'
         if (g.is_keyboard_focus(this)) bg = 'white'
         g.fillBackgroundSize(this.size(), bg)
         g.strokeBackgroundSize(this.size(), 'black')
         if (g.is_keyboard_focus(this)) {
+            // @ts-ignore
             g.ctx.fillStyle = StandardTextColor
+            // @ts-ignore
             g.ctx.font = StandardTextStyle
             let parts = this._parts()
             let bx = 5
             let ax = bx + g.measureText(parts.before, 'base').w
             g.fillStandardText(parts.before, bx, 20, 'base')
             g.fillStandardText(parts.after, ax, 20, 'base')
+            // @ts-ignore
             g.ctx.fillStyle = 'black'
+            // @ts-ignore
             g.ctx.fillRect(ax, 2, 2, 20)
         } else {
             g.fillStandardText(this.text, 5, 20, 'base');
@@ -428,23 +432,21 @@ export class TextLine extends BaseView {
             event.ctx.set_keyboard_focus(this)
         }
         if (event.type === KEYBOARD_DOWN) {
-            let code = event.details.code
-            let key = event.details.key
-            // this.log("got a keypress",event.details)
-            if (code === 'KeyD' && event.details.ctrl) return this.delete_right()
-            if (code === 'Backspace') return this.delete_left()
-            if (code === 'ArrowLeft') return this.cursor_left()
-            if (code === 'ArrowRight') return this.cursor_right()
-            if (code === 'Enter') {
+            let e = event as KeyboardEvent
+            if (e.code === 'KeyD' && e.modifiers.ctrl) return this.delete_right()
+            if (e.code === 'Backspace') return this.delete_left()
+            if (e.code === 'ArrowLeft') return this.cursor_left()
+            if (e.code === 'ArrowRight') return this.cursor_right()
+            if (e.code === 'Enter') {
                 event.ctx.release_keyboard_focus(this)
                 this.fire('action', this.text)
                 return
             }
-            if (key && key.length === 1) this.insert(key)
+            if (e.key && e.key.length === 1) this.insert(e.key)
         }
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         this.set_size(new Size(this.pref_width, 26))
         if (this._hflex) {
             this.size().w = available.w

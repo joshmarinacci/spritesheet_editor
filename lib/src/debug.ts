@@ -34,7 +34,7 @@ export class DebugLensGlass extends BaseView {
     }
 
     override draw(g: CanvasSurface) {
-        let root = g.get_root()
+        let root = g.root()
         g.ctx.save()
         g.ctx.beginPath()
         let size = this.size()
@@ -164,7 +164,7 @@ export class DebugLensGlass extends BaseView {
                 if(view.name() === 'debug-lens-glass') return false
                 return true
             }
-            this.pick_under_cursor(event.ctx.get_root(),p2, views, should_recurse, should_include);
+            this.pick_under_cursor(event.ctx.root(),p2, views, should_recurse, should_include);
             this.log("path is",views)
             this.lens.set_selected(views[views.length-1])
         }

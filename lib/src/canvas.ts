@@ -6,7 +6,7 @@ import {
     FocusEvent,
     KEYBOARD_DOWN,
     KEYBOARD_UP,
-    KeyboardEvent,
+    KeyboardEvent, Modifiers,
     ParentView, Point,
     POINTER_DOWN,
     POINTER_DRAG, POINTER_MOVE,
@@ -34,7 +34,7 @@ export function rect_from_pos_size(point: Point, size: Size) {
 }
 
 class MouseInputService {
-    private surface: CanvasSurface;
+    private surface: SurfaceContext;
     private down: boolean;
     private path: [];
     private last_point: Point;
@@ -122,7 +122,7 @@ class MouseInputService {
 
     private scan_path(position: Point) {
         let path:[] = []
-        this.calculate_path_to_cursor(this.surface.get_root(),position,path)
+        this.calculate_path_to_cursor(this.surface.root(),position,path)
         // this.log("final path is",path)
         return path
     }
@@ -143,7 +143,6 @@ class MouseInputService {
                 stopped = true
             }
         })
-        if(this.surface._input_callback) this.surface._input_callback(evt)
     }
 
     private propagateScrollEvent(evt: ScrollEvent, path: []) {
@@ -185,62 +184,6 @@ class KeyboardInputService {
     }
     constructor(surface:CanvasSurface) {
         this.surface = surface
-        document.addEventListener('keydown', (e) => {
-            let evt = new KeyboardEvent(this.surface, KEYBOARD_DOWN)
-            evt.key = e.key
-            evt.code = e.code
-            // @ts-ignore
-            evt.domEvent = e
-            evt.modifiers = {
-                alt: e.altKey,
-                ctrl: e.ctrlKey,
-                meta: e.metaKey,
-                shift: e.shiftKey
-            }
-
-            evt.details = {
-                key:e.key,
-                code:e.code,
-                shift:e.shiftKey,
-                alt:e.altKey,
-                ctrl:e.ctrlKey,
-            }
-            let path = this.calculate_path_to_keyboard_focus(this.surface.get_root(),this.surface._keyboard_focus) as View[]
-            this.surface.propagateKeyboardEvent(evt, path)
-            this.surface.repaint()
-            if(!e.altKey && !e.metaKey) e.preventDefault()
-            // if (e.key === 'ArrowLeft') KBD.fire(EVENTS.LEFT, {});
-            // if (e.key === 'ArrowRight') KBD.fire(EVENTS.RIGHT, {});
-            // if (e.key === 'ArrowDown') KBD.fire(EVENTS.DOWN, {});
-            // if (e.key === 'ArrowUp') KBD.fire(EVENTS.UP, {});
-            // KBD.fire(EVENTS.KEYDOWN,e)
-            // e.preventDefault()
-        })
-        document.addEventListener('keyup',(e)=>{
-            let evt = new KeyboardEvent(this.surface, KEYBOARD_UP)
-            evt.key = e.key
-            evt.code = e.code
-            // @ts-ignore
-            evt.domEvent = e
-            evt.modifiers = {
-                alt: e.altKey,
-                ctrl: e.ctrlKey,
-                meta: e.metaKey,
-                shift: e.shiftKey
-            }
-            evt.details = {
-                key:e.key,
-                code:e.code,
-                shift:e.shiftKey,
-                alt:e.altKey,
-                ctrl:e.ctrlKey,
-            }
-            let path = this.calculate_path_to_keyboard_focus(this.surface.get_root(),this.surface._keyboard_focus) as View[]
-            this.surface.propagateKeyboardEvent(evt, path)
-            this.surface.repaint()
-            if(!e.altKey && !e.metaKey) e.preventDefault()
-
-        })
     }
 
     dispatch_keyboard_focus_change(old_focus: View, new_focus: View) {
@@ -271,23 +214,69 @@ class KeyboardInputService {
             }
         }
     }
+
+    trigger_key_down(key: string, code: string, modifiers: Modifiers) {
+        let evt = new KeyboardEvent(this.surface, KEYBOARD_DOWN)
+        evt.key = key
+        evt.code = code
+        evt.modifiers = modifiers
+        let path = this.calculate_path_to_keyboard_focus(this.surface.root(),this.surface.keyboard_focus()) as View[]
+        this.surface.propagateKeyboardEvent(evt, path)
+        this.surface.repaint()
+    }
+
+    trigger_key_up(key: string, code: string, modifiers: Modifiers) {
+        let evt = new KeyboardEvent(this.surface, KEYBOARD_UP)
+        evt.key = key
+        evt.code = code
+        evt.modifiers = modifiers
+        let path = this.calculate_path_to_keyboard_focus(this.surface.root(),this.surface.keyboard_focus()) as View[]
+        this.surface.propagateKeyboardEvent(evt, path)
+        this.surface.repaint()
+
+    }
 }
 
-export class CanvasSurface {
-    w: number;
-    h: number;
-    canvas: HTMLCanvasElement;
-    private root: View;
+export interface SurfaceContext {
+    size():Size;
+    root():View;
+    set_root(root:View);
+    repaint();
+    clear();
+    fill(rect: Rect, color: string);
+    stroke(rect: Rect, color: string);
+    fillBackgroundSize(size:Size, color: string);
+    strokeBackgroundSize(size: Size, color: string);
+    measureText(caption: string, font_name?:string):Size;
+    fillStandardText(caption: string, x: number, y: number, font_name?:string, scale?:number);
+    draw_glyph(codepoint: number, x:number, y:number, font_name: string, fill: string, scale?:number);
+
+    keyboard_focus():View;
+    set_keyboard_focus(view:View);
+    is_keyboard_focus(view:View);
+    release_keyboard_focus(view:View);
+    view_to_local(pt: Point, view: View):Point;
+    find_by_name(name:string):View|null;
+}
+export class CanvasSurface implements SurfaceContext {
+    private w: number;
+    private h: number;
+
+    size(): Size {
+        return new Size(this.w,this.h)
+    }
+
+    private canvas: HTMLCanvasElement;
+    private _root: View;
     ctx: CanvasRenderingContext2D;
     debug: boolean;
     private scale: number;
-    _input_callback: Callback;
-    _keyboard_focus: View;
+    private _input_callback: Callback;
+    protected _keyboard_focus: View;
     private fonts:Map<string,CanvasFont>
     private global_smoothing = true
     private _pointer_target: View|null;
-    private last_point: Point;
-    mouse: MouseInputService;
+    private mouse: MouseInputService;
     private keyboard: KeyboardInputService;
 
     constructor(w: number, h: number, scale?:number) {
@@ -309,19 +298,16 @@ export class CanvasSurface {
         this.clear()
         this.fonts = new Map()
         this._pointer_target = null
-        this.keyboard = new KeyboardInputService(this)
-        this._setup_mouse_input();
     }
 
     addToPage() {
         document.body.appendChild(this.canvas);
     }
-
     set_root(root: View) {
-        this.root = root;
+        this._root = root;
     }
-    get_root():View {
-        return this.root
+    root():View {
+        return this._root
     }
 
     repaint() {
@@ -338,12 +324,12 @@ export class CanvasSurface {
     }
 
     private layout_stack() {
-        if(!this.root) {
+        if(!this._root) {
             console.warn("root is null")
         } else {
             let available_size = new Size(this.w,this.h)
             // this.log("layout_stack with size",available_size)
-            let size = this.root.layout(this, available_size)
+            let size = this._root.layout(this, available_size)
             // console.log("canvas, root requested",size)
         }
     }
@@ -354,7 +340,7 @@ export class CanvasSurface {
         this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
         this.ctx.scale(this.scale, this.scale)
         this.debug_draw_rect(new Rect(0, 0, this.w - 1, this.h - 1), 'canvas')
-        if(this.root) this.draw_view(this.root)
+        if(this._root) this.draw_view(this._root)
         this.ctx.restore()
     }
 
@@ -410,7 +396,6 @@ export class CanvasSurface {
         this.ctx.strokeStyle = color
         this.ctx.strokeRect(0,0, size.w, size.h);
     }
-
     private debug_draw_rect(bds: Rect, title: string) {
         if (!this.debug) return
         this.ctx.strokeStyle = 'black'
@@ -435,13 +420,11 @@ export class CanvasSurface {
             this.ctx.fillText(str, cx+3 + i + 1, cy+3 + i + 1)
         }
     }
-
     fillRect(x: number, y: number, w: number, h: number, color: string) {
         this.ctx.fillStyle = color;
         this.ctx.fillRect(x,y,w,h)
     }
-
-    screen_to_local(evt:MouseEvent):Point {
+    private screen_to_local(evt: MouseEvent):Point {
         let rect = this.canvas.getBoundingClientRect();
         let pt = new Point(evt.x-rect.x,evt.y-rect.y);
         pt.x /= this.scale
@@ -451,7 +434,7 @@ export class CanvasSurface {
 
     propagateKeyboardEvent(evt: KeyboardEvent, path:View[]) {
         if(!this._keyboard_focus) {
-            if(this._input_callback) this._input_callback(evt)
+            // if(this._input_callback) this._input_callback(evt)
             return
         }
         if(!path) {
@@ -468,9 +451,12 @@ export class CanvasSurface {
             if(evt.stopped) stopped = true
         })
         // if(this._keyboard_focus) this._keyboard_focus.input(evt)
-        if(this._input_callback) this._input_callback(evt)
+        // if(this._input_callback) this._input_callback(evt)
     }
 
+    keyboard_focus(): View {
+        return this._keyboard_focus
+    }
     set_keyboard_focus(view:View) {
         let old = this._keyboard_focus
         this._keyboard_focus = view
@@ -479,7 +465,6 @@ export class CanvasSurface {
     is_keyboard_focus(view:View) {
         return view === this._keyboard_focus
     }
-
     release_keyboard_focus(view:View) {
         this._keyboard_focus = null
     }
@@ -502,7 +487,6 @@ export class CanvasSurface {
         }
         return new Size(metrics.width, 16);
     }
-
     fillStandardText(caption: string, x: number, y: number, font_name?:string, scale?:number) {
         if(!scale) scale = 1
         if(font_name && this.fonts.has(font_name)) {
@@ -516,7 +500,6 @@ export class CanvasSurface {
         this.ctx.font = StandardTextStyle
         this.ctx.fillText(caption,x, y)
     }
-
     draw_glyph(codepoint: number, x:number, y:number, font_name: string, fill: string, scale?:number) {
         if(!scale) scale = 1
         this.ctx.fillStyle = fill
@@ -527,13 +510,6 @@ export class CanvasSurface {
             }
         }
     }
-
-    // dispatch_fake_mouse_event(type: string, pos: Point) {
-    //     let e = new CommonEvent('mousedown',pos,this)
-    //     e.button = 0;
-        // this.dispatch_pointer_event(this.root,e)
-    // }
-
     private log(...args) {
         console.log("CANVAS: ", ...args)
     }
@@ -560,8 +536,8 @@ export class CanvasSurface {
 
     }
 
-    find_by_name(name: string):View|null {
-        return this.find_by_name_view(this.root,name)
+    public find_by_name(name: string):View|null {
+        return this.find_by_name_view(this._root,name)
     }
 
     private find_by_name_view(view: View, name: string):View|null {
@@ -580,7 +556,7 @@ export class CanvasSurface {
     }
 
     public local_to_view(pt: Point, view: View) {
-        let trans = this.calculate_transform_to(this.root,view)
+        let trans = this.calculate_transform_to(this._root,view)
         let f = pt.subtract(trans)
         return f
     }
@@ -602,8 +578,8 @@ export class CanvasSurface {
         return null
     }
 
-    view_to_local(pt: Point, view: View) {
-        let trans = this.calculate_transform_to(this.root,view)
+    public view_to_local(pt: Point, view: View) {
+        let trans = this.calculate_transform_to(this._root,view)
         return pt.add(trans)
     }
 
@@ -616,24 +592,58 @@ export class CanvasSurface {
         this.canvas.addEventListener('mousedown',(domEvent:MouseEvent)=>{
             let position = this.screen_to_local(domEvent)
             this.mouse.trigger_mouse_down(position, domEvent.button)
+            if(this._input_callback) this._input_callback({})
             domEvent.preventDefault()
         })
         this.canvas.addEventListener('mousemove',(domEvent:MouseEvent)=>{
             let position = this.screen_to_local(domEvent)
             this.mouse.trigger_mouse_move(position, domEvent.button)
+            if(this._input_callback) this._input_callback({})
             domEvent.preventDefault()
         })
         this.canvas.addEventListener('mouseup',(domEvent:MouseEvent)=>{
             let position = this.screen_to_local(domEvent)
             this.mouse.trigger_mouse_up(position, domEvent.button)
+            if(this._input_callback) this._input_callback({})
             domEvent.preventDefault()
         })
         this.canvas.addEventListener('wheel',(domEvent)=>{
             let position = this.screen_to_local(domEvent)
             let delta = new Point(domEvent.deltaX, domEvent.deltaY)
             this.mouse.trigger_scroll(position, delta)
+            if(this._input_callback) this._input_callback({})
             domEvent.preventDefault()
         });
+    }
+    private _setup_keyboard_input() {
+        this.keyboard = new KeyboardInputService(this)
+        document.addEventListener('keydown',(e)=>{
+            let modifiers:Modifiers = {
+                alt: e.altKey,
+                ctrl: e.ctrlKey,
+                meta: e.metaKey,
+                shift: e.shiftKey
+            }
+            this.keyboard.trigger_key_down(e.key, e.code, modifiers)
+            if(!e.altKey && !e.metaKey) e.preventDefault()
+        })
+        document.addEventListener('keyup',(e) => {
+            let modifiers:Modifiers = {
+                alt: e.altKey,
+                ctrl: e.ctrlKey,
+                meta: e.metaKey,
+                shift: e.shiftKey
+            }
+            this.keyboard.trigger_key_up(e.key, e.code, modifiers)
+            if(!e.altKey && !e.metaKey) e.preventDefault()
+        })
+    }
+
+    start() {
+        this.addToPage()
+        this._setup_mouse_input();
+        this._setup_keyboard_input()
+        this.repaint()
     }
 }
 

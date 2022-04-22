@@ -1,6 +1,6 @@
 import {HBox, ScrollView, VBox} from "../../lib/src/containers";
 import {ActionButton, Label, TextLine, ToggleButton} from "../../lib/src/components";
-import {CanvasSurface,} from "../../lib/src/canvas";
+import {CanvasSurface, SurfaceContext} from "../../lib/src/canvas";
 import {
     BaseView,
     Callback,
@@ -40,19 +40,21 @@ export class MapEditor extends BaseView {
         this._scale = scale
     }
 
-    draw(ctx: CanvasSurface) {
+    draw(ctx: SurfaceContext) {
         ctx.fillBackgroundSize(this.size(), EMPTY_COLOR)
         if (!this.tilemap) return
         this.tilemap.forEachPixel((val, i, j) => {
             if (!val || val === 0) return;
             let sheet = this.doc.get_selected_sheet()
             let tile = sheet.sprites.find((t: Sprite) => t.id === val);
+            // @ts-ignore
             ctx.ctx.imageSmoothingEnabled = false
             if (tile) {
+                // @ts-ignore
                 ctx.ctx.drawImage(tile._img, i * this._scale, j * this._scale, this._scale, this._scale)
             }
         })
-        if (this.doc.get_map_grid_visible()) draw_grid(ctx, this.size(), this._scale)
+        if (this.doc.get_map_grid_visible()) draw_grid(ctx as CanvasSurface, this.size(), this._scale)
     }
 
     input(evt: CoolEvent): void {
@@ -70,7 +72,7 @@ export class MapEditor extends BaseView {
         }
     }
 
-    layout(g: CanvasSurface, available: Size): Size {
+    layout(g: SurfaceContext, available: Size): Size {
         if (!this.tilemap) {
             this.set_size(new Size(100, 100))
         } else {

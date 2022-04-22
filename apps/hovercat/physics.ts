@@ -1,4 +1,4 @@
-
+import {Point, Size} from "../../lib/src/core";
 import {
     Sprite,
     Tilemap
