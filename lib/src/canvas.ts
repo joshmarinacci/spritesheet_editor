@@ -446,21 +446,6 @@ export class CanvasSurface {
         }
     }
 
-    async load_spritesheet(img_url: any):Promise<SpriteSheet> {
-        let ss = new SpriteSheet(img_url,this);
-        await ss.load()
-        return ss;
-    }
-
-    draw_slice(x: number, y: number, slice: SpriteSlice, scale: number) {
-        if (!slice.sheet.is_loaded()) log("not loaded yet", slice.sheet.url)
-        this.ctx.imageSmoothingEnabled = false;
-        this.ctx.drawImage(slice.sheet.img,
-            slice.rect.x, slice.rect.y, slice.rect.w, slice.rect.h,
-            x, y, slice.rect.w * scale, slice.rect.h * scale
-        )
-    }
-
     fillRect(x: number, y: number, w: number, h: number, color: string) {
         this.ctx.fillStyle = color;
         this.ctx.fillRect(x,y,w,h)
@@ -489,10 +474,6 @@ export class CanvasSurface {
             this.log("no path, can't propagate")
             return
         }
-        // this.log("dispatching keyboard event",evt)
-        // this.log('to target,this._keyboard_focus')
-        // this.log("along path",path)
-        // this.log(path.map(p => p.name()))
         let stopped = false
         path.forEach((view:View) => {
             if(stopped) {
@@ -510,7 +491,6 @@ export class CanvasSurface {
         let old = this._keyboard_focus
         this._keyboard_focus = view
         this.keyboard.dispatch_keyboard_focus_change(old,this._keyboard_focus)
-        // this.log("set keyboard focus to",this._keyboard_focus)
     }
     is_keyboard_focus(view:View) {
         return view === this._keyboard_focus
@@ -641,52 +621,6 @@ export class CanvasSurface {
     view_to_local(pt: Point, view: View) {
         let trans = this.calculate_transform_to(this.root,view)
         return pt.add(trans)
-    }
-}
-
-export class SpriteSheet {
-    img: HTMLImageElement;
-    loaded: boolean
-    url: any;
-    private can: CanvasSurface;
-
-    constructor(url: any, can: CanvasSurface) {
-        this.url = url
-        this.img = new Image()
-        this.loaded = false
-        this.can = can
-    }
-    load() {
-        return new Promise<void>((res,rej)=>{
-            this.img.addEventListener('load', () => {
-                log('loaded', this.url)
-                this.loaded = true
-                this.can.repaint()
-                res()
-            })
-            this.img.src = this.url
-        })
-    }
-
-    is_loaded() {
-        return this.loaded
-    }
-
-    get_slice(numb: number): SpriteSlice {
-        let w = this.img.width/8
-        let x = numb%w;
-        let y = Math.floor(numb/w)
-        return new SpriteSlice(this, new Rect(x*8, y*8, 8, 8))
-    }
-}
-
-export class SpriteSlice {
-    sheet: SpriteSheet;
-    rect: Rect;
-
-    constructor(param: SpriteSheet, rect: Rect) {
-        this.sheet = param
-        this.rect = rect
     }
 }
 

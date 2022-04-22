@@ -522,6 +522,6 @@ export function with_props(comp: View, json: any): View {
 }
 
 export function with_action(view: View, cb: Callback): View {
-    view.on('action', cb)
+    view.on(COMMAND_ACTION, cb)
     return view
 }
