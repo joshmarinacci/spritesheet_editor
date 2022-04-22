@@ -43,61 +43,48 @@ class MouseInputService {
         this.surface = surface
         this.down = false
         this.last_point = new Point(0,0)
-        this.surface.canvas.addEventListener('contextmenu',(e)=>{
-            e.preventDefault();
-            return false;
-        })
-        this.surface.canvas.addEventListener('mousedown',(domEvent)=>{
-            this.down = true;
-            let position = this.surface.screen_to_local(domEvent)
-            this.last_point = position
-            this.path = this.scan_path(position)
-            this.target = this.path[this.path.length-1] // last
-            let evt = new PointerEvent(this.surface, POINTER_DOWN, position, new Point(0,0))
-            evt.button = domEvent.button
-            evt.direction = "down"
-            evt.target = this.target
-            this.propagatePointerEvent(evt,this.path)
-            this.surface.repaint()
-            domEvent.preventDefault()
-        })
-        this.surface.canvas.addEventListener('mousemove',(domEvent)=>{
-            let position = this.surface.screen_to_local(domEvent)
-            let delta = position.subtract(this.last_point)
-            this.last_point = position.clone()
-            let evt
-            if(this.down) {
-                evt = new PointerEvent(this.surface, POINTER_DRAG, position, delta)
-            } else {
-                this.path = this.scan_path(position)
-                evt = new PointerEvent(this.surface, POINTER_MOVE, position, delta)
-            }
-            evt.button = domEvent.button
-            evt.target = this.path[this.path.length - 1] // last
-            evt.direction = "down"
-            this.propagatePointerEvent(evt, this.path)
-            this.surface.repaint()
-            domEvent.preventDefault()
-        })
-        this.surface.canvas.addEventListener('mouseup',(domEvent)=>{
-            this.down = false
-            let position = this.surface.screen_to_local(domEvent)
-            let evt = new PointerEvent(this.surface, POINTER_UP, position, new Point(0,0))
-            evt.button = domEvent.button
-            evt.target = this.path[this.path.length-1] // last
-            evt.direction = "down"
-            this.propagatePointerEvent(evt,this.path)
-            this.surface.repaint()
-            domEvent.preventDefault()
-        })
-        this.surface.canvas.addEventListener('wheel',(domEvent)=>{
-            let position = this.surface.screen_to_local(domEvent)
-            this.path = this.scan_path(position)
-            let evt = new ScrollEvent(this.surface, SCROLL_EVENT, position, new Point(domEvent.deltaX, domEvent.deltaY))
-            this.propagateScrollEvent(evt,this.path)
-            domEvent.preventDefault()
-        });
+    }
+    trigger_mouse_down(position:Point, button:number) {
+        this.down = true;
+        this.last_point = position
+        this.path = this.scan_path(position)
+        this.target = this.path[this.path.length-1] // last
+        let evt = new PointerEvent(this.surface, POINTER_DOWN, position, new Point(0,0))
+        evt.button = button
+        evt.target = this.target
+        this.propagatePointerEvent(evt,this.path)
+        this.surface.repaint()
+    }
 
+    trigger_mouse_move(position: Point, button: number) {
+        let delta = position.subtract(this.last_point)
+        this.last_point = position.clone()
+        let evt
+        if(this.down) {
+            evt = new PointerEvent(this.surface, POINTER_DRAG, position, delta)
+        } else {
+            this.path = this.scan_path(position)
+            evt = new PointerEvent(this.surface, POINTER_MOVE, position, delta)
+        }
+        evt.button = button
+        evt.target = this.path[this.path.length - 1] // last
+        this.propagatePointerEvent(evt, this.path)
+        this.surface.repaint()
+    }
+
+    trigger_mouse_up(position: Point, button: number) {
+        this.down = false
+        let evt = new PointerEvent(this.surface, POINTER_UP, position, new Point(0,0))
+        evt.button = button
+        evt.target = this.path[this.path.length-1] // last
+        this.propagatePointerEvent(evt,this.path)
+        this.surface.repaint()
+    }
+
+    trigger_scroll(position:Point, delta:Point) {
+        this.path = this.scan_path(position)
+        let evt = new ScrollEvent(this.surface, SCROLL_EVENT, position, delta)
+        this.propagateScrollEvent(evt,this.path)
     }
 
     private calculate_path_to_cursor(view: View, position: Point, path:View[]):boolean {
@@ -188,6 +175,7 @@ class MouseInputService {
             }
         })
     }
+
 }
 
 class KeyboardInputService {
@@ -321,6 +309,8 @@ export class CanvasSurface {
         this.clear()
         this.fonts = new Map()
         this._pointer_target = null
+        this.keyboard = new KeyboardInputService(this)
+        this._setup_mouse_input();
     }
 
     addToPage() {
@@ -457,12 +447,6 @@ export class CanvasSurface {
         pt.x /= this.scale
         pt.y /= this.scale
         return pt
-    }
-    setup_keyboard_input() {
-        this.keyboard = new KeyboardInputService(this)
-    }
-    setup_mouse_input() {
-        this.mouse = new MouseInputService(this)
     }
 
     propagateKeyboardEvent(evt: KeyboardEvent, path:View[]) {
@@ -621,6 +605,35 @@ export class CanvasSurface {
     view_to_local(pt: Point, view: View) {
         let trans = this.calculate_transform_to(this.root,view)
         return pt.add(trans)
+    }
+
+    private _setup_mouse_input() {
+        this.mouse = new MouseInputService(this)
+        this.canvas.addEventListener('contextmenu',(e)=>{
+            e.preventDefault();
+            return false;
+        })
+        this.canvas.addEventListener('mousedown',(domEvent:MouseEvent)=>{
+            let position = this.screen_to_local(domEvent)
+            this.mouse.trigger_mouse_down(position, domEvent.button)
+            domEvent.preventDefault()
+        })
+        this.canvas.addEventListener('mousemove',(domEvent:MouseEvent)=>{
+            let position = this.screen_to_local(domEvent)
+            this.mouse.trigger_mouse_move(position, domEvent.button)
+            domEvent.preventDefault()
+        })
+        this.canvas.addEventListener('mouseup',(domEvent:MouseEvent)=>{
+            let position = this.screen_to_local(domEvent)
+            this.mouse.trigger_mouse_up(position, domEvent.button)
+            domEvent.preventDefault()
+        })
+        this.canvas.addEventListener('wheel',(domEvent)=>{
+            let position = this.screen_to_local(domEvent)
+            let delta = new Point(domEvent.deltaX, domEvent.deltaY)
+            this.mouse.trigger_scroll(position, delta)
+            domEvent.preventDefault()
+        });
     }
 }
 

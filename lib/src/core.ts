@@ -210,6 +210,7 @@ export class PointerEvent extends CoolEvent {
         super(ctx, POINTER_CATEGORY, type);
         this.position = position
         this.delta = delta
+        this.direction = 'down'
     }
 }
 

@@ -381,8 +381,6 @@ export function start() {
     dl.set_visible(true)
     main.add(dl)
     surface.set_root(new KeystrokeCaptureView(main))
-    surface.setup_mouse_input()
-    surface.setup_keyboard_input()
     surface.addToPage();
     surface.repaint()
 
