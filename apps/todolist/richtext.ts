@@ -181,6 +181,9 @@ function do_layout(doc: Paragraph[], size: Size, g: SurfaceContext) {
         root.blocks.push(block)
         y = block.position.y + block.size.h + root_style.padding_width
     })
+    if(y > root.size.h) {
+        root.size.h = y
+    }
 
     return root
 }
@@ -321,9 +324,10 @@ export class RichTextArea extends BaseView {
     }
 
     layout(g: SurfaceContext, available: Size): Size {
-        if(!this.size().equals(available)) {
+        if(this.size().w !== available.w) {
             this.set_size(new Size(available.w, available.h))
             this.render_tree_root = do_layout(this._doc, this.size(), g)
+            this.set_size(new Size(this.size().w,this.render_tree_root.size.h))
         }
         return this.size()
     }

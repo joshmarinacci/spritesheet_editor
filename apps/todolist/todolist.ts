@@ -14,7 +14,7 @@ import {CanvasSurface, SurfaceContext} from "../../lib/src/canvas";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
 import {BlockStyle, Paragraph, RichTextArea, TextStyle} from "./richtext";
-import {HBox, KeystrokeCaptureView, LayerView, VBox} from "../../lib/src/containers";
+import {HBox, KeystrokeCaptureView, LayerView, ScrollView, VBox} from "../../lib/src/containers";
 
 type TodoItem = {
     desc:string,
@@ -304,8 +304,12 @@ class SplitView extends BaseView {
 }
 
 function make_main_view():View {
+    let scroll = new ScrollView();
+    scroll.set_hflex(true)
+    scroll.set_vflex(true)
+    scroll.set_content(with_props(new RichTextArea(), {doc:DOC}))
     let root = with_props(new SplitView(), {hflex:true, vflex:true, name:'banana-split'}) as SplitView
-    root.set_first(with_props(new RichTextArea(), {doc:DOC}))
+    root.set_first(scroll)
     let list_view = with_props(new CompoundListView(), {name:'main-view', vflex:true, hflex:true}) as CompoundListView
     DATA.forEach(td => list_view.add_item(make_item_view(td)))
     root.set_second(list_view)
