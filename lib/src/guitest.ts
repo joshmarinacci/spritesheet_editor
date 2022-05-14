@@ -335,14 +335,14 @@ function make_song_list(surface: CanvasSurface) {
     return song_list
 }
 
-export function start() {
-    let surface = new CanvasSurface(1024,720, 1.0);
+function make_standard(w:number,h:number): CanvasSurface{
+    let surface = new CanvasSurface(w,h, 1.0);
     surface.load_jsonfont(basefont_data,'base','base')
     surface.debug = false
-
     let main = new LayerView();
     main.set_name('layer-view')
     let app_layer = new LayerView()
+
     app_layer.set_name('app-layer')
     main.add(app_layer)
 
@@ -353,6 +353,16 @@ export function start() {
     let popup_layer = new PopupLayer()
     popup_layer.set_name('popup-layer')
     main.add(popup_layer)
+
+    let dl = new DebugLayer()
+    dl.set_visible(true)
+    main.add(dl)
+    surface.set_root(new KeystrokeCaptureView(main))
+
+    return surface
+}
+export function start() {
+    let surface = make_standard(1024,720)
 
     let root = new VBox();
     root.set_name('root')
@@ -372,51 +382,11 @@ export function start() {
 
     middle_layer.add(make_song_list(surface))
     root.add(middle_layer)
-    root.add(make_statusbar())
+    root.add(make_statusbar());
 
-    app_layer.add(root)
-
-
-    let dl = new DebugLayer()
-    dl.set_visible(true)
-    main.add(dl)
-    surface.set_root(new KeystrokeCaptureView(main))
+    (surface.find_by_name('app-layer') as LayerView).add(root)
     surface.start()
-
     open_songs_dialog(surface)()
     surface.repaint()
-
-
-    // unit test 1
-    //click button1 with a fake mouse click through the canvas.
-    //add callback to button1 to confirm the test worked
-    // function test1(value) {
-    //     console.log("starting test1")
-    //     return new Promise((res,rej)=>{
-    //         button1.on('action',() => {
-    //             console.log("test complete")
-    //             res(value)
-    //         })
-    //         surface.dispatch_fake_mouse_event('mousedown', new Point(60,60))
-    //     })
-    // }
-
-    function wait(number: number) {
-        return new Promise((res,rej)=>{
-            setTimeout(()=>{
-                res(0)
-            },number)
-        })
-    }
-    // async function run_all_tests() {
-    //     console.log("starting tests")
-    //     // await wait(500)
-    //     // console.log('continuing')
-    //     let val = await test1(99)
-    //     console.assert(val === 99,'test1 failed')
-    //     // console.log("test1 passed")
-    //     console.log("end of tests")
-    // }
-    // wait(1000).then(run_all_tests)
 }
 
