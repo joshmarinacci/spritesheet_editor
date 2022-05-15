@@ -1,4 +1,4 @@
-import {CanvasSurface} from "./canvas";
+import {CanvasSurface, SurfaceContext} from "./canvas";
 import {
     ActionButton, CheckButton,
     FontIcon,
@@ -9,17 +9,28 @@ import {
     RadioButton,
     SelectList, TextLine, ToggleButton
 } from "./components";
-import {BaseView, COMMAND_ACTION, CommandEvent, gen_id, Point, Size, View, with_props} from "./core";
+import {
+    BaseParentView,
+    BaseView,
+    COMMAND_ACTION,
+    COMMAND_CHANGE,
+    CommandEvent, CoolEvent,
+    gen_id,
+    Point, POINTER_CATEGORY, POINTER_DRAG, PointerEvent,
+    Size,
+    View,
+    with_props
+} from "./core";
 // @ts-ignore
 import basefont_data from "./base_font.json";
 // @ts-ignore
 import toolbar_json from "./toolbar.json"
-import {DebugLayer} from "./debug";
+import {DebugLayer, ResizeHandle} from "./debug";
 import {randi} from "../../common/util";
 import {TableView} from "./table";
 import {
     DialogContainer,
-    DialogLayer, HBox,
+    DialogLayer, GrowPanel, HBox,
     KeystrokeCaptureView, LayerView,
     PopupContainer,
     PopupLayer,
@@ -361,10 +372,8 @@ function make_standard(w:number,h:number): CanvasSurface{
 
     return surface
 }
-export function start() {
-    let surface = make_standard(1024,720)
-
-    let root = new VBox();
+function make_music_player(surface: CanvasSurface):View {
+    let root = new VBox()
     root.set_name('root')
     root.add(make_toolbar(surface))
 
@@ -384,9 +393,209 @@ export function start() {
     root.add(middle_layer)
     root.add(make_statusbar());
 
-    (surface.find_by_name('app-layer') as LayerView).add(root)
+    root.set_hflex(true)
+    root.set_vflex(true)
+    return root
+}
+
+class FillChildPanel extends BaseParentView {
+    constructor() {
+        super('fill-child-panel');
+    }
+    layout(g: SurfaceContext, available: Size): Size {
+        this.set_size(available)
+        this._children.forEach(ch => ch.layout(g,available))
+        return this.size()
+    }
+}
+
+class TabbedPanel extends BaseParentView {
+    private tabs: Map<View, String>;
+    private tab_bar: HBox;
+    private wrapper: FillChildPanel;
+    private selected: View;
+    constructor() {
+        super("tabbed-panel");
+        this.tabs = new Map<View,String>()
+        this.tab_bar = new HBox()
+        this.tab_bar.set_fill('green')
+        this.tab_bar.set_hflex(true)
+        this.add(this.tab_bar)
+        this.wrapper = new FillChildPanel();
+        this.add(this.wrapper)
+        this.selected = null
+    }
+    draw(g: SurfaceContext) {
+        // this.log('drawing',this.size())
+    }
+
+    layout(g: SurfaceContext, available: Size): Size {
+        this.tab_bar.layout(g, new Size(available.w,available.h));
+        let ts = this.tab_bar.size()
+        this.wrapper.layout(g, new Size(available.w, available.h - ts.h))
+        this.wrapper.set_position(new Point(0,ts.h))
+        this.set_size(available)
+        return this.size()
+    }
+
+    add_view(title: string, content: View) {
+        this.tabs.set(content,title)
+        let tab_button = new ToggleButton()
+        tab_button.set_caption(title)
+        tab_button.set_selected(false)
+        tab_button.on(COMMAND_CHANGE,()=>{
+            this.log("switching tabs to",title,content)
+            this.selected = content
+            this.tab_bar.get_children().forEach(ch => {
+                (ch as ToggleButton).set_selected(false)
+            })
+            tab_button.set_selected(true)
+            // @ts-ignore
+            this.wrapper._children = []
+            this.wrapper.add(content)
+        })
+        this.tab_bar.add(tab_button)
+        // this.tab_bar.add(with_props(new ToggleButton(),{caption:title, selected:false}))
+    }
+}
+
+function make_login_root(surface: CanvasSurface):View {
+    let root = new VBox()
+    root.set_vflex(true)
+    root.halign = 'center'
+    root.set_hflex(true)
+    root.add(with_props(new Header(), {caption:'login'}))
+    //username | box
+    let username_row = new HBox()
+    username_row.add(with_props(new Label(), {caption:'username'}))
+    username_row.add(with_props(new TextLine(), {text:''}))
+    root.add(username_row)
+    //password | box
+    let password_row = new HBox()
+    password_row.add(with_props(new Label(), {caption:'password'}))
+    password_row.add(with_props(new TextLine(), {text:''}))
+    root.add(password_row)
+
+    let button_row = new HBox()
+    button_row.add(with_props(new ActionButton(), {caption:'< Cancel'}))
+    button_row.add(with_props(new ActionButton(), {caption:'Log In >'}))
+    root.add(button_row)
+    //cancel | login
+    let container = new DialogContainer()
+    container.set_size(new Size(300,200))
+    container.add(root)
+    return container
+}
+
+class WindowResizeHandle extends BaseView {
+    private window: ResizableWindow;
+    constructor(window:ResizableWindow) {
+        super('window-resize-handle');
+        this.set_size(new Size(20, 20))
+        this.window = window
+    }
+    draw(g: SurfaceContext): void {
+        g.fillBackgroundSize(this.size(), '#888')
+        g.draw_glyph(2921, 2, 0, 'base', 'black')
+    }
+
+    layout(g: SurfaceContext, available: Size): Size {
+        return this.size()
+    }
+
+    override input(event: CoolEvent) {
+        if (event.category === POINTER_CATEGORY) {
+            let pt = event as PointerEvent
+            if(event.type === POINTER_DRAG) {
+                this.window.set_size(this.window.size().add(pt.delta))
+            }
+            event.stopped = true
+            event.ctx.repaint()
+        }
+    }
+}
+
+class ResizableWindow extends BaseParentView {
+    private titlebar: Header;
+    private resize_handle: WindowResizeHandle;
+    private content:View;
+    constructor() {
+        super("resizable-window");
+        this.titlebar = new Header()
+        this.titlebar.set_caption('Alert!')
+        this.add(this.titlebar)
+
+        this.resize_handle = new WindowResizeHandle(this);
+        this.add(this.resize_handle)
+        this.set_size(new Size(300,200))
+    }
+    draw(g: SurfaceContext) {
+        g.fillBackgroundSize(this.size(),'#f0f0f0')
+        g.strokeBackgroundSize(this.size(),'black')
+    }
+
+    layout(g: SurfaceContext, available: Size): Size {
+        this.titlebar.layout(g,this.size())
+        this.titlebar.set_position(new Point(0,0))
+        this.resize_handle.layout(g,this.size())
+        this.resize_handle.set_position(new Point(this.size().w-20, this.size().h-20))
+
+        let y = this.titlebar.size().h
+        let h = this.size().h - this.titlebar.size().h - this.resize_handle.size().h;
+        this.content.layout(g,new Size(this.size().w,h))
+        this.content.set_position(new Point(0,y))
+        return this.size()
+    }
+
+    set_content(content: View) {
+        this.content = content
+        this.add(this.content)
+    }
+}
+function make_action_window(surface: CanvasSurface):View {
+    let vbox = new VBox()
+    // vbox.set_fill('green')
+    vbox.set_hflex(true)
+    vbox.set_vflex(true)
+    vbox.halign = 'center'
+    let label = with_props(new Label(),{caption:'Destroy Moon?'})
+    vbox.add(label)
+    let button_bar = new HBox()
+    button_bar.add(with_props(new ActionButton(),{caption:"Yes"}))
+    button_bar.add(with_props(new ActionButton(),{caption:"No"}))
+    button_bar.add(with_props(new ActionButton(),{caption:"Cancel"}))
+    vbox.add(button_bar)
+
+    let window = new ResizableWindow()
+    window.set_content(vbox)
+
+    // let root = new DialogContainer()
+    // root.set_size(new Size(500,500))
+    // root.add(window)
+    // return root
+    return window
+}
+
+export function start() {
+    let surface = make_standard(1024,720)
+    let tab_root = new TabbedPanel()
+    tab_root.set_name('tabbed-root');
+    // let btn = with_props(new ActionButton(), {caption:'foo'});
+    // tab_root.add_view("The first tab",with_props(new ActionButton(), {caption:'foo'}));
+    // tab_root.add_view("The second tab",with_props(new ActionButton(), {caption:'bar'}));
+
+    let music_root:View = make_music_player(surface) as View;
+    tab_root.add_view('Music Player',music_root);
+
+    let login_root = make_login_root(surface);
+    tab_root.add_view('Login Dialog', login_root);
+
+    let action_dialog = make_action_window(surface);
+    tab_root.add_view('Window', action_dialog);
+
+    (surface.find_by_name('app-layer') as LayerView).add(tab_root)
     surface.start()
-    open_songs_dialog(surface)()
+    // open_songs_dialog(surface)()
     surface.repaint()
 }
 

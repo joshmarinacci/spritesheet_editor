@@ -215,6 +215,9 @@ export class GrowPanel extends BaseParentView {
         if (this.fill) g.fillBackgroundSize(this.size(), this.fill)
     }
 
+    set_fill(fill: string) {
+        this.fill = fill
+    }
     with_fill(fill: string) {
         this.fill = fill
         return this
@@ -505,6 +508,7 @@ export class DialogContainer extends BaseParentView {
     constructor() {
         super("dialog-container")
         this._name = 'dialog-container'
+        this.set_size(new Size(250,250))
     }
 
     draw(g: SurfaceContext): void {
@@ -513,8 +517,8 @@ export class DialogContainer extends BaseParentView {
 
     layout(g: SurfaceContext, available: Size): Size {
         let box = this._children[0]
-        let size = box.layout(g, new Size(600, 600))
-        this.set_size(size)
+        let size = box.layout(g, this.size())//new Size(600, 600))
+        // this.set_size(size)
         this.set_position(new Point(
             (g.size().w - size.w) / 2,
             (g.size().h - size.h) / 2
