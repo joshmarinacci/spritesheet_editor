@@ -1,13 +1,26 @@
-import {ActionButton, Label, TextLine} from "../../lib/src/components";
-import {Doc, Sprite, Tilemap} from "./app-model";
-import {COMMAND_CHANGE, gen_id, with_props} from "../../lib/src/core";
+import {
+    Sheet,
+    Sprite,
+    Tilemap,
+    SpriteGlyph,
+    SpriteFont,
+    gen_id,
+    CanvasSurface,
+    HBox,
+    VBox,
+    with_props,
+    Label,
+    TextLine,
+    COMMAND_CHANGE,
+    ActionButton,
+} from "../../../thneed-gfx/";
+import {Doc,} from "./app-model";
 // @ts-ignore
-import basefont_data from "../../lib/src/base_font.json";
+// import basefont_data from "../../lib/src/base_font.json";
 import {TileSelector} from "./tile_selector";
 import {MapEditor} from "./map_editor";
 import {PaletteChooser} from "./palette_chooser";
 import {TileEditor} from "./tile_editor";
-import {HBox, VBox} from "../../lib/src/containers";
 
 export function make_sheet_editor_view(doc: Doc) {
     let sheet_editor = new HBox()

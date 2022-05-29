@@ -1,12 +1,18 @@
-
-import {BaseView, KEYBOARD_DOWN, KEYBOARD_UP, KeyboardEvent, Point, Rect, Size} from "../../lib/src/core";
-import {LayerView} from "../../lib/src/containers";
-import {CanvasSurface, SurfaceContext} from "../../lib/src/canvas";
+import {
+    BaseView,
+    CanvasSurface,
+    KEYBOARD_DOWN, KEYBOARD_UP,
+    LayerView,
+    Point,
+    Rect,
+    Sheet,
+    Size,
+    Sprite,
+    SurfaceContext,
+    Tilemap
+} from "thneed-gfx"
 import {
     Doc, PICO8,
-    Sheet,
-    Sprite,
-    Tilemap
 } from "../tileeditor/app-model";
 import {do_physics, Physics, Player} from "./physics";
 // @ts-ignore

@@ -1,35 +1,31 @@
-import {randi} from "../../common/util";
-// @ts-ignore
-import snake_json from "./snake.json";
-
-import {
-    SurfaceContext, log, CanvasSurface,
-} from "../../lib/src/canvas";
-import {
-    LayerView
-
-} from "../../lib/src/containers";
-import {GridModel} from "../../common/models";
-import {
+import {CanvasSurface,
+    SurfaceContext,
+    log,
     CoolEvent,
+    Sprite,
+    Point,
+    Sheet,
+    Size,
+    SpriteFont,
+    SpriteGlyph,
+    Tilemap,
     BaseView,
     BaseParentView,
-    KEYBOARD_DOWN,
-    KeyboardEvent,
-    Size,
+    LayerView,
+    SuperArray,
     Rect,
-    Point,
-    SuperArray
-} from "../../lib/src/core";
+    KEYBOARD_DOWN,
+} from "thneed-gfx";
+// @ts-ignore
+import snake_json from "./snake.json";
+import {GridModel} from "../../common/models";
+import {randi} from "../../common/util"
 import {
     CHERRY_BLOSSOM,
     DEMI_CHROME,
     Doc, DUNE,
     GRAYSCALE_PALETTE,
     INVERTED_PALETTE,
-    Sheet,
-    Sprite,
-    SpriteFont, Tilemap
 } from "../tileeditor/app-model";
 
 const SCALE = 3
@@ -309,6 +305,7 @@ export async function start() {
     log("total level count =", SPEEDS.length)
     let doc = new Doc()
     doc.reset_from_json(snake_json)
+    log("doc is now",doc)
 
 
     let surface = new CanvasSurface(CANVAS_SIZE.w*8*SCALE,CANVAS_SIZE.h*8*SCALE);

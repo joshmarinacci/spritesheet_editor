@@ -1,9 +1,23 @@
-import {ActionButton, CustomLabel, Label, TextLine} from "../../lib/src/components";
-import {HBox, VBox} from "../../lib/src/containers";
-import {Doc, draw_sprite, SpriteFont, SpriteGlyph} from "./app-model";
-import {CanvasSurface,} from "../../lib/src/canvas";
-import {StandardPanelBackgroundColor} from "../../lib/src/style";
-import {BaseView, CoolEvent, gen_id, POINTER_DOWN, PointerEvent, Rect, Size, with_props} from "../../lib/src/core";
+import {
+    CanvasSurface,
+    BaseView,
+    CoolEvent,
+    POINTER_DOWN,
+    Size,
+    with_props,
+    VBox,
+    HBox,
+    PointerEvent,
+    ActionButton,
+    TextLine,
+    Label,
+    SpriteFont,
+    Rect,
+    CustomLabel,
+    gen_id,
+    SpriteGlyph, StandardPanelBackgroundColor,
+} from "thneed-gfx";
+import {Doc, draw_sprite} from "./app-model";
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
 import {draw_grid, wrap_number} from "./common";
@@ -17,6 +31,7 @@ export class GlyphChooser extends BaseView {
     private scale: number;
     private wrap: number;
     private _font: SpriteFont;
+    public selected_glyph_index: number
 
     constructor(doc: Doc) {
         super('glyph-chooser')
@@ -24,6 +39,7 @@ export class GlyphChooser extends BaseView {
         this.scale = 32;
         this.wrap = 20
         this._name = 'glyph-chooser'
+        this.selected_glyph_index = 0
     }
 
     draw(g: CanvasSurface) {
@@ -35,7 +51,7 @@ export class GlyphChooser extends BaseView {
                 draw_sprite(glyph, g, pt.x * this.scale, pt.y * this.scale, 4, this.doc.get_font_palette())
             })
             draw_grid(g, this.size(), this.scale);
-            let pt = wrap_number(font.selected_glyph_index(), this.wrap);
+            let pt = wrap_number(this.selected_glyph_index, this.wrap);
             draw_selection_rect(g, new Rect(pt.x * this.scale, pt.y * this.scale, this.scale, this.scale));
         }
     }
@@ -48,8 +64,8 @@ export class GlyphChooser extends BaseView {
             let font = this._font
             if(font) {
                 if (val >= 0 && val < font.glyphs.length) {
-                    font.set_selected_glyph_index(val);
-                    this.doc.fire('change', font.selected_glyph_index())
+                    this.selected_glyph_index = val;
+                    this.doc.fire('change', this.selected_glyph_index)
                 }
             }
         }
@@ -62,6 +78,15 @@ export class GlyphChooser extends BaseView {
 
     set_font(font: SpriteFont) {
         this._font = font
+    }
+
+    get_selected_glyph() {
+        if(!this._font) return null
+        return this._font.glyphs[this.selected_glyph_index]
+    }
+
+    set_selected_glyph(glyph: SpriteGlyph) {
+        this.selected_glyph_index = this._font.glyphs.indexOf(glyph)
     }
 }
 
@@ -125,6 +150,8 @@ export class FontPreview extends BaseView {
 }
 
 export function make_font_view(doc: Doc) {
+    let glyph_chooser = new GlyphChooser(doc)
+
     let panel = new HBox()
     panel.set_name('font-editor-view')
     panel.set_fill(StandardPanelBackgroundColor)
@@ -157,7 +184,7 @@ export function make_font_view(doc: Doc) {
     let id_label = new CustomLabel("id", () => {
         let font = doc.get_selected_font()
         if(font) {
-            let glyph = font.get_selected_glyph()
+            let glyph = glyph_chooser.get_selected_glyph()
             if (glyph) return glyph.id
         }
         return "???"
@@ -173,7 +200,7 @@ export function make_font_view(doc: Doc) {
     name_box.on('action', (text) => {
         let font = doc.get_selected_font()
         if(font) {
-            let glyph = font.get_selected_glyph()
+            let glyph = glyph_chooser.get_selected_glyph()
             if (glyph) glyph.name = text
         }
     })
@@ -188,7 +215,7 @@ export function make_font_view(doc: Doc) {
     codepoint_edit.on('action', (text) => {
         let font = doc.get_selected_font()
         if(font) {
-            let glyph = font.get_selected_glyph()
+            let glyph = glyph_chooser.get_selected_glyph()
             if (glyph && parseInt(text)) glyph.meta.codepoint = parseInt(text)
             doc.mark_dirty()
             doc.fire('change', "added a glyph");
@@ -204,7 +231,7 @@ export function make_font_view(doc: Doc) {
     left_edit.on('action', (text) => {
         let font = doc.get_selected_font()
         if(font) {
-            let glyph = font.get_selected_glyph()
+            let glyph = glyph_chooser.get_selected_glyph()
             let parsed = parseInt(text)
             if (glyph && !isNaN(parsed)) glyph.meta.left = parsed
             doc.mark_dirty()
@@ -217,7 +244,7 @@ export function make_font_view(doc: Doc) {
     right_edit.on('action', (text) => {
         let font = doc.get_selected_font()
         if(font) {
-            let glyph = font.get_selected_glyph()
+            let glyph = glyph_chooser.get_selected_glyph()
             let parsed = parseInt(text)
             if (glyph && !isNaN(parsed)) glyph.meta.right = parsed
             doc.mark_dirty()
@@ -234,7 +261,7 @@ export function make_font_view(doc: Doc) {
     baseline_text.on('action', (text) => {
         let font = doc.get_selected_font()
         if(font) {
-            let glyph = font.get_selected_glyph()
+            let glyph = glyph_chooser.get_selected_glyph()
             let parsed = parseInt(text)
             if (glyph && !isNaN(parsed)) glyph.meta.baseline = parsed
             doc.mark_dirty()
@@ -257,7 +284,7 @@ export function make_font_view(doc: Doc) {
         let glyph = new SpriteGlyph(gen_id('glyph'), 'glyphname', 8, 8, doc)
         glyph.meta.codepoint = 400
         font.add(glyph)
-        font.set_selected_glyph(glyph)
+        glyph_chooser.set_selected_glyph(glyph)
         doc.mark_dirty()
         doc.fire('change', "added a glyph");
     })
@@ -291,7 +318,7 @@ export function make_font_view(doc: Doc) {
     doc.addEventListener('change', () => {
         let font = doc.get_selected_font()
         if(font) {
-            let glyph = font.get_selected_glyph()
+            let glyph = glyph_chooser.get_selected_glyph()
             if (glyph) {
                 editor.set_sprite(glyph)
                 name_box.set_text(glyph.name)
@@ -302,7 +329,6 @@ export function make_font_view(doc: Doc) {
             }
         }
     })
-    let glyph_chooser = new GlyphChooser(doc)
     col2.add(glyph_chooser)
 
     let preview_box = new TextLine()
@@ -325,7 +351,7 @@ export function make_font_view(doc: Doc) {
             font_name_edit.set_text(font.name)
             preview_canvas.set_font(font)
             glyph_chooser.set_font(font)
-            let glyph = font.get_selected_glyph()
+            let glyph = glyph_chooser.get_selected_glyph()
             if (glyph) {
                 editor.set_sprite(glyph)
             }

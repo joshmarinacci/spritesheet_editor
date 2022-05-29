@@ -1,7 +1,10 @@
-import {CanvasSurface,} from "../../lib/src/canvas";
-import {Size, Point} from "../../lib/src/core";
+import {
+    Size,
+    Point,
+    CanvasSurface,
+} from "thneed-gfx";
 // @ts-ignore
-import basefont_data from "../../lib/src/base_font.json";
+import basefont_data from "thneed-gfx/src/base_font.json";
 
 export function draw_grid(g: CanvasSurface, size: Size, step: number) {
     //draw the grid

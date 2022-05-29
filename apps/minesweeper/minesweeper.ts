@@ -1,13 +1,14 @@
-import {CanvasSurface, SurfaceContext} from "../../lib/src/canvas";
-import {LayerView} from "../../lib/src/containers";
-import {GridModel} from "../../common/models";
 import {
     BaseView,
     CoolEvent,
     POINTER_DOWN,
+    Size,
+    SurfaceContext,
     PointerEvent,
-    Size
-} from "../../lib/src/core";
+    CanvasSurface,
+    LayerView
+} from "thneed-gfx"
+import {GridModel} from "../../common/models";
 
 /*
 

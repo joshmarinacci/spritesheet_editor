@@ -1,6 +1,28 @@
-import {CanvasSurface, SurfaceContext} from "../../lib/src/canvas";
-import {BaseView, CoolEvent, POINTER_DOWN, PointerEvent, Rect, Size} from "../../lib/src/core";
-// @ts-ignore
+import {
+    Sprite,
+    Rect,
+    POINTER_CATEGORY,
+    Point,
+    SECONDARY_BUTTON,
+    Tilemap,
+    CanvasSurface,
+    BaseView,
+    SurfaceContext,
+    CoolEvent,
+    POINTER_DOWN,
+    POINTER_DRAG,
+    Size,
+    Callback,
+    with_props,
+    VBox,
+    HBox,
+    PointerEvent,
+    ActionButton,
+    TextLine,
+    ToggleButton,
+    Label,
+    ScrollView,
+} from "../../../thneed-gfx/";// @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
 import {Doc, draw_sprite} from "./app-model";
 import {draw_grid, wrap_number} from "./common";

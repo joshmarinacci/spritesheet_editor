@@ -1,20 +1,16 @@
 import {CheckButton, Label, TextLine, } from "../../lib/src/components";
 import {
-    BaseParentView, BaseView,
+    BaseParentView, BaseView, CanvasSurface,
     COMMAND_CHANGE,
-    CoolEvent, KEYBOARD_CATEGORY,
-    KEYBOARD_DOWN, KeyboardEvent, Point, POINTER_CATEGORY,
-    POINTER_DOWN, POINTER_DRAG, PointerEvent, Size,
+    CoolEvent, DebugLayer, HBox, KEYBOARD_CATEGORY,
+    KEYBOARD_DOWN, KeyboardEvent, KeystrokeCaptureView, LayerView, Point, POINTER_CATEGORY,
+    POINTER_DOWN, POINTER_DRAG, PointerEvent, ScrollView, Size, SurfaceContext, VBox,
     View,
     with_props
-} from "../../lib/src/core"
-import {DebugLayer} from "../../lib/src/debug";
-
-import {CanvasSurface, SurfaceContext} from "../../lib/src/canvas";
+} from "thneed-gfx"
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
 import {BlockStyle, Paragraph, RichTextArea, TextStyle} from "./richtext";
-import {HBox, KeystrokeCaptureView, LayerView, ScrollView, VBox} from "../../lib/src/containers";
 
 type TodoItem = {
     desc:string,

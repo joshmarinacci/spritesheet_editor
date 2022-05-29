@@ -1,19 +1,28 @@
-import {HBox, ScrollView, VBox} from "../../lib/src/containers";
-import {ActionButton, Label, TextLine, ToggleButton} from "../../lib/src/components";
-import {CanvasSurface, SurfaceContext} from "../../lib/src/canvas";
 import {
+    Sprite,
+    Tilemap,
+    CanvasSurface,
     BaseView,
-    Callback,
+    SurfaceContext,
     CoolEvent,
     POINTER_DOWN,
     POINTER_DRAG,
-    PointerEvent,
     Size,
-    with_props
-} from "../../lib/src/core";
+    Callback,
+    with_props,
+    VBox,
+    HBox,
+    PointerEvent,
+    ActionButton,
+    TextLine,
+    ToggleButton,
+    Label,
+    ScrollView,
+} from "thneed-gfx";
+
 // @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
-import {Doc, Sprite, Tilemap} from "./app-model";
+import {Doc} from "./app-model";
 import {draw_grid} from "./common";
 import {TileSelector} from "./tile_selector";
 import {EMPTY_COLOR} from "./font_editor";

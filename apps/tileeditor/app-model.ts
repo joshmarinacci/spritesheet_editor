@@ -1,6 +1,12 @@
-import {CanvasSurface} from "../../lib/src/canvas";
-import {gen_id} from "../../lib/src/core";
-
+import {
+    Sheet,
+    Sprite,
+    Tilemap,
+    SpriteGlyph,
+    SpriteFont,
+    gen_id,
+    CanvasSurface,
+} from "thneed-gfx";
 
 export const GRAYSCALE_PALETTE = [
     '#ff00ff',
@@ -56,131 +62,7 @@ export const PICO8 = [
 '#FFCCAA',
 'transparent',
 ]
-export class Sprite {
-    id: string
-    name:string
-    w: number
-    h: number
-    data: number[]
-    _img: HTMLCanvasElement
-    private doc: Doc;
 
-    constructor(id:string, name:string, w:number, h:number, doc:Doc) {
-        this.id = id || gen_id('unknown');
-        this.doc = doc
-        this.name = name || 'unknown'
-        this.w = w;
-        this.h = h;
-        this.data = []
-        for (let i = 0; i < this.w * this.h; i++) {
-            this.data[i] = 0;
-        }
-        this._img = document.createElement('canvas')
-        this._img.width = this.w
-        this._img.height = this.h
-    }
-
-    forEachPixel(cb: (val: any, i: number, j: number) => void) {
-        for (let j = 0; j < this.h; j++) {
-            for (let i = 0; i < this.w; i++) {
-                let n = j * this.w + i;
-                let v = this.data[n];
-                cb(v, i, j);
-            }
-        }
-    }
-
-    set_pixel(x: number, y: number, color: any) {
-        let n = y * this.w + x;
-        this.data[n] = color;
-        this.sync()
-    }
-    sync() {
-        let c = this._img.getContext('2d')
-        let pal = this.doc.get_color_palette()
-        c.clearRect(0,0,this._img.width, this._img.height)
-        this.forEachPixel((v,i,j)=>{
-            c.fillStyle = pal[v]
-            c.fillRect(i, j, 1, 1)
-        })
-    }
-
-    get_pixel(x: number, y: number):any {
-        let n = y * this.w + x;
-        return this.data[n]
-    }
-
-    toJsonObj():object {
-        return {
-            clazz:'Sprite',
-            id:this.id,
-            name:this.name,
-            w:this.w,
-            h:this.h,
-            data:this.data,
-        }
-    }
-}
-
-export class Tilemap {
-    id:string
-    name: string
-    w: number
-    h: number
-    data: number[];
-
-    constructor(id, name, w, h) {
-        this.id = id || gen_id('unknown');
-        this.name = name || 'unknown'
-        this.w = w;
-        this.h = h;
-        this.data = []
-        for (let i = 0; i < this.w * this.h; i++) {
-            this.data[i] = 0;
-        }
-    }
-
-    forEachPixel(cb: (val: any, i: number, j: number) => void) {
-        for (let j = 0; j < this.h; j++) {
-            for (let i = 0; i < this.w; i++) {
-                let n = j * this.w + i;
-                let v = this.data[n];
-                cb(v, i, j);
-            }
-        }
-    }
-    expand_width(number: number) {
-        let new_tm = new Tilemap("temp","temp",this.w+number,this.h);
-        this.forEachPixel((val, i, j) => {
-            new_tm.set_pixel(i,j,val)
-        })
-        this.data = new_tm.data
-        this.w = new_tm.w
-        this.h = new_tm.h
-    }
-
-    set_pixel(x: number, y: number, color: any) {
-        let n = y * this.w + x;
-        this.data[n] = color;
-    }
-    get_pixel(x: number, y: number):any {
-        let n = y * this.w + x;
-        return this.data[n]
-    }
-
-    toJsonObj() {
-        return {
-            clazz:'Tilemap',
-            id:this.id,
-            name:this.name,
-            w:this.w,
-            h:this.h,
-            data:this.data,
-        }
-    }
-
-
-}
 
 export type CB = (any) => void;
 export type Etype = "change"|"reload"|"structure"|'main-selection'|'palette-change'
@@ -203,115 +85,14 @@ export class Observable {
     }
 }
 
-export class Sheet {
-    sprites: Sprite[];
-    private id: string;
-    name: string;
-    constructor(id:string, name:string) {
-        this.id = id || gen_id('unknown');
-        this.name = name || 'unknown'
-        this.sprites = []
-    }
-    add(sprite: Sprite) {
-        this.sprites.push(sprite)
-    }
-
-    toJsonObj() {
-        return {
-            clazz:'Sheet',
-            id:this.id,
-            name:this.name,
-            sprites: this.sprites.map(sp => sp.toJsonObj())
-        }
-    }
-}
-type GlyphMeta = {
-    codepoint:number
-    left:number,
-    right:number,
-    baseline:number,
-}
-export class SpriteGlyph extends Sprite {
-    meta: GlyphMeta;
-    constructor(id,name,w,h, doc:Doc) {
-        super(id,name,w,h,doc)
-        this.meta = {
-            codepoint:300,
-            left:0,
-            right:0,
-            baseline:0
-        }
-    }
-    override sync() {
-        let c = this._img.getContext('2d')
-        this.forEachPixel((v,i,j)=>{
-            if(v %2 === 0) {
-                c.fillStyle = 'white'
-                c.fillRect(i, j, 1, 1)
-            }
-            if(v%2 === 1) {
-                c.fillStyle = 'black'
-                c.fillRect(i, j, 1, 1)
-            }
-        })
-    }
-
-    toJsonObj():object {
-        let obj = super.toJsonObj()
-        // @ts-ignore
-        obj.clazz = 'Glyph'
-        // @ts-ignore
-        obj.meta = this.meta
-        // @ts-ignore
-        // console.log("saving out",obj.meta)
-        return obj
-    }
-}
-
-export class SpriteFont {
-    glyphs:SpriteGlyph[]
-    private id: string;
-    name: string;
-    private _selected_glyph_index: number;
-    constructor(id,name, doc:Doc) {
-        this.id = id || gen_id('unknown');
-        this.name = name || 'unknown'
-        this.glyphs = []
-        this._selected_glyph_index = 0
-    }
-    toJsonObj() {
-        return {
-            clazz:'Font',
-            id:this.id,
-            name:this.name,
-            glyphs: this.glyphs.map(sp => sp.toJsonObj())
-        }
-    }
-
-    add(spriteGlyph: SpriteGlyph) {
-        this.glyphs.push(spriteGlyph)
-    }
-
-    set_selected_glyph_index(val: number) {
-        console.log("set to",val)
-        this._selected_glyph_index = val
-    }
-    selected_glyph_index():number {
-        return this._selected_glyph_index
-    }
-    get_selected_glyph():SpriteGlyph {
-        return this.glyphs[this._selected_glyph_index]
-    }
-    set_selected_glyph(target: SpriteGlyph) {
-        this._selected_glyph_index = this.glyphs.indexOf(target)
-    }
-}
 
 function obj_to_class(sh, doc:Doc) {
     if(sh.clazz === 'Sprite') {
+        console.log("making a sprite",sh.id,sh.name)
         let sprite = new Sprite(sh.id, sh.name, sh.w, sh.h, doc)
         sprite.data = sh.data
         sprite.sync()
+        console.log("called sync")
         return sprite
     }
     if(sh.clazz === 'Tilemap') {
@@ -320,12 +101,13 @@ function obj_to_class(sh, doc:Doc) {
         return tilemap
     }
     if(sh.clazz === 'Sheet') {
+        console.log("making a sheet",sh.id,sh.name)
         let sheet = new Sheet(sh.id,sh.name)
         sheet.sprites = sh.sprites.map(sp => obj_to_class(sp, doc))
         return sheet
     }
     if(sh.clazz === 'Font') {
-        let font = new SpriteFont(sh.id,sh.name, doc)
+        let font = new SpriteFont(sh.id,sh.name)
         font.glyphs = sh.glyphs.map(g => obj_to_class(g, doc))
         return font
     }
@@ -379,7 +161,7 @@ export class Doc extends Observable {
         tilemap.set_pixel(0, 0, 'sprite1');
         this.maps = [tilemap]
         this._map_grid_visible = true;
-        let font = new SpriteFont(gen_id('font'),'somefont',this)
+        let font = new SpriteFont(gen_id('font'),'somefont')
         let glyph = new SpriteGlyph(gen_id('glyph'),'a',8,8,this)
         font.glyphs.push(glyph)
         this.fonts = [font]

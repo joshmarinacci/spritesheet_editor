@@ -1,6 +1,14 @@
+import {
+    BaseView,
+    SurfaceContext,
+    Rect,
+    CoolEvent,
+    POINTER_DOWN,
+    Size,
+    PointerEvent,
+    CanvasSurface,
+} from "thneed-gfx";
 import {Doc} from "./app-model";
-import {BaseView, CoolEvent, POINTER_DOWN, PointerEvent, Rect, Size} from "../../lib/src/core";
-import {CanvasSurface, SurfaceContext} from "../../lib/src/canvas";
 import {draw_grid} from "./common";
 import {EMPTY_COLOR} from "./font_editor";
 

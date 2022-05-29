@@ -1,14 +1,9 @@
 import {
     BaseView,
-    COMMAND_CHANGE,
     CoolEvent, Point,
-    POINTER_DOWN,
     POINTER_MOVE,
-    PointerEvent, Rect, Size,
-    View,
-    with_props
-} from "../../lib/src/core"
-import {SurfaceContext } from "../../lib/src/canvas";
+    PointerEvent, Rect, Size, SurfaceContext
+} from "thneed-gfx"
 
 export type TextStyle = {
     font: string,

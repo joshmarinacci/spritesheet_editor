@@ -1,8 +1,4 @@
-import {Point, Size} from "../../lib/src/core";
-import {
-    Sprite,
-    Tilemap
-} from "../tileeditor/app-model";
+import {Point, Size, Sprite, Tilemap} from "thneed-gfx";
 
 const TILE_SIZE = 8
 

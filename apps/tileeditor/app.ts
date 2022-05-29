@@ -1,12 +1,31 @@
+// import {canvasToPNGBlob, fileToJSON, forceDownloadBlob, jsonObjToBlob} from "../../common/util";
 import {
+    Sheet,
+    Sprite,
+    Tilemap,
+    SpriteGlyph,
+    SpriteFont,
+    gen_id,
+    CanvasSurface,
+    HBox,
     ActionButton,
+    with_props,
     CustomLabel,
     DropdownButton,
+    TextLine,
+    BaseParentView,
+    SurfaceContext,
+    StandardPanelBackgroundColor,
+    Size,
+    Point,
+    LayerView,
+    VBox,
+    log,
     Header,
-    SelectList, TextLine,
-} from "../../lib/src/components";
-import {DebugLayer} from "../../lib/src/debug";
-import {canvasToPNGBlob, fileToJSON, forceDownloadBlob, jsonObjToBlob} from "../../common/util";
+    KeystrokeCaptureView,
+    DebugLayer,
+    SelectList,
+} from "thneed-gfx";
 import {
     CHERRY_BLOSSOM,
     DEMI_CHROME,
@@ -14,21 +33,13 @@ import {
     DUNE,
     GRAYSCALE_PALETTE,
     INVERTED_PALETTE, PICO8,
-    Sheet,
-    Sprite,
-    SpriteFont,
-    SpriteGlyph,
-    Tilemap
 } from "./app-model";
-import {CanvasSurface, log, SurfaceContext,} from "../../lib/src/canvas";
-import {StandardPanelBackgroundColor} from "../../lib/src/style";
-import {BaseParentView, gen_id, Point, Size, with_props} from "../../lib/src/core";
+import {jsonObjToBlob, fileToJSON, forceDownloadBlob,canvasToPNGBlob,} from "../../common/util"
 // @ts-ignore
-import basefont_data from "../../lib/src/base_font.json";
+import basefont_data from "thneed-gfx/src/base_font.json";
 import {make_map_view} from "./map_editor";
 import {make_font_view} from "./font_editor";
 import {make_sheet_editor_view} from "./sheet_editor";
-import {HBox, KeystrokeCaptureView, LayerView, VBox} from "../../lib/src/containers"
 function setup_toolbar(doc: Doc):HBox {
     let toolbar = new HBox();
     toolbar.pad = 0
@@ -41,7 +52,7 @@ function setup_toolbar(doc: Doc):HBox {
         sheet.add(sprite)
         let tilemap = new Tilemap(gen_id('tilemap'),'mapx', 16, 16);
         tilemap.set_pixel(0, 0, sprite.id);
-        let font = new SpriteFont(gen_id('font'),'somefont',doc)
+        let font = new SpriteFont(gen_id('font'),'somefont')
         let glyph = new SpriteGlyph(gen_id('glyph'),'a',8,8,doc)
         font.glyphs.push(glyph)
         let empty = {
@@ -107,7 +118,7 @@ function setup_toolbar(doc: Doc):HBox {
 
     let add_font_button = with_props(new ActionButton(),{caption:'+ font'})
     add_font_button.on('action',()=>{
-        let font = new SpriteFont(gen_id('font'),'somefont',doc)
+        let font = new SpriteFont(gen_id('font'),'somefont')
         let glyph = new SpriteGlyph(gen_id('glyph'),'a glyph',8,8,doc)
         glyph.meta.codepoint = 300
         font.glyphs.push(glyph)

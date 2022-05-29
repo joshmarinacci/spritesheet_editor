@@ -1,14 +1,29 @@
-import {Doc, Sprite} from "./app-model";
 import {
-    BaseView,
-    CoolEvent, Point,
+    Sprite,
+    Rect,
     POINTER_CATEGORY,
-    POINTER_DOWN,
-    PointerEvent, Rect,
+    Point,
     SECONDARY_BUTTON,
-    Size
-} from "../../lib/src/core";
-import {CanvasSurface, SurfaceContext} from "../../lib/src/canvas";
+    Tilemap,
+    CanvasSurface,
+    BaseView,
+    SurfaceContext,
+    CoolEvent,
+    POINTER_DOWN,
+    POINTER_DRAG,
+    Size,
+    Callback,
+    with_props,
+    VBox,
+    HBox,
+    PointerEvent,
+    ActionButton,
+    TextLine,
+    ToggleButton,
+    Label,
+    ScrollView,
+} from "../../../thneed-gfx/";
+import {Doc} from "./app-model";
 import {draw_grid} from "./common";
 
 
