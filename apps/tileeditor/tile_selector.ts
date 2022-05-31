@@ -22,7 +22,8 @@ import {
     ToggleButton,
     Label,
     ScrollView,
-} from "../../../thneed-gfx/";// @ts-ignore
+} from "thneed-gfx";
+// @ts-ignore
 import basefont_data from "../../lib/src/base_font.json";
 import {Doc, draw_sprite} from "./app-model";
 import {draw_grid, wrap_number} from "./common";
