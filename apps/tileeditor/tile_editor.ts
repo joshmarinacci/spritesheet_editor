@@ -4,25 +4,14 @@ import {
     POINTER_CATEGORY,
     Point,
     SECONDARY_BUTTON,
-    Tilemap,
     CanvasSurface,
     BaseView,
     SurfaceContext,
     CoolEvent,
     POINTER_DOWN,
-    POINTER_DRAG,
     Size,
-    Callback,
-    with_props,
-    VBox,
-    HBox,
-    PointerEvent,
-    ActionButton,
-    TextLine,
-    ToggleButton,
-    Label,
-    ScrollView,
-} from "../../../thneed-gfx/";
+    PointerEvent, POINTER_DRAG,
+} from "thneed-gfx";
 import {Doc} from "./app-model";
 import {draw_grid} from "./common";
 
@@ -72,11 +61,16 @@ export class TileEditor extends BaseView {
             }
             return
         }
-        if (this._next_click_fill && e.type === POINTER_DOWN) {
-            let v = tile.get_pixel(pt.x, pt.y)
-            this.bucket_fill(tile, v, this.doc.get_selected_color(), pt)
-            this._next_click_fill = false
-        } else {
+        if(e.type === POINTER_DOWN) {
+            if (this._next_click_fill) {
+                let v = tile.get_pixel(pt.x, pt.y)
+                this.bucket_fill(tile, v, this.doc.get_selected_color(), pt)
+                this._next_click_fill = false
+            } else {
+                tile.set_pixel(pt.x, pt.y, this.doc.get_selected_color());
+            }
+        }
+        if(e.type === POINTER_DRAG) {
             tile.set_pixel(pt.x, pt.y, this.doc.get_selected_color());
         }
         this.doc.mark_dirty()
