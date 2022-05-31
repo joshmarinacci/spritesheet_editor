@@ -13,7 +13,7 @@ import {
     TextLine,
     COMMAND_CHANGE,
     ActionButton,
-} from "../../../thneed-gfx/";
+} from "thneed-gfx";
 import {Doc,} from "./app-model";
 // @ts-ignore
 // import basefont_data from "../../lib/src/base_font.json";
