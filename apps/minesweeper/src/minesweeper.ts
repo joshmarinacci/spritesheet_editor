@@ -8,7 +8,7 @@ import {
     CanvasSurface,
     LayerView
 } from "thneed-gfx"
-import {GridModel} from "../../common/models";
+import {GridModel} from "../../../common/models";
 
 /*
 

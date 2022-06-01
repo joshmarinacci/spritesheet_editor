@@ -34,7 +34,7 @@ import {
     GRAYSCALE_PALETTE,
     INVERTED_PALETTE, PICO8,
 } from "./app-model";
-import {jsonObjToBlob, fileToJSON, forceDownloadBlob,canvasToPNGBlob,} from "../../common/util"
+import {jsonObjToBlob, fileToJSON, forceDownloadBlob,canvasToPNGBlob,} from "../../../common/util"
 // @ts-ignore
 // import basefont_data from "thneed-gfx/src/base_font.json";
 import {make_map_view} from "./map_editor";

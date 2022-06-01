@@ -17,15 +17,15 @@ import {CanvasSurface,
 } from "thneed-gfx";
 // @ts-ignore
 import snake_json from "./snake.json";
-import {GridModel} from "../../common/models";
-import {randi} from "../../common/util"
+import {GridModel} from "../../../common/models";
+import {randi} from "../../../common/util"
 import {
     CHERRY_BLOSSOM,
     DEMI_CHROME,
     Doc, DUNE,
     GRAYSCALE_PALETTE,
     INVERTED_PALETTE,
-} from "../tileeditor/app-model";
+} from "../../tileeditor/src/app-model";
 
 const SCALE = 3
 const SPEEDS = [

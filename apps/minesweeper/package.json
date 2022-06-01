@@ -8,7 +8,7 @@
     "typescript": "^4.5.5"
   },
   "scripts": {
-    "minesweeper-dev": "npx parcel minesweeper.html",
-    "build": "npx parcel build minesweeper.html"
+    "minesweeper-dev": "npx parcel src/minesweeper.html",
+    "build": "npx parcel build src/minesweeper.html"
   }
 }
