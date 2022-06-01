@@ -4,6 +4,7 @@
   "source": "minesweeper.html",
   "dependencies": {
     "parcel": "^2.3.2",
+    "thneed-gfx": "^0.1.4",
     "typescript": "^4.5.5"
   },
   "scripts": {

@@ -18,8 +18,6 @@ import {
     SpriteGlyph, StandardPanelBackgroundColor,
 } from "thneed-gfx";
 import {Doc, draw_sprite} from "./app-model";
-// @ts-ignore
-import basefont_data from "../../lib/src/base_font.json";
 import {draw_grid, wrap_number} from "./common";
 import {draw_selection_rect, PaletteChooser} from "./palette_chooser";
 import {TileEditor} from "./tile_editor";

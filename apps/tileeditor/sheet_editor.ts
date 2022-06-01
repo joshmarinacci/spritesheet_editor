@@ -1,11 +1,7 @@
 import {
-    Sheet,
     Sprite,
     Tilemap,
-    SpriteGlyph,
-    SpriteFont,
     gen_id,
-    CanvasSurface,
     HBox,
     VBox,
     with_props,
@@ -14,9 +10,7 @@ import {
     COMMAND_CHANGE,
     ActionButton,
 } from "thneed-gfx";
-import {Doc,} from "./app-model";
-// @ts-ignore
-// import basefont_data from "../../lib/src/base_font.json";
+import {Doc} from "./app-model";
 import {TileSelector} from "./tile_selector";
 import {MapEditor} from "./map_editor";
 import {PaletteChooser} from "./palette_chooser";

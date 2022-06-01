@@ -17,11 +17,9 @@ import {
     TextLine,
     ToggleButton,
     Label,
-    ScrollView,
+    ScrollView, COMMAND_CHANGE,
 } from "thneed-gfx";
 
-// @ts-ignore
-import basefont_data from "../../lib/src/base_font.json";
 import {Doc} from "./app-model";
 import {draw_grid} from "./common";
 import {TileSelector} from "./tile_selector";
@@ -130,7 +128,7 @@ export function make_map_view(doc: Doc) {
 
     let toolbar = with_props(new HBox(), { fill:'#ccc', hflex:true }) as HBox
     let grid_toggle = new ToggleButton("grid")
-    grid_toggle.on('action', () => {
+    grid_toggle.on(COMMAND_CHANGE, () => {
         doc.set_map_grid_visible(!doc.get_map_grid_visible());
         grid_toggle.set_selected(doc.get_map_grid_visible());
     });

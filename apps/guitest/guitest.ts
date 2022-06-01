@@ -1,42 +1,43 @@
-import {CanvasSurface, SurfaceContext} from "./canvas";
 import {
-    ActionButton, CheckButton,
-    FontIcon,
-    Header,
-    HSpacer,
-    Label,
-    NumberTextLine,
-    RadioButton,
-    SelectList, TextLine, ToggleButton
-} from "./components";
-import {
+    ActionButton,
+    PointerEvent,
     BaseParentView,
     BaseView,
+    CanvasSurface,
+    CheckButton,
     COMMAND_ACTION,
     COMMAND_CHANGE,
-    CommandEvent, CoolEvent,
-    gen_id,
-    Point, POINTER_CATEGORY, POINTER_DRAG, PointerEvent,
-    Size,
-    View,
-    with_props
-} from "./core";
-// @ts-ignore
-import basefont_data from "./base_font.json";
-// @ts-ignore
-import toolbar_json from "./toolbar.json"
-import {DebugLayer, ResizeHandle} from "./debug";
-import {randi} from "../../common/util";
-import {TableView} from "./table";
-import {
+    CommandEvent,
+    CoolEvent,
+    DebugLayer,
     DialogContainer,
-    DialogLayer, GrowPanel, HBox,
-    KeystrokeCaptureView, LayerView,
+    FontIcon,
+    gen_id,
+    HBox,
+    Header,
+    HSpacer,
+    KeystrokeCaptureView,
+    Label,
+    LayerView,
+    NumberTextLine,
+    Point,
+    POINTER_CATEGORY,
+    POINTER_DRAG,
     PopupContainer,
     PopupLayer,
+    RadioButton,
+    randi,
     ScrollView,
-    VBox
-} from "./containers";
+    SelectList,
+    Size,
+    SurfaceContext,
+    TableView,
+    TextLine,
+    ToggleButton,
+    VBox,
+    View,
+    with_props, DialogLayer
+} from "thneed-gfx";
 
 class FixedGridPanel extends BaseView {
     private sw: number;

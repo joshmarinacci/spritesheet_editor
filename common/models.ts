@@ -1,6 +1,3 @@
-import {log} from "../lib/src/canvas";
-import {Callback, Point, Size} from "../lib/src/core";
-
 export class GridModel {
     w: number;
     h: number;

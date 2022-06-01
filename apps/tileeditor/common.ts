@@ -3,8 +3,6 @@ import {
     Point,
     CanvasSurface,
 } from "thneed-gfx";
-// @ts-ignore
-import basefont_data from "thneed-gfx/src/base_font.json";
 
 export function draw_grid(g: CanvasSurface, size: Size, step: number) {
     //draw the grid

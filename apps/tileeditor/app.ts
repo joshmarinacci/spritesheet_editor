@@ -36,7 +36,7 @@ import {
 } from "./app-model";
 import {jsonObjToBlob, fileToJSON, forceDownloadBlob,canvasToPNGBlob,} from "../../common/util"
 // @ts-ignore
-import basefont_data from "thneed-gfx/src/base_font.json";
+// import basefont_data from "thneed-gfx/src/base_font.json";
 import {make_map_view} from "./map_editor";
 import {make_font_view} from "./font_editor";
 import {make_sheet_editor_view} from "./sheet_editor";
@@ -343,6 +343,6 @@ export function start() {
     root.add(popup_layer)
     root.add(new DebugLayer())
     surface.set_root(root)
-    surface.load_jsonfont(basefont_data,'base','base')
+    // surface.load_jsonfont(basefont_data,'base','base')
     surface.start();
 }
