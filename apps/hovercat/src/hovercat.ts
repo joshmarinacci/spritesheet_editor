@@ -13,7 +13,7 @@ import {
 } from "thneed-gfx"
 import {
     Doc, PICO8,
-} from "../tileeditor/src/app-model";
+} from "../../tileeditor/src/app-model";
 import {do_physics, Physics, Player} from "./physics";
 // @ts-ignore
 import hovercat_json from "./hovercat.json";

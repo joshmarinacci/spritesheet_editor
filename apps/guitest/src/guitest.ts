@@ -280,18 +280,18 @@ function restore_from_json(toolbar_json: any):View {
     return root
 }
 
-function make_toolbar(surf:CanvasSurface) {
-    let toolbar:HBox = restore_from_json(toolbar_json) as HBox
-    let drop:DropdownButton = toolbar.find_child('Dropdown_button_001') as DropdownButton
-    drop.data = ['zero','mid','loud','bleeding ears']
-    drop.set_renderer((v)=>v.toString())
-    drop.set_selected_index(0)
-
-    // @ts-ignore
-    let add_songs:ActionButton = toolbar.find_child('ActionButton_004') as ActionButton
-    add_songs.on(COMMAND_ACTION,open_songs_dialog(surf))
-    return toolbar
-}
+// function make_toolbar(surf:CanvasSurface) {
+//     let toolbar:HBox = restore_from_json(toolbar_json) as HBox
+//     let drop:DropdownButton = toolbar.find_child('Dropdown_button_001') as DropdownButton
+//     drop.data = ['zero','mid','loud','bleeding ears']
+//     drop.set_renderer((v)=>v.toString())
+//     drop.set_selected_index(0)
+//
+//     // @ts-ignore
+//     let add_songs:ActionButton = toolbar.find_child('ActionButton_004') as ActionButton
+//     add_songs.on(COMMAND_ACTION,open_songs_dialog(surf))
+//     return toolbar
+// }
 
 function make_statusbar() {
     let status_bar = new HBox()
@@ -349,7 +349,7 @@ function make_song_list(surface: CanvasSurface) {
 
 function make_standard(w:number,h:number): CanvasSurface{
     let surface = new CanvasSurface(w,h, 1.0);
-    surface.load_jsonfont(basefont_data,'base','base')
+    // surface.load_jsonfont(basefont_data,'base','base')
     surface.debug = false
     let main = new LayerView();
     main.set_name('layer-view')
@@ -376,7 +376,7 @@ function make_standard(w:number,h:number): CanvasSurface{
 function make_music_player(surface: CanvasSurface):View {
     let root = new VBox()
     root.set_name('root')
-    root.add(make_toolbar(surface))
+    // root.add(make_toolbar(surface))
 
     let middle_layer = new HBox()
     middle_layer.set_vflex(true)
