@@ -63,6 +63,24 @@ export const PICO8 = [
 'transparent',
 ]
 
+export const MINECRAFT16 = [
+    '#f9ffff',
+    '#9c9d97',
+    '#474f52',
+    '#1d1c21',
+    '#ffd83d',
+    '#f9801d',
+    '#b02e26',
+    '#825432',
+    '#80c71f',
+    '#5d7c15',
+    '#3ab3da',
+    '#169c9d',
+    '#3c44a9',
+    '#f38caa',
+    '#c64fbd',
+    '#8932b7',
+]
 
 export type CB = (any) => void;
 export type Etype = "change"|"reload"|"structure"|'main-selection'|'palette-change'

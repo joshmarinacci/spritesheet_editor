@@ -32,7 +32,7 @@ import {
     Doc,
     DUNE,
     GRAYSCALE_PALETTE,
-    INVERTED_PALETTE, PICO8,
+    INVERTED_PALETTE, MINECRAFT16, PICO8,
 } from "./app-model";
 import {jsonObjToBlob, fileToJSON, forceDownloadBlob,canvasToPNGBlob,} from "../../../common/util"
 // @ts-ignore
@@ -160,6 +160,7 @@ function setup_toolbar(doc: Doc):HBox {
             {caption:'Cherry Blossom' ,fun:()=>doc.set_palette(CHERRY_BLOSSOM)},
             {caption:'Dune' ,fun:()=>doc.set_palette(DUNE)},
             {caption:'Pico8' ,fun:()=>doc.set_palette(PICO8)},
+            {caption:'Minecraft16' ,fun:()=>doc.set_palette(MINECRAFT16)},
         ]
     })
     toolbar.add(change_palette_button)
