@@ -1,15 +1,14 @@
-import {CheckButton, Label, TextLine, } from "../../lib/src/components";
 import {
-    BaseParentView, BaseView, CanvasSurface,
+    BaseParentView, BaseView, CanvasSurface, CheckButton,
     COMMAND_CHANGE,
     CoolEvent, DebugLayer, HBox, KEYBOARD_CATEGORY,
-    KEYBOARD_DOWN, KeyboardEvent, KeystrokeCaptureView, LayerView, Point, POINTER_CATEGORY,
+    KEYBOARD_DOWN, KeyboardEvent, KeystrokeCaptureView, Label, LayerView, Point, POINTER_CATEGORY,
     POINTER_DOWN, POINTER_DRAG, PointerEvent, ScrollView, Size, SurfaceContext, VBox,
     View,
     with_props
 } from "thneed-gfx"
 // @ts-ignore
-import basefont_data from "../../lib/src/base_font.json";
+import basefont_data from "thneed-gfx/src/base_font.json";
 import {BlockStyle, Paragraph, RichTextArea, TextStyle} from "./richtext";
 
 type TodoItem = {

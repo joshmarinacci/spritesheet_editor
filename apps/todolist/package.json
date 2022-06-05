@@ -3,11 +3,12 @@
   "version": "0.0.1",
   "dependencies": {
     "parcel": "^2.3.2",
-    "typescript": "^4.5.5"
+    "typescript": "^4.5.5",
+    "thneed-gfx": "^0.1.9"
   },
   "scripts": {
-    "dev": "npx parcel index.html",
-    "build": "npx parcel build index.html"
+    "dev": "npx parcel src/index.html",
+    "build": "npx parcel build src/index.html"
   }
 }
 
