@@ -1,10 +1,11 @@
 import {
-    BaseParentView, BaseView, CanvasSurface, CheckButton,
+    ActionButton,
+    BaseParentView, BaseView, CanvasSurface, CheckButton, COMMAND_ACTION,
     COMMAND_CHANGE,
-    CoolEvent, DebugLayer, HBox, KEYBOARD_CATEGORY,
+    CoolEvent, DebugLayer, HBox, HSpacer, KEYBOARD_CATEGORY,
     KEYBOARD_DOWN, KeyboardEvent, KeystrokeCaptureView, Label, LayerView, Point, POINTER_CATEGORY,
-    POINTER_DOWN, POINTER_DRAG, PointerEvent, ScrollView, Size, SurfaceContext, VBox,
-    View,
+    POINTER_DOWN, POINTER_DRAG, PointerEvent, ScrollView, Size, SurfaceContext, TextLine, ToggleButton, VBox,
+    View, with_action,
     with_props
 } from "thneed-gfx"
 // @ts-ignore
@@ -100,17 +101,94 @@ let DOC:Paragraph[] = [
     }
 ]
 
+class EditableLabel extends BaseParentView {
+    private ed_lab_lab: Label;
+    private _text: string;
+    private ed_lab_line: TextLine;
+    private editing: boolean;
+    constructor() {
+        super("editable-label");
+        this._text = "no text"
+        this.ed_lab_lab = with_props(new Label(),{caption:this._text}) as Label
+        this.add(this.ed_lab_lab)
+        this.ed_lab_lab.set_visible(true)
+        this.ed_lab_line = with_props(new TextLine(),{text:this._text}) as TextLine
+        this.ed_lab_line.set_visible(false)
+        this.add(this.ed_lab_line)
+        this.set_hflex(true)
+    }
+
+    layout(g: SurfaceContext, available: Size): Size {
+        this.set_size(new Size(available.w,20))
+        this.get_children().forEach(ch => ch.layout(g,new Size(available.w,20)))
+        return this.size()
+    }
+
+    set_editing(b: boolean) {
+        this.editing = b
+        if(this.editing) {
+            this.ed_lab_lab.set_visible(false)
+            this.ed_lab_line.set_visible(true)
+        } else {
+            let t = this.ed_lab_line.text
+            this.ed_lab_lab.set_caption(t)
+            this.ed_lab_lab.set_visible(true)
+            this.ed_lab_line.set_visible(false)
+            this._text = t
+        }
+    }
+
+    text() {
+        return this._text
+    }
+
+    set_text(desc: string) {
+        this._text = desc
+        this.ed_lab_lab.set_caption(this._text)
+        this.ed_lab_line.set_text(this._text)
+    }
+}
+
+
+
 function make_item_view(td: TodoItem):View {
+    let ed_lab = new EditableLabel()
+    ed_lab.set_text(td.desc)
     let box = with_props(new VBox(),{fill:'yellow'}) as VBox
     let row = with_props(new HBox(), {fill:'#eee', hflex:true}) as HBox
     let cb = with_props(new CheckButton(), {caption:'c', selected:td.completed})
     cb.on(COMMAND_CHANGE,(e)=>td.completed = e.target.selected())
     row.add(cb)
-    row.add(with_props(new Label(),{caption:td.desc}))
+    // row.add(with_props(new Label(),{caption:td.desc}))
+    row.add(ed_lab)
     box.add(row)
     let row2 = new HBox()
     row2.add(with_props(new Label(), {caption:'tags'}))
+    row2.add(new HSpacer())
     box.add(row2)
+    let tog = new ToggleButton()
+    tog.set_caption("edit")
+    tog.on(COMMAND_CHANGE,() => {
+        ed_lab.set_editing(tog.selected())
+        //if just finished editing, copy back the text
+        if(!tog.selected()) {
+            td.desc = ed_lab.text()
+        }
+    })
+    // let ed = with_action(with_props(new ActionButton(),{caption:'edit'}) as ActionButton,()=>{
+    //     ed_lab.set_editing(true)
+    //     let edit_row = with_props(new HBox(),{fill:'#f0f0f0', hflex:true}) as HBox
+    //     edit_row.add(with_props(new Label(),{caption:'editing'}))
+    //     edit_row.add(with_action(with_props(new ActionButton(),{caption:'done'}) as ActionButton,()=>{
+    //         // td.desc = ed_lab_line.text
+    //         // ed_lab_lab.set_caption(td.desc)
+    //         // ed_lab_lab.set_visible(true)
+    //         // ed_lab_line.set_visible(false)
+    //         box.remove(edit_row)
+    //     }))
+    //     box.add(edit_row)
+    // })
+    row2.add(tog)
     return box
 }
 
@@ -305,9 +383,35 @@ function make_main_view():View {
     scroll.set_content(with_props(new RichTextArea(), {doc:DOC}))
     let root = with_props(new SplitView(), {hflex:true, vflex:true, name:'banana-split'}) as SplitView
     root.set_first(scroll)
+
+    let vbox = new VBox()
+    vbox.set_vflex(true)
+    vbox.set_fill('white')
+    vbox.set_hflex(true)
+
+    let toolbar = new HBox()
+    toolbar.set_hflex(true)
+    let add = new ActionButton()
+    add.set_caption("add")
+    toolbar.add(add)
+    vbox.add(toolbar)
+
     let list_view = with_props(new CompoundListView(), {name:'main-view', vflex:true, hflex:true}) as CompoundListView
     DATA.forEach(td => list_view.add_item(make_item_view(td)))
-    root.set_second(list_view)
+    // root.set_second(list_view)
+    vbox.add(list_view)
+
+    add.on(COMMAND_ACTION,() => {
+        let new_item:TodoItem = {
+            completed: false,
+            desc: "no desc",
+            tags: ["two","tags"]
+        }
+        DATA.push(new_item)
+        list_view.add_item(make_item_view(new_item))
+    })
+
+    root.set_second(vbox)
     return root
 }
 
