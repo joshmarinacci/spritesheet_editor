@@ -14,6 +14,7 @@ import {
 } from "thneed-gfx";
 import {Doc} from "./app-model";
 import {draw_grid} from "./common";
+import {ChangeBuffer} from "./sheet_editor";
 
 
 export class TileEditor extends BaseView {
@@ -22,14 +23,16 @@ export class TileEditor extends BaseView {
     private sprite: Sprite
     private palette: string[];
     private _next_click_fill: boolean;
+    private undobuffer: ChangeBuffer;
 
-    constructor(doc, palette) {
+    constructor(doc, palette, change:ChangeBuffer) {
         super('tile editor')
         this.doc = doc
         this.palette = palette
         this.scale = 32;
         this.sprite = null
         this._next_click_fill = false
+        this.undobuffer = change
     }
 
     draw(g: SurfaceContext) {
@@ -67,7 +70,20 @@ export class TileEditor extends BaseView {
                 this.bucket_fill(tile, v, this.doc.get_selected_color(), pt)
                 this._next_click_fill = false
             } else {
-                tile.set_pixel(pt.x, pt.y, this.doc.get_selected_color());
+                let old_color = tile.get_pixel(pt.x,pt.y)
+                let new_color = this.doc.get_selected_color()
+                this.undobuffer.push_change(
+                    "set_pixel",
+                    ()=>{
+                        console.log("re setting pixel")
+                        //redo
+                        tile.set_pixel(pt.x,pt.y,new_color)
+                    },()=>{
+                        //undo
+                        console.log("un setting pixel")
+                        tile.set_pixel(pt.x,pt.y,old_color)
+                    })
+                tile.set_pixel(pt.x, pt.y, new_color);
             }
         }
         if(e.type === POINTER_DRAG) {

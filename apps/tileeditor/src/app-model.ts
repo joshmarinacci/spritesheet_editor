@@ -226,13 +226,6 @@ export class Doc extends Observable {
         if (!sheet) return null
         return sheet.sprites[this._selected_tile_index]
     }
-    // get_selected_glyph_index():number {
-    //     return this.selected_glyph_index
-    // }
-    // set_selected_glyph_index(val: number) {
-    //     this.selected_glyph_index = val;
-    //     this.fire('change', this.selected_glyph_index)
-    // }
     get_selected_map():Tilemap {
         return this.maps[this.selected_map]
     }
@@ -348,10 +341,6 @@ export class Doc extends Observable {
             let data = JSON.parse(item)
             this.reset_from_json(data)
         }
-    }
-
-    set_selected_tree_item_index(y:number) {
-        // this.selected_tree_item_index = y
     }
 
     set_selected_tree_item(item:any) {

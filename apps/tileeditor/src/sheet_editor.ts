@@ -8,7 +8,7 @@ import {
     Label,
     TextLine,
     COMMAND_CHANGE,
-    ActionButton,
+    ActionButton, COMMAND_ACTION,
 } from "thneed-gfx";
 import {Doc} from "./app-model";
 import {TileSelector} from "./tile_selector";
@@ -16,7 +16,52 @@ import {MapEditor} from "./map_editor";
 import {PaletteChooser} from "./palette_chooser";
 import {TileEditor} from "./tile_editor";
 
+
+type Change = {
+    name:string,
+    undo:()=>void,
+    redo:()=>void,
+}
+
+export class ChangeBuffer {
+    private changes: Change[];
+    private current: number;
+    constructor() {
+        this.changes = []
+        this.current = -1
+    }
+    undo() {
+        if(this.current <= -1) {
+            return
+        }
+        let change = this.changes[this.current]
+        change.undo()
+        this.current--
+        if(this.current < -1) this.current = -1
+    }
+    redo() {
+        this.current++
+        if(this.current > this.changes.length-1) {
+            this.current = this.changes.length-1
+            return
+        }
+        let change = this.changes[this.current]
+        change.redo()
+    }
+
+    push_change(name:string, redo: () => void, undo: () => void) {
+        this.changes = this.changes.slice(0,this.current+1)
+        this.changes.push({
+            name:name,
+            undo:undo,
+            redo:redo,
+        })
+        this.current += 1
+    }
+}
+
 export function make_sheet_editor_view(doc: Doc) {
+    let change_buffer = new ChangeBuffer()
     let sheet_editor = new HBox()
     sheet_editor.set_name('sheet-editor-view')
 
@@ -25,7 +70,7 @@ export function make_sheet_editor_view(doc: Doc) {
     vb1.add(palette_chooser);
 
     // tile editor, edits the current tile
-    let tile_editor = new TileEditor(doc, doc.get_color_palette());
+    let tile_editor = new TileEditor(doc, doc.get_color_palette(), change_buffer);
     vb1.add(tile_editor)
     let label = with_props(new Label("name"),{caption:'name'});
     vb1.add(label)
@@ -48,6 +93,12 @@ export function make_sheet_editor_view(doc: Doc) {
     let bucket_button = with_props(new ActionButton(), {caption: 'fill once'})
     bucket_button.on('action', () => tile_editor.next_click_fill())
     vb1.add(bucket_button)
+    let undo_button = with_props(new ActionButton(),{caption:"undo"}) as ActionButton
+    undo_button.on(COMMAND_ACTION,() => change_buffer.undo())
+    let redo_button = with_props(new ActionButton(),{caption:"redo"})
+    redo_button.on(COMMAND_ACTION, () => change_buffer.redo())
+    vb1.add(undo_button)
+    vb1.add(redo_button)
     sheet_editor.add(vb1)
 
     let vb2 = new VBox()
