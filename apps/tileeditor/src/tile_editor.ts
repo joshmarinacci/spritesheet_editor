@@ -70,24 +70,13 @@ export class TileEditor extends BaseView {
                 this.bucket_fill(tile, v, this.doc.get_selected_color(), pt)
                 this._next_click_fill = false
             } else {
-                let old_color = tile.get_pixel(pt.x,pt.y)
                 let new_color = this.doc.get_selected_color()
-                this.undobuffer.push_change(
-                    "set_pixel",
-                    ()=>{
-                        console.log("re setting pixel")
-                        //redo
-                        tile.set_pixel(pt.x,pt.y,new_color)
-                    },()=>{
-                        //undo
-                        console.log("un setting pixel")
-                        tile.set_pixel(pt.x,pt.y,old_color)
-                    })
-                tile.set_pixel(pt.x, pt.y, new_color);
+                this.set_pixel(new_color,pt,tile)
             }
         }
         if(e.type === POINTER_DRAG) {
-            tile.set_pixel(pt.x, pt.y, this.doc.get_selected_color());
+            let new_color = this.doc.get_selected_color()
+            this.set_pixel(new_color,pt,tile)
         }
         this.doc.mark_dirty()
         this.doc.fire('change', "tile edited");
@@ -110,6 +99,7 @@ export class TileEditor extends BaseView {
         let v = tile.get_pixel(pt.x, pt.y)
         if (v !== target) return
         if (v === target) {
+            this.set_pixel(replace,pt,tile)
             tile.set_pixel(pt.x, pt.y, replace)
         } else {
             return
@@ -122,5 +112,24 @@ export class TileEditor extends BaseView {
 
     set_palette(colorPalette: string[]) {
         this.palette = colorPalette
+    }
+
+    private set_pixel(new_color: number, pt: Point, tile: Sprite) {
+        let old_color = tile.get_pixel(pt.x,pt.y)
+        if(old_color === new_color) {
+            return
+        }
+        this.undobuffer.push_change(
+            "set_pixel",
+            ()=>{
+                console.log("re setting pixel")
+                //redo
+                tile.set_pixel(pt.x,pt.y,new_color)
+            },()=>{
+                //undo
+                console.log("un setting pixel")
+                tile.set_pixel(pt.x,pt.y,old_color)
+            })
+        tile.set_pixel(pt.x, pt.y, new_color);
     }
 }
