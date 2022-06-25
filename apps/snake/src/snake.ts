@@ -1,4 +1,5 @@
-import {CanvasSurface,
+import {
+    CanvasSurface,
     SurfaceContext,
     log,
     CoolEvent,
@@ -13,7 +14,7 @@ import {CanvasSurface,
     LayerView,
     SuperArray,
     Rect,
-    KEYBOARD_DOWN,
+    KEYBOARD_DOWN, KEYBOARD_UP,
 } from "thneed-gfx";
 // @ts-ignore
 import snake_json from "./snake.json";
@@ -112,8 +113,9 @@ class GridView extends BaseParentView {
     }
     draw(g: SurfaceContext): void {
         // @ts-ignore
-        g.ctx.imageSmoothingEnabled = false
+        g.set_smooth_sprites(false)
         g.fillBackgroundSize(this.size(),'white')
+        g.set_sprite_scale(3)
         this.model.forEach((w,x,y)=>{
             let color = 'white'
             if (w === EMPTY) color = 'white'
@@ -126,7 +128,6 @@ class GridView extends BaseParentView {
             let yy = y*8*SCALE
             g.fill(new Rect(xx,yy,1*8*SCALE,1*8*SCALE),color);
             let pt = new Point(xx,yy)
-            g.set_sprite_scale(3)
             if (w === EMPTY) g.draw_sprite(pt,this.empty)
             if (w === WALL) {
                 if(x === 0) g.draw_sprite(pt, this.wall_left)
@@ -297,6 +298,57 @@ function find_empty_point(board: GridModel, min: number, max: number):Point {
 }
 
 
+type KeyState = {
+    down:boolean,
+    typed:boolean,
+}
+class KeyboardLayerView extends LayerView {
+    key_map: Map<string, KeyState>;
+
+    constructor() {
+        super('keyboard-layer-view')
+        this.key_map = new Map<string, KeyState>();
+    }
+    override draw(g:SurfaceContext) {
+        // console.log("drawing top")
+        // this.clear()
+    }
+    override input(evt: CoolEvent): void {
+        if (evt.type === KEYBOARD_DOWN) {
+            this.get_key_state(evt.code).down = true
+            this.get_key_state(evt.code).typed = false
+        }
+        if (evt.type === KEYBOARD_UP) {
+            this.get_key_state(evt.code).down = false
+            this.get_key_state(evt.code).typed = true
+            console.log("set typed")
+        }
+    }
+    is_down(name: string): boolean {
+        return this.get_key_state(name).down
+    }
+    was_typed(name:string): boolean {
+        return this.get_key_state(name).typed
+    }
+
+    private get_key_state(name:string):KeyState {
+        if (!this.key_map.has(name)) {
+            let ks:KeyState = {
+                down: false,
+                typed: false,
+            }
+            this.key_map.set(name, ks)
+        }
+        return this.key_map.get(name)
+    }
+
+    clear_typed_state() {
+        this.key_map.forEach((val,key) => {
+            val.typed = false
+        })
+    }
+}
+
 export async function start() {
     log("starting", snake_json)
     log("total level count =", SPEEDS.length)
@@ -309,7 +361,7 @@ export async function start() {
     surface.load_jsonfont(doc,'base','base')
 
 
-    let root = new LayerView()
+    let root = new KeyboardLayerView()
     let snake = new SnakeModel()
     snake.position.copy_from(START_POSITION);
     let board = new GridModel(BOARD_SIZE)
@@ -344,24 +396,23 @@ export async function start() {
         doc.set_palette(COLOR_PALETTES[current_palette])
     }
 
-    surface.on_input((evt) => {
-        if(gameover) {
+    let playing = false
+    let gameover = true
+
+    function handle_user_input() {
+        if (gameover) {
             splash_layer.set_visible(false)
             gameover = false
             playing = true
             nextLevel()
         }
-        if(evt.type === KEYBOARD_DOWN) {
-            let e = evt as KeyboardEvent
-            if(e.key === 'ArrowLeft')  turn_to(new Point(-1,0));
-            if(e.key === 'ArrowRight') turn_to(new Point(+1,0));
-            if(e.key === 'ArrowUp')    turn_to(new Point(+0,-1));
-            if(e.key === 'ArrowDown')  turn_to(new Point(+0,+1));
-            if(e.key === 'p') cycle_palette()
-        }
-    })
-    let playing = false
-    let gameover = true
+        if(root.is_down('ArrowLeft'))  turn_to(new Point(-1,  0))
+        if(root.is_down('ArrowRight')) turn_to(new Point(+1,  0))
+        if(root.is_down('ArrowUp'))    turn_to(new Point( 0, -1))
+        if(root.is_down('ArrowDown'))  turn_to(new Point( 0, +1))
+        if(root.was_typed('KeyP')) cycle_palette()
+        root.clear_typed_state()
+    }
 
     function restart() {
         score.level = 0
@@ -439,6 +490,8 @@ export async function start() {
         snake.direction = pt
     }
     function process_tick() {
+        handle_user_input()
+        if(!playing) return
         clock += 1
         if(clock % SPEEDS[snake.speed] !== 0) return
 
@@ -469,10 +522,13 @@ export async function start() {
         }
     }
     surface.start()
+    surface.mouse.debug = false
+    surface.keyboard.debug = false
+    surface.set_keyboard_focus(root)
     restart()
 
     function refresh() {
-        if(playing)process_tick()
+        process_tick()
         surface.repaint()
         requestAnimationFrame(refresh)
     }
