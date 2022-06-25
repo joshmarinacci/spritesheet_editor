@@ -125,21 +125,19 @@ class GridView extends BaseParentView {
             let xx = x*8*SCALE
             let yy = y*8*SCALE
             g.fill(new Rect(xx,yy,1*8*SCALE,1*8*SCALE),color);
-            const draw_sprite = (x,y,e, s) => {
-                // @ts-ignore
-                g.draw_sprite(x,y,e,s)
-            }
-            if (w === EMPTY) draw_sprite(xx,yy,this.empty, SCALE)
+            let pt = new Point(xx,yy)
+            g.set_sprite_scale(3)
+            if (w === EMPTY) g.draw_sprite(pt,this.empty)
             if (w === WALL) {
-                if(x === 0) draw_sprite(xx, yy, this.wall_left, SCALE)
-                if(x === this.model.w-1) draw_sprite(xx, yy, this.wall_right, SCALE)
-                if(y === 0) draw_sprite(xx, yy, this.wall_top, SCALE)
-                if(y === this.model.w-1) draw_sprite(xx, yy, this.wall_bottom, SCALE)
+                if(x === 0) g.draw_sprite(pt, this.wall_left)
+                if(x === this.model.w-1) g.draw_sprite(pt, this.wall_right)
+                if(y === 0) g.draw_sprite(pt, this.wall_top)
+                if(y === this.model.w-1) g.draw_sprite(pt, this.wall_bottom)
             }
-            if (w === TAIL) draw_sprite(xx,yy,this.tail,SCALE)
-            if (w === FOOD) draw_sprite(xx,yy,this.food,SCALE)
-            if (w === HEART) draw_sprite(xx,yy,this.heart,SCALE)
-            if (w === SHRINK) draw_sprite(xx,yy,this.shrink,SCALE)
+            if (w === TAIL) g.draw_sprite(pt,this.tail)
+            if (w === FOOD) g.draw_sprite(pt,this.food)
+            if (w === HEART) g.draw_sprite(pt,this.heart)
+            if (w === SHRINK) g.draw_sprite(pt,this.shrink)
 
         })
     }

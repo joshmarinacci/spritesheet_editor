@@ -15,7 +15,7 @@ import {
     TextLine,
     BaseParentView,
     SurfaceContext,
-    StandardPanelBackgroundColor,
+    PanelBG,
     Size,
     Point,
     LayerView,
@@ -192,7 +192,7 @@ class SinglePanel extends BaseParentView {
         this.pad = 0
     }
     override draw(g: SurfaceContext) {
-        g.fillBackgroundSize(this.size(),StandardPanelBackgroundColor)
+        g.fillBackgroundSize(this.size(),PanelBG)
     }
 
     layout(g: SurfaceContext, available: Size): Size {

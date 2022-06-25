@@ -15,7 +15,7 @@ import {
     Rect,
     CustomLabel,
     gen_id,
-    SpriteGlyph, StandardPanelBackgroundColor,
+    SpriteGlyph, PanelBG,
 } from "thneed-gfx";
 import {Doc, draw_sprite} from "./app-model";
 import {draw_grid, wrap_number} from "./common";
@@ -152,7 +152,7 @@ export function make_font_view(doc: Doc) {
 
     let panel = new HBox()
     panel.set_name('font-editor-view')
-    panel.set_fill(StandardPanelBackgroundColor)
+    panel.set_fill(PanelBG)
     panel.set_hflex(true)
     panel.set_vflex(true)
 
